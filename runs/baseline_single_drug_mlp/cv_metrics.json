@@ -1,0 +1,92 @@
+{
+  "cfg": {
+    "patient_hidden_dim": 128,
+    "patient_emb_dim": 64,
+    "drug_emb_dim": 64,
+    "head_hidden_dim": 128,
+    "dropout": 0.2,
+    "batch_size": 256,
+    "lr": 0.001,
+    "weight_decay": 1e-05,
+    "max_epochs": 120,
+    "patience": 15,
+    "min_epochs": 20,
+    "random_state": 42,
+    "n_folds": 5,
+    "device": "auto"
+  },
+  "device": "mps",
+  "n_patients": 613,
+  "n_drugs": 165,
+  "n_features": 80,
+  "overall_cv": {
+    "cv_folds": [
+      {
+        "fold": 1,
+        "best_epoch": 23,
+        "val_mse": 2019.9608714403732,
+        "val_mae": 34.151519775390625,
+        "mean_per_patient_spearman": 0.6975787188888906,
+        "median_per_drug_spearman": 0.2776009464138823,
+        "n_val_patients": 123,
+        "n_val_measurements": 10289,
+        "elapsed_s": 137.48666286468506
+      },
+      {
+        "fold": 2,
+        "best_epoch": 29,
+        "val_mse": 2302.2423768385424,
+        "val_mae": 35.75140380859375,
+        "mean_per_patient_spearman": 0.7088739407033313,
+        "median_per_drug_spearman": 0.22648387057815872,
+        "n_val_patients": 123,
+        "n_val_measurements": 11966,
+        "elapsed_s": 148.91230607032776
+      },
+      {
+        "fold": 3,
+        "best_epoch": 20,
+        "val_mse": 2332.5253828888303,
+        "val_mae": 36.39168930053711,
+        "mean_per_patient_spearman": 0.6811793711006797,
+        "median_per_drug_spearman": 0.28569061517522004,
+        "n_val_patients": 123,
+        "n_val_measurements": 11361,
+        "elapsed_s": 110.46571922302246
+      },
+      {
+        "fold": 4,
+        "best_epoch": 29,
+        "val_mse": 2232.341254613792,
+        "val_mae": 35.687740325927734,
+        "mean_per_patient_spearman": 0.6999876117668141,
+        "median_per_drug_spearman": 0.3693454431847938,
+        "n_val_patients": 122,
+        "n_val_measurements": 11108,
+        "elapsed_s": 138.52955412864685
+      },
+      {
+        "fold": 5,
+        "best_epoch": 28,
+        "val_mse": 2033.165384052423,
+        "val_mae": 33.21485137939453,
+        "mean_per_patient_spearman": 0.7302070395001636,
+        "median_per_drug_spearman": 0.35375522143958404,
+        "n_val_patients": 122,
+        "n_val_measurements": 11102,
+        "elapsed_s": 133.43200421333313
+      }
+    ],
+    "cv_mean_per_patient_spearman": 0.7035653363919759,
+    "cv_std_per_patient_spearman": 0.017942496822378255,
+    "cv_mean_mae": 35.03944091796875,
+    "gate_pass_spearman_0_4": true
+  },
+  "output_files": {
+    "final_model": "runs/baseline_single_drug_mlp/final_model.pt",
+    "per_patient_spearman": "runs/baseline_single_drug_mlp/per_patient_spearman.csv",
+    "per_drug_spearman": "runs/baseline_single_drug_mlp/per_drug_spearman.csv",
+    "cv_held_out_predictions": "runs/baseline_single_drug_mlp/cv_held_out_predictions.csv",
+    "prediction_matrix": "runs/baseline_single_drug_mlp/predictions_all_patients_all_drugs.csv"
+  }
+}
