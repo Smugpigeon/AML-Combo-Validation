@@ -1,0 +1,49 @@
+[project]
+name = "combo-val"
+version = "0.1.0"
+description = "AML combination pharmacology validation: does mechanism-aware combo beat best single drug?"
+requires-python = ">=3.11"
+
+dependencies = [
+    "numpy>=1.26",
+    "pandas>=2.0",
+    "scipy>=1.11",
+    "scikit-learn>=1.4",
+    "xgboost>=2.0",
+    "pyyaml>=6.0",
+    "openpyxl>=3.1",
+    "matplotlib>=3.8",
+    "seaborn>=0.13",
+    "torch>=2.0",               # for multi-task MLP (Baseline A) + residual (Hypothesis B)
+    "pyarrow>=15.0",            # parquet
+    "requests>=2.31",           # DrugComb API / download
+    "umap-learn>=0.5",          # optional: supplementary figures
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "ruff>=0.4",
+    "mypy>=1.9",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+addopts = "-ra -v"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "W", "UP", "B"]
+ignore = ["E501"]

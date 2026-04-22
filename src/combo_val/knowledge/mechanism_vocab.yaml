@@ -1,0 +1,360 @@
+meta:
+  name: AML Combination Pharmacology Mechanism Vocabulary
+  version: 0.1.0
+  description: >
+    Shared mechanism space for combination pharmacology scoring in AML.
+    Each drug is projected into this space; each patient is projected into
+    a "mechanism-deficit" vector in the SAME space. Combination coverage
+    is the dot product. This is the core structural prior that lets the
+    scoring layer work under data scarcity.
+  derived_from:
+    - aml_ontology.yaml (v0.3.0)  # therapy_catalog + program_rules + prototypes
+    - drug_tower/drug_master_approved_aml_v1.csv
+    - drug_tower/drug_family_master_aml_v1.csv
+    - FDA labels (data/external/fda_labels/)
+  design_principles:
+    - "Shared drug/patient axis: coverage = drug_vector · patient_deficit_vector"
+    - "Sparse (one-hot-ish) rather than dense; interpretability > expressiveness"
+    - "Separable axes: target / cell_state_effect / regimen_role / toxicity"
+    - "Toxicity is a STACKING prior (L2 of sum of vectors), NOT a coverage axis"
+
+# ============================================================================
+# AXIS 1: TARGET  (molecular target / driver node)
+# Drug side: "what this drug hits"
+# Patient side: "what driver this patient carries"
+# ============================================================================
+target_axis:
+  # --- AML-approved driver targets ---
+  FLT3:
+    description: FLT3-ITD / FLT3-TKD kinase
+    patient_evidence_source:
+      - MUT::FLT3
+      - FLT3-ITD / FLT3-TKD call
+    drug_examples: [midostaurin, quizartinib, gilteritinib]
+
+  IDH1:
+    description: IDH1 neomorphic mutation (R132)
+    patient_evidence_source: [MUT::IDH1]
+    drug_examples: [ivosidenib, olutasidenib]
+
+  IDH2:
+    description: IDH2 neomorphic mutation (R140/R172)
+    patient_evidence_source: [MUT::IDH2]
+    drug_examples: [enasidenib]
+
+  BCL2:
+    description: BCL2-dependent apoptosis evasion
+    patient_evidence_source:
+      - PROGRAM::apoptosis_priming_high  # inferred
+      - GSVA high for BCL2-dependency signature
+    drug_examples: [venetoclax]
+
+  DNMT:
+    description: DNA methyltransferase 1 (hypomethylating target)
+    patient_evidence_source:
+      - MUT::DNMT3A  # partial
+      - MUT::TET2
+      - PROGRAM::methylation_high
+    drug_examples: [azacitidine_injectable, decitabine_injectable, onureg]
+
+  MENIN_HOX:
+    description: Menin-KMT2A interaction driving HOX program
+    patient_evidence_source:
+      - MUT::NPM1
+      - FUSION::KMT2A
+      - PROGRAM::menin_hox
+    drug_examples: [revumenib_npm1, revumenib_kmt2ar, ziftomenib_npm1]
+
+  CD33:
+    description: CD33 surface antigen (myeloid lineage marker)
+    patient_evidence_source: [IMMUNO::CD33_positive]
+    drug_examples: [gemtuzumab_ozogamicin]
+
+  SMO:
+    description: Hedgehog smoothened receptor
+    patient_evidence_source: []  # no strong biomarker; context-driven
+    drug_examples: [glasdegib]
+
+  RARA:
+    description: PML::RARA fusion (APL-specific)
+    patient_evidence_source: [FUSION::PML::RARA]
+    drug_examples: []  # ATRA/ATO not yet in drug_tower but will be added
+
+  # --- Cytotoxic / chemo targets ---
+  DNA_SYNTHESIS:
+    description: Nucleoside analog inhibiting DNA replication
+    patient_evidence_source: []  # backbone-agnostic
+    drug_examples: [cytarabine_intensive_context, cytarabine_ldac_context]
+
+  TOPO_II:
+    description: Topoisomerase II (anthracycline target)
+    patient_evidence_source: []
+    drug_examples: [daunorubicin_intensive_context, idarubicin_intensive_context]
+
+  # --- Experimental / rescue targets (placeholder) ---
+  TP53_PATHWAY:
+    description: TP53 reactivation / mutant p53 restoration
+    patient_evidence_source:
+      - MUT::TP53
+      - CYTO::complex_karyotype
+      - CYTO::chr17p_loss
+    drug_examples: []  # eprenetapopt was withdrawn; placeholder for future
+
+  SPLICEOSOME:
+    description: Spliceosomal modulation (for splicing-mutated MDS-like)
+    patient_evidence_source:
+      - MUT::SRSF2
+      - MUT::SF3B1
+      - MUT::U2AF1
+    drug_examples: []  # H3B-8800 class, experimental only
+
+  RAS_MAPK:
+    description: RAS/MAPK pathway rescue
+    patient_evidence_source:
+      - MUT::NRAS
+      - MUT::KRAS
+      - MUT::PTPN11
+    drug_examples: []  # trametinib/cobimetinib if added
+
+  JAK_STAT:
+    description: JAK/STAT axis (inflammatory high-risk)
+    patient_evidence_source: [PROGRAM::inflammatory_il6_stat3]
+    drug_examples: []  # ruxolitinib experimental in AML
+
+# ============================================================================
+# AXIS 2: CELL_STATE_EFFECT  (what the drug DOES to cell / what state patient IS IN)
+# Drug side: pharmacodynamic effect
+# Patient side: biology program active (from GSVA / RNA)
+# ============================================================================
+cell_state_axis:
+  apoptosis_priming:
+    description: Promotes intrinsic apoptosis (BH3 mimetics, priming upstream)
+    patient_evidence_source: [GSVA::APOPTOSIS_DEPENDENT]
+    drug_mechanism_examples: [BCL2_inhibition]
+
+  differentiation_induction:
+    description: Pushes myeloid blasts toward mature lineage
+    patient_evidence_source:
+      - PROGRAM::stemness_high  # patient NEEDS differentiation if stemness is high
+    drug_mechanism_examples: [IDH_inhibition, MENIN_inhibition, ATRA]
+
+  DNA_damage:
+    description: Induces double-strand breaks / replication stress
+    patient_evidence_source: [PROGRAM::dna_damage_p53_low]  # low damage-repair = more sensitive
+    drug_mechanism_examples: [cytarabine, anthracyclines]
+
+  cell_cycle_block:
+    description: Arrests proliferation (CDK / S-phase / mitosis)
+    patient_evidence_source: []
+    drug_mechanism_examples: [cytarabine]
+
+  stem_cell_targeting:
+    description: Depletes leukemic stem cell compartment (LSC17 / HOX axis)
+    patient_evidence_source:
+      - PROGRAM::stemness
+      - PROGRAM::menin_hox
+    drug_mechanism_examples: [MENIN_inhibition, BET_inhibition]
+
+  hypomethylation:
+    description: Global DNA demethylation + transcriptional reprogramming
+    patient_evidence_source: [PROGRAM::methylation_high]
+    drug_mechanism_examples: [HMA]
+
+  immune_engagement:
+    description: ADC-mediated targeted killing / immune recruitment
+    patient_evidence_source: [IMMUNO::CD33_positive]
+    drug_mechanism_examples: [CD33_ADC]
+
+# ============================================================================
+# AXIS 3: REGIMEN_ROLE  (clinical positioning — maps to regimen_grammar roles)
+# Used both for drug classification AND patient fitness constraint
+# ============================================================================
+regimen_role_axis:
+  intensive_backbone:
+    description: Part of ND-intensive induction (7+3, CPX-351)
+    patient_fitness_required: fit_for_intensive=1
+    drug_examples:
+      - cytarabine_intensive_context
+      - daunorubicin_intensive_context
+      - idarubicin_intensive_context
+      - vyxeos
+
+  low_intensity_backbone:
+    description: Part of ND-less-intensive / HMA-based / LDAC-based regimen
+    patient_fitness_required: fit_for_intensive=0 OR comorbidities
+    drug_examples:
+      - venetoclax
+      - azacitidine_injectable
+      - decitabine_injectable
+      - cytarabine_ldac_context
+      - glasdegib
+
+  targeted_anchor:
+    description: Can stand alone in R/R or unfit ND
+    drug_examples: [gilteritinib, ivosidenib, olutasidenib, enasidenib]
+
+  targeted_overlay:
+    description: Adds on top of backbone (driver add-on)
+    drug_examples: [midostaurin, quizartinib]
+
+  modifier:
+    description: CD33-directed or context modifier, not a program
+    drug_examples: [gemtuzumab_ozogamicin]
+
+  maintenance_post_cr:
+    description: Post-remission maintenance only
+    drug_examples: [onureg]
+
+  alert_only:
+    description: High-risk program, assay/board review only — never auto-prescribed
+    patient_context: [splicing_MDS_flag, TP53_high_risk_flag]
+    drug_examples: []
+
+# ============================================================================
+# AXIS 4: TOXICITY  (for STACKING prior — sum of drug toxicity vectors)
+# This is NOT a coverage axis. High sum = prune candidate.
+# Source: drug_tower.major_safety_watchouts + FDA labels + CTCAE
+# Values are 0/0.5/1 (none / moderate / strong)
+# ============================================================================
+toxicity_axis:
+  myelosuppression:
+    description: Neutropenia / thrombocytopenia / anemia
+    stacking_rule: "sum_L1 capped at 2.5; > 2.5 = prune"
+
+  hepatotoxicity:
+    description: Transaminitis, hepatic failure risk
+    stacking_rule: "sum_L1 capped at 1.5"
+
+  cardiotoxicity:
+    description: Cardiac dysfunction, LVEF drop
+    stacking_rule: "sum_L1 capped at 1.0 (anthracycline lifetime dose)"
+
+  QT_prolongation:
+    description: Proarrhythmic QT effect
+    stacking_rule: "sum_L1 capped at 1.5; pair with QT drugs = flag"
+
+  differentiation_syndrome:
+    description: APL-like DS from IDH/MENIN/FLT3 inhibitors
+    stacking_rule: "any sum > 1 = flag for prophylaxis"
+
+  TLS_risk:
+    description: Tumor lysis syndrome (venetoclax, high-burden disease)
+    stacking_rule: "flag if sum > 0.5"
+
+  infection_neutropenic:
+    description: Infection risk during cytopenia
+    stacking_rule: "coupled with myelosuppression axis"
+
+  GI_toxicity:
+    description: Nausea, mucositis, diarrhea
+    stacking_rule: "soft cap"
+
+  renal:
+    description: Renal impairment / AKI
+    stacking_rule: "soft cap"
+
+  drug_interactions_CYP3A:
+    description: CYP3A substrate/inhibitor stack (e.g. azoles × venetoclax)
+    stacking_rule: "any two CYP3A substrates = flag, dose-adjustment required"
+
+# ============================================================================
+# PATIENT DEFICIT MAPPING
+# How to go from HyGReM-NC outputs -> mechanism deficit vector
+# ============================================================================
+patient_deficit_derivation:
+  # Mapping: prototype -> target_axis weights (when this prototype "needs" that target)
+  prototype_target_weights:
+    APL_PML_RARA:
+      RARA: 1.0
+    CBF_RUNX1_RUNX1T1:
+      DNA_SYNTHESIS: 1.0      # intensive cytarabine-sensitive
+      TOPO_II: 0.8
+    CBF_CBFB_MYH11:
+      DNA_SYNTHESIS: 1.0
+      TOPO_II: 0.8
+    NPM1_FLT3_HOX:
+      FLT3: 1.0
+      MENIN_HOX: 0.9
+      BCL2: 0.7
+      DNMT: 0.6
+    NPM1_IDH_HOX:
+      IDH1: 0.7               # one of IDH1/IDH2 depending on mutation
+      IDH2: 0.7
+      MENIN_HOX: 0.9
+      BCL2: 0.7
+      DNMT: 0.6
+    KMT2A_MONOCYTIC:
+      MENIN_HOX: 1.0
+      BCL2: 0.7
+      DNMT: 0.5
+    TP53_COMPLEX_KARYOTYPE:
+      TP53_PATHWAY: 1.0       # no approved drug yet; flags alert_only
+      BCL2: 0.5               # VEN + HMA still used as bridge
+      DNMT: 0.5
+    MDS_RELATED:
+      DNMT: 1.0
+      BCL2: 0.8
+      SPLICEOSOME: 0.6        # flag if splicing mut present
+    MECOM_OR_HOX_ADVERSE:
+      MENIN_HOX: 0.9          # HOX-activated
+    CEBPA_BZIP:
+      DNA_SYNTHESIS: 1.0
+      TOPO_II: 0.8
+
+  prototype_cell_state_weights:
+    # Every prototype implies some cell-state need
+    APL_PML_RARA:
+      differentiation_induction: 1.0
+    CBF_RUNX1_RUNX1T1:
+      DNA_damage: 0.8
+      cell_cycle_block: 0.8
+    CBF_CBFB_MYH11:
+      DNA_damage: 0.8
+      cell_cycle_block: 0.8
+    NPM1_FLT3_HOX:
+      differentiation_induction: 0.8  # via MENIN
+      apoptosis_priming: 0.8          # via VEN
+      stem_cell_targeting: 0.7
+    NPM1_IDH_HOX:
+      differentiation_induction: 0.9  # IDHi induces differentiation
+      apoptosis_priming: 0.7
+      stem_cell_targeting: 0.7
+    KMT2A_MONOCYTIC:
+      differentiation_induction: 0.9  # MENINi drives diff
+      stem_cell_targeting: 1.0
+    TP53_COMPLEX_KARYOTYPE:
+      apoptosis_priming: 0.6
+      hypomethylation: 0.7
+    MDS_RELATED:
+      hypomethylation: 1.0
+      apoptosis_priming: 0.7
+    MECOM_OR_HOX_ADVERSE:
+      stem_cell_targeting: 1.0
+    CEBPA_BZIP:
+      DNA_damage: 0.8
+      cell_cycle_block: 0.8
+
+  # Regimen role is inferred from clinical fitness, NOT from prototype
+  fitness_to_role_weights:
+    fit_for_intensive:
+      intensive_backbone: 1.0
+      targeted_overlay: 0.8
+    not_fit_for_intensive:
+      low_intensity_backbone: 1.0
+      targeted_anchor: 0.8
+    post_remission:
+      maintenance_post_cr: 1.0
+
+# ============================================================================
+# COVERAGE SCORING
+# ============================================================================
+scoring:
+  coverage_formula: "coverage(combo, patient) = sum over all axes of: patient_deficit · sum(drug_vectors_in_combo) / len(combo)"
+  # Note: 'sum / len' = average; prevents trivially high score from adding many drugs
+  # Could also use max() to reward at-least-one-drug-covers-each-mechanism
+  coverage_aggregator: mean  # alternatives: max, weighted_sum
+
+  toxicity_formula: "toxicity_stack(combo) = L2_norm(sum of toxicity_vectors)"
+  toxicity_penalty_curve: "piecewise linear per axis using 'stacking_rule'"
+
+  final_score_prior: "prior(combo, patient) = coverage - toxicity_penalty - grammar_violation_penalty"

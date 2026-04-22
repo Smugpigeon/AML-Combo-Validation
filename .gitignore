@@ -1,0 +1,34 @@
+# Raw & processed data (large, external-sourced)
+data/raw/
+data/canonical/*.parquet
+runs/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Secrets
+.env
+.env.local
+
+# OS / editors
+.DS_Store
+.idea/
+.vscode/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Large model outputs
+*.pt
+*.onnx
+*.joblib
+*.pkl
