@@ -68,8 +68,16 @@ class ComboConfig:
     random_state: int = 42
     # Synergy metric to model
     synergy_col: str = "synergy_loewe"
-    # Combo AUC scaling constant (combo_auc = 0.5(a1+a2) + k * synergy)
+    # Combo AUC formula:
+    #   combo_auc = 0.5 * (auc_d1 + auc_d2)
+    #             + synergy_to_auc_scale * predicted_synergy
+    #             - mech_prior_scale * mechanism_prior_score
+    # - synergy_to_auc_scale converts Loewe synergy (~ -50..+15) to AUC units
+    # - mech_prior_scale converts mechanism bonus (0..5+) to AUC reduction
+    #   (lower AUC = "more cell killing"; mech-matched combos should score lower)
     synergy_to_auc_scale: float = 1.0
+    mech_prior_scale: float = 30.0
+    use_mech_prior: bool = True
 
 
 # ---------------------------------------------------------------------------
@@ -282,12 +290,28 @@ def train_combo_predictor(
             for c, (beat_j, _) in enumerate(indices_in_combo):
                 synergy_matrix[beat_i, beat_j] = pred_grid[r, c]
 
-    # Compute combo AUC: 0.5 * (auc1 + auc2) + k * synergy
+    # Compute combo AUC: 0.5 * (auc1 + auc2) + k * synergy - mech_scale * mech
     auc_matrix = baseline_pred.values  # (n_pats, n_drugs)
     combo_auc = (
         0.5 * (auc_matrix[:, :, None] + auc_matrix[:, None, :])
         + cfg.synergy_to_auc_scale * synergy_matrix[None, :, :]
     )  # (n_pats, n_drugs, n_drugs)
+
+    if cfg.use_mech_prior:
+        # Mechanism-driven combo prior (patient-specific, knowledge-based)
+        from combo_val.combo.mechanism_prior import (
+            compute_combo_mech_scores,
+            diagnostics as mech_diagnostics,
+        )
+        # Read patient features matching the baseline_pred index order.
+        pf_path = Path("data/canonical/beataml_patient_features.csv")
+        pf = pd.read_csv(pf_path).set_index("patient_id")
+        pf = pf.reindex(baseline_pred.index)
+        mech_diag = mech_diagnostics(pf, beataml_drugs)
+        print(f"[combo] mechanism prior diagnostics: {mech_diag}")
+        mech_score = compute_combo_mech_scores(pf, beataml_drugs)
+        # Higher mech_score = better match → lower combo_auc (more cell killing)
+        combo_auc = combo_auc - cfg.mech_prior_scale * mech_score.astype(np.float32)
 
     # Save per-patient best-combo table (memory-friendly) rather than the full tensor
     rows: list[dict] = []
