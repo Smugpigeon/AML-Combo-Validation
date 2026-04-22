@@ -1,0 +1,104 @@
+{
+  "cfg": {
+    "input_path": "data/raw/drugcomb/summary_v_1_5.csv",
+    "beataml_long_path": "data/canonical/beataml_drug_response_long.csv",
+    "out_dir": "data/canonical",
+    "chunk_size": 100000,
+    "fuzzy_cutoff": 0.87,
+    "drug1_col_aliases": [
+      "drug_row",
+      "drug1",
+      "drug_row_cid",
+      "drug_row_name"
+    ],
+    "drug2_col_aliases": [
+      "drug_col",
+      "drug2",
+      "drug_col_cid",
+      "drug_col_name"
+    ],
+    "cell_line_col_aliases": [
+      "cell_line_name",
+      "cell_line",
+      "cell"
+    ],
+    "synergy_col_aliases": {
+      "synergy_loewe": [
+        "synergy_loewe",
+        "S_loewe",
+        "loewe"
+      ],
+      "synergy_bliss": [
+        "synergy_bliss",
+        "S_bliss",
+        "bliss"
+      ],
+      "synergy_zip": [
+        "synergy_zip",
+        "S_zip",
+        "zip"
+      ],
+      "synergy_hsa": [
+        "synergy_hsa",
+        "S_hsa",
+        "hsa"
+      ]
+    },
+    "block_id_col_aliases": [
+      "block_id",
+      "BlockID",
+      "block"
+    ],
+    "study_col_aliases": [
+      "study_name",
+      "study",
+      "source"
+    ]
+  },
+  "elapsed_s": 6.2,
+  "total_rows_scanned": 1432351,
+  "aml_rows_kept": 13877,
+  "aml_cell_line_hits": {
+    "HL-60": 5661,
+    "MV4-11": 732,
+    "MOLM-13": 673,
+    "KASUMI-1": 674,
+    "NB4": 623,
+    "OCI-AML2": 705,
+    "OCI-AML3": 699,
+    "OCI-AML5": 828,
+    "THP-1": 748,
+    "U-937": 495,
+    "KG-1": 320,
+    "SET-2": 552,
+    "HEL": 1167
+  },
+  "n_unique_drugs_drugcomb": 769,
+  "drug_alignment_breakdown": {
+    "no_match": 681,
+    "exact": 80,
+    "fuzzy": 8
+  },
+  "n_combination_rows": 4938,
+  "n_monotherapy_rows": 8939,
+  "n_pairs_strict_both_mapped": 186,
+  "n_pairs_any_mapped": 1708,
+  "n_monotherapy_with_beataml_match": 1603,
+  "schema": {
+    "drug1": "drug_row",
+    "drug2": "drug_col",
+    "cell_line": "cell_line_name",
+    "block_id": "block_id",
+    "study": "study_name",
+    "synergy_loewe": "synergy_loewe",
+    "synergy_bliss": "synergy_bliss",
+    "synergy_zip": "synergy_zip",
+    "synergy_hsa": "synergy_hsa"
+  },
+  "outputs": {
+    "strict_pairs": "data/canonical/drugcomb_aml_pairs.csv",
+    "any_match_pairs": "data/canonical/drugcomb_aml_pairs_any_match.csv",
+    "monotherapy": "data/canonical/drugcomb_aml_monotherapy.csv",
+    "alignment": "data/canonical/drugcomb_drug_alignment.csv"
+  }
+}

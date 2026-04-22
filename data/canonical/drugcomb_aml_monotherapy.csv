@@ -1,0 +1,1604 @@
+block_id,cell_line_id,drug1_original,drug1_id,drug1_match_source,drug2_original,drug2_id,drug2_match_source,synergy_loewe,synergy_bliss,synergy_zip,synergy_hsa,source_study
+384677,HL-60,Vemurafenib,Vemurafenib (PLX-4032),exact,Vemurafenib,Vemurafenib (PLX-4032),exact,-15.0240692774418,1.36996821984658,8.80117575222769,-16.1325661091835,ALMANAC
+517790,HEL,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543474,HEL,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543483,HEL,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543502,HEL,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543509,HEL,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543547,HEL,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543567,HEL,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543568,HEL,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543571,HEL,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543573,HEL,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543575,HEL,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543579,HEL,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543588,HEL,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543638,HEL,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543650,HEL,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543654,HEL,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543659,HEL,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543687,HEL,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543703,HEL,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+544780,HEL,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+548582,HEL,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+551578,HEL,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+572765,HEL,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+573419,HEL,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+578499,HEL,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+583326,HEL,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+588206,HEL,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+591886,HEL,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+605045,HEL,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+608762,HEL,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+615665,HEL,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+648457,HEL,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+660475,HEL,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+674627,HEL,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+679139,HEL,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+684415,HEL,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+701925,HEL,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+703970,HEL,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705591,HEL,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707199,HEL,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+708819,HEL,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+802734,HEL,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802749,HEL,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802769,HEL,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802778,HEL,staurosporine,Staurosporine,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802783,HEL,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802784,HEL,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802785,HEL,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802788,HEL,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802792,HEL,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802793,HEL,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802828,HEL,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802830,HEL,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802833,HEL,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802834,HEL,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802835,HEL,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802836,HEL,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802843,HEL,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802844,HEL,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802889,HEL,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802890,HEL,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802892,HEL,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802913,HEL,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802915,HEL,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802930,HEL,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802932,HEL,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802938,HEL,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802963,HEL,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802974,HEL,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802976,HEL,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802977,HEL,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802978,HEL,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802980,HEL,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802983,HEL,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802984,HEL,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802985,HEL,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802988,HEL,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+802989,HEL,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803019,HEL,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803020,HEL,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803023,HEL,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803024,HEL,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803031,HEL,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803034,HEL,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803036,HEL,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803038,HEL,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803043,HEL,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803045,HEL,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803048,HEL,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803065,HEL,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803130,HEL,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803144,HEL,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803151,HEL,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803152,HEL,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803153,HEL,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803157,HEL,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803158,HEL,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803166,HEL,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+803175,HEL,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+466389,HEL,NVP-AEW541,NVP-AEW541,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+466866,HEL,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467311,HEL,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467815,HEL,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468318,HEL,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+469326,HEL,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+470823,HEL,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471321,HEL,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471820,HEL,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+474130,HEL,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475089,HEL,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475590,HEL,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+476075,HEL,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477052,HEL,Dovitinib,Dovitinib (CHIR-258),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477556,HEL,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+1025621,HEL,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025633,HEL,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025651,HEL,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025663,HEL,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025664,HEL,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025665,HEL,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025669,HEL,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025673,HEL,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025674,HEL,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025702,HEL,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025705,HEL,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025708,HEL,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025709,HEL,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025712,HEL,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025713,HEL,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025720,HEL,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025721,HEL,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025765,HEL,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025766,HEL,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025768,HEL,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025787,HEL,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025789,HEL,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025801,HEL,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025804,HEL,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025810,HEL,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025823,HEL,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025834,HEL,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025836,HEL,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025837,HEL,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025838,HEL,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025839,HEL,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025841,HEL,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025844,HEL,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025846,HEL,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025847,HEL,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025850,HEL,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025852,HEL,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025880,HEL,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025882,HEL,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025883,HEL,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025890,HEL,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025893,HEL,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025895,HEL,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025897,HEL,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025902,HEL,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025904,HEL,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025908,HEL,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025924,HEL,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025987,HEL,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1025991,HEL,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026003,HEL,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026010,HEL,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026011,HEL,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026013,HEL,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026014,HEL,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026021,HEL,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026027,HEL,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026033,HEL,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026047,HEL,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1026055,HEL,Flavopiridol,Flavopiridol,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+515216,HL-60,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515219,HL-60,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515223,HL-60,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515234,HL-60,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515236,HL-60,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515238,HL-60,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515252,HL-60,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515260,HL-60,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515262,HL-60,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515264,HL-60,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515268,HL-60,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515271,HL-60,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515275,HL-60,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515284,HL-60,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515304,HL-60,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515324,HL-60,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515327,HL-60,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515333,HL-60,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515340,HL-60,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+515349,HL-60,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+545836,HL-60,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+546039,HL-60,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+556375,HL-60,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+556770,HL-60,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+573325,HL-60,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+573475,HL-60,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+593542,HL-60,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+610210,HL-60,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+610950,HL-60,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+615781,HL-60,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+616549,HL-60,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+638073,HL-60,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641731,HL-60,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641740,HL-60,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641744,HL-60,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641751,HL-60,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641759,HL-60,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641761,HL-60,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641769,HL-60,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641785,HL-60,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641788,HL-60,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641790,HL-60,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641794,HL-60,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641795,HL-60,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641805,HL-60,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+642569,HL-60,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+646059,HL-60,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671588,HL-60,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+678993,HL-60,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+687614,HL-60,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+693834,HL-60,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+694528,HL-60,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+698581,HL-60,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+698907,HL-60,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+699851,HL-60,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+700464,HL-60,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+1018982,HL-60,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1018996,HL-60,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019014,HL-60,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019027,HL-60,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019028,HL-60,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019029,HL-60,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019033,HL-60,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019037,HL-60,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019038,HL-60,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019067,HL-60,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019070,HL-60,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019073,HL-60,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019074,HL-60,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019077,HL-60,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019078,HL-60,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019085,HL-60,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019086,HL-60,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019128,HL-60,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019129,HL-60,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019131,HL-60,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019150,HL-60,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019152,HL-60,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019164,HL-60,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019167,HL-60,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019173,HL-60,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019186,HL-60,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019197,HL-60,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019199,HL-60,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019200,HL-60,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019201,HL-60,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019202,HL-60,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019204,HL-60,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019207,HL-60,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019209,HL-60,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019212,HL-60,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019214,HL-60,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019241,HL-60,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019243,HL-60,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019244,HL-60,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019251,HL-60,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019254,HL-60,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019256,HL-60,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019258,HL-60,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019263,HL-60,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019265,HL-60,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019269,HL-60,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019285,HL-60,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019350,HL-60,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019354,HL-60,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019366,HL-60,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019373,HL-60,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019374,HL-60,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019376,HL-60,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019377,HL-60,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019384,HL-60,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019390,HL-60,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019396,HL-60,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019411,HL-60,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1019419,HL-60,Flavopiridol,Flavopiridol,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+492746,KASUMI-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492748,KASUMI-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492757,KASUMI-1,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492762,KASUMI-1,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492773,KASUMI-1,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492774,KASUMI-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492777,KASUMI-1,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492781,KASUMI-1,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492792,KASUMI-1,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492795,KASUMI-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+492802,KASUMI-1,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+500793,KASUMI-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+507042,KASUMI-1,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+532436,KASUMI-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+544420,KASUMI-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+554138,KASUMI-1,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+558167,KASUMI-1,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+562843,KASUMI-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563553,KASUMI-1,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+573458,KASUMI-1,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+575162,KASUMI-1,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+594266,KASUMI-1,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+597239,KASUMI-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+600238,KASUMI-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+616111,KASUMI-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627256,KASUMI-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627261,KASUMI-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627266,KASUMI-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627267,KASUMI-1,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627278,KASUMI-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627279,KASUMI-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627281,KASUMI-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627291,KASUMI-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627292,KASUMI-1,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627365,KASUMI-1,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+637913,KASUMI-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+647860,KASUMI-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+663595,KASUMI-1,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+683914,KASUMI-1,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+694696,KASUMI-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+701427,KASUMI-1,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+720760,KASUMI-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720761,KASUMI-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720762,KASUMI-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720764,KASUMI-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720765,KASUMI-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720774,KASUMI-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720776,KASUMI-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720777,KASUMI-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720779,KASUMI-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720782,KASUMI-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720783,KASUMI-1,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720784,KASUMI-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720786,KASUMI-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720788,KASUMI-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720789,KASUMI-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720790,KASUMI-1,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720791,KASUMI-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720792,KASUMI-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720793,KASUMI-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720794,KASUMI-1,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720795,KASUMI-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720796,KASUMI-1,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720800,KASUMI-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720802,KASUMI-1,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720803,KASUMI-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720804,KASUMI-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720809,KASUMI-1,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+971148,KASUMI-1,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971166,KASUMI-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971178,KASUMI-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971179,KASUMI-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971183,KASUMI-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971187,KASUMI-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971188,KASUMI-1,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971216,KASUMI-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971221,KASUMI-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971222,KASUMI-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971223,KASUMI-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971224,KASUMI-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971231,KASUMI-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971232,KASUMI-1,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971275,KASUMI-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971277,KASUMI-1,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971296,KASUMI-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971298,KASUMI-1,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971310,KASUMI-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971313,KASUMI-1,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971319,KASUMI-1,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971332,KASUMI-1,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971343,KASUMI-1,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971345,KASUMI-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971346,KASUMI-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971347,KASUMI-1,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971348,KASUMI-1,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971350,KASUMI-1,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971353,KASUMI-1,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971355,KASUMI-1,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971356,KASUMI-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971359,KASUMI-1,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971361,KASUMI-1,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971388,KASUMI-1,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971390,KASUMI-1,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971391,KASUMI-1,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971398,KASUMI-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971401,KASUMI-1,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971403,KASUMI-1,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971405,KASUMI-1,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971410,KASUMI-1,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971412,KASUMI-1,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971416,KASUMI-1,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971432,KASUMI-1,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971497,KASUMI-1,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971501,KASUMI-1,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971513,KASUMI-1,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971520,KASUMI-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971521,KASUMI-1,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971523,KASUMI-1,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971524,KASUMI-1,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971531,KASUMI-1,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971537,KASUMI-1,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971543,KASUMI-1,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971547,KASUMI-1,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971559,KASUMI-1,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+971567,KASUMI-1,Flavopiridol,Flavopiridol,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+466463,KG-1,NVP-AEW541,NVP-AEW541,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+466930,KG-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467385,KG-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467889,KG-1,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468392,KG-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+469400,KG-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+470895,KG-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471395,KG-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471894,KG-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+474196,KG-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475163,KG-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475662,KG-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+476144,KG-1,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477126,KG-1,Dovitinib,Dovitinib (CHIR-258),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477630,KG-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+481137,KG-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481140,KG-1,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481151,KG-1,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481162,KG-1,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481164,KG-1,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481165,KG-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481171,KG-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481176,KG-1,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481182,KG-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481195,KG-1,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481198,KG-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+481203,KG-1,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+488734,KG-1,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493477,KG-1,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501015,KG-1,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+504336,KG-1,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+539558,KG-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+546440,KG-1,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+547714,KG-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+562178,KG-1,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+569021,KG-1,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+569520,KG-1,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+574930,KG-1,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+577731,KG-1,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+581172,KG-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+591196,KG-1,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+595475,KG-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+596432,KG-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+602789,KG-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+604104,KG-1,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+614886,KG-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618969,KG-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618975,KG-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618982,KG-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618984,KG-1,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618990,KG-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618997,KG-1,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+618999,KG-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+619001,KG-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+620965,KG-1,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+632177,KG-1,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+635977,KG-1,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+656187,KG-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+693852,KG-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+697073,KG-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+701787,KG-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+704016,KG-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705636,KG-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707244,KG-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+708865,KG-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+720810,KG-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720811,KG-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720812,KG-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720814,KG-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720815,KG-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720824,KG-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720826,KG-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720827,KG-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720829,KG-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720832,KG-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720833,KG-1,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720834,KG-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720836,KG-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720838,KG-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720839,KG-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720840,KG-1,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720841,KG-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720842,KG-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720843,KG-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720844,KG-1,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720845,KG-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720846,KG-1,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720850,KG-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720852,KG-1,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720853,KG-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720854,KG-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+720859,KG-1,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+531864,MOLM-13,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+562400,MOLM-13,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563401,MOLM-13,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563405,MOLM-13,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563438,MOLM-13,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563443,MOLM-13,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563499,MOLM-13,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563507,MOLM-13,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563518,MOLM-13,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563559,MOLM-13,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563572,MOLM-13,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563574,MOLM-13,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563576,MOLM-13,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563584,MOLM-13,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563586,MOLM-13,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563604,MOLM-13,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563608,MOLM-13,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563632,MOLM-13,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563748,MOLM-13,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+564231,MOLM-13,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+567826,MOLM-13,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+575226,MOLM-13,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576953,MOLM-13,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+579552,MOLM-13,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+580740,MOLM-13,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+583795,MOLM-13,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+587364,MOLM-13,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+609830,MOLM-13,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+611743,MOLM-13,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+612671,MOLM-13,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+616100,MOLM-13,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654429,MOLM-13,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+656499,MOLM-13,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+662493,MOLM-13,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+668316,MOLM-13,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+668565,MOLM-13,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+669573,MOLM-13,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671725,MOLM-13,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671726,MOLM-13,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671731,MOLM-13,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671734,MOLM-13,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671767,MOLM-13,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671782,MOLM-13,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671823,MOLM-13,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671832,MOLM-13,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+671842,MOLM-13,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+672440,MOLM-13,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+672783,MOLM-13,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+674327,MOLM-13,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+675867,MOLM-13,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+677288,MOLM-13,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+687190,MOLM-13,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+692471,MOLM-13,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+697624,MOLM-13,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+698547,MOLM-13,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+700522,MOLM-13,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+749957,MOLM-13,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+749971,MOLM-13,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+749989,MOLM-13,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+749997,MOLM-13,staurosporine,Staurosporine,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750001,MOLM-13,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750002,MOLM-13,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750003,MOLM-13,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750006,MOLM-13,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750010,MOLM-13,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750011,MOLM-13,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750042,MOLM-13,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750044,MOLM-13,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750047,MOLM-13,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750048,MOLM-13,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750049,MOLM-13,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750050,MOLM-13,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750057,MOLM-13,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750058,MOLM-13,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750097,MOLM-13,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750098,MOLM-13,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750118,MOLM-13,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750120,MOLM-13,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750137,MOLM-13,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750140,MOLM-13,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750144,MOLM-13,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750163,MOLM-13,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750174,MOLM-13,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750176,MOLM-13,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750177,MOLM-13,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750178,MOLM-13,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750180,MOLM-13,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750183,MOLM-13,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750185,MOLM-13,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750186,MOLM-13,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750189,MOLM-13,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750216,MOLM-13,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750217,MOLM-13,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750219,MOLM-13,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750220,MOLM-13,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750227,MOLM-13,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750229,MOLM-13,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750231,MOLM-13,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750233,MOLM-13,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750238,MOLM-13,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750240,MOLM-13,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750243,MOLM-13,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750256,MOLM-13,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750315,MOLM-13,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750328,MOLM-13,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750334,MOLM-13,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750335,MOLM-13,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750336,MOLM-13,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750340,MOLM-13,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750348,MOLM-13,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+750357,MOLM-13,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+520075,MV4-11,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+525097,MV4-11,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535358,MV4-11,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535359,MV4-11,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535403,MV4-11,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535413,MV4-11,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535422,MV4-11,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535431,MV4-11,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535439,MV4-11,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535466,MV4-11,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535484,MV4-11,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535500,MV4-11,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535511,MV4-11,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535532,MV4-11,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+535534,MV4-11,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+541989,MV4-11,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+542712,MV4-11,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543347,MV4-11,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+545629,MV4-11,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+563118,MV4-11,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+580236,MV4-11,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+583363,MV4-11,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+595065,MV4-11,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+602421,MV4-11,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+605635,MV4-11,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+609679,MV4-11,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+610999,MV4-11,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+614890,MV4-11,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+615844,MV4-11,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+616737,MV4-11,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+642834,MV4-11,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+644583,MV4-11,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654854,MV4-11,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654855,MV4-11,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654858,MV4-11,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654860,MV4-11,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654863,MV4-11,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654868,MV4-11,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654872,MV4-11,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654888,MV4-11,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654926,MV4-11,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654942,MV4-11,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+654962,MV4-11,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+655334,MV4-11,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+659562,MV4-11,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+669001,MV4-11,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+670822,MV4-11,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+674567,MV4-11,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+677943,MV4-11,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+678912,MV4-11,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680480,MV4-11,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+686249,MV4-11,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+686744,MV4-11,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+688198,MV4-11,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+699591,MV4-11,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+704083,MV4-11,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705701,MV4-11,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707309,MV4-11,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+708932,MV4-11,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+721067,MV4-11,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721068,MV4-11,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721069,MV4-11,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721071,MV4-11,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721072,MV4-11,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721081,MV4-11,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721083,MV4-11,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721084,MV4-11,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721086,MV4-11,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721089,MV4-11,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721090,MV4-11,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721091,MV4-11,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721093,MV4-11,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721095,MV4-11,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721096,MV4-11,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721097,MV4-11,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721098,MV4-11,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721099,MV4-11,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721100,MV4-11,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721101,MV4-11,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721102,MV4-11,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721103,MV4-11,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721104,MV4-11,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721108,MV4-11,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721110,MV4-11,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721111,MV4-11,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721112,MV4-11,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721115,MV4-11,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721118,MV4-11,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+812146,MV4-11,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812161,MV4-11,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812179,MV4-11,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812188,MV4-11,staurosporine,Staurosporine,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812191,MV4-11,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812192,MV4-11,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812193,MV4-11,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812195,MV4-11,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812198,MV4-11,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812199,MV4-11,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812229,MV4-11,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812231,MV4-11,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812233,MV4-11,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812234,MV4-11,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812235,MV4-11,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812236,MV4-11,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812242,MV4-11,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812243,MV4-11,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812282,MV4-11,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812283,MV4-11,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812285,MV4-11,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812303,MV4-11,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812305,MV4-11,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812320,MV4-11,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812322,MV4-11,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812327,MV4-11,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812351,MV4-11,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812359,MV4-11,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812361,MV4-11,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812362,MV4-11,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812363,MV4-11,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812365,MV4-11,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812368,MV4-11,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812370,MV4-11,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812371,MV4-11,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812374,MV4-11,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812375,MV4-11,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812402,MV4-11,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812403,MV4-11,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812405,MV4-11,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812406,MV4-11,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812413,MV4-11,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812417,MV4-11,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812419,MV4-11,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812424,MV4-11,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812426,MV4-11,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812429,MV4-11,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812445,MV4-11,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812498,MV4-11,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812510,MV4-11,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812516,MV4-11,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812517,MV4-11,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812521,MV4-11,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812522,MV4-11,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812528,MV4-11,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+812537,MV4-11,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+495309,NB4,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495312,NB4,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495314,NB4,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495315,NB4,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495325,NB4,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495335,NB4,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495337,NB4,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495339,NB4,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495340,NB4,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495346,NB4,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495350,NB4,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495365,NB4,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495374,NB4,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495378,NB4,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495379,NB4,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495384,NB4,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+495389,NB4,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+502955,NB4,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+503825,NB4,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+505519,NB4,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+508137,NB4,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+513615,NB4,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+516042,NB4,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+519277,NB4,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+522122,NB4,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+529018,NB4,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+538155,NB4,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543713,NB4,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+551464,NB4,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+554377,NB4,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+567070,NB4,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+628979,NB4,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+628984,NB4,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+628988,NB4,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+628991,NB4,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+628997,NB4,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629002,NB4,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629003,NB4,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629010,NB4,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629025,NB4,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629030,NB4,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629031,NB4,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629036,NB4,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+635454,NB4,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+635494,NB4,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+648186,NB4,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+649814,NB4,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+655959,NB4,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+656652,NB4,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+662602,NB4,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+663230,NB4,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+675262,NB4,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+687563,NB4,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+693532,NB4,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+697876,NB4,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+698811,NB4,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+880153,NB4,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880164,NB4,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880180,NB4,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880191,NB4,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880192,NB4,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880193,NB4,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880196,NB4,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880199,NB4,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880200,NB4,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880227,NB4,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880229,NB4,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880231,NB4,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880234,NB4,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880235,NB4,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880241,NB4,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880242,NB4,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880276,NB4,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880277,NB4,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880279,NB4,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880295,NB4,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880297,NB4,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880309,NB4,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880312,NB4,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880326,NB4,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880337,NB4,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880339,NB4,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880340,NB4,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880341,NB4,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880343,NB4,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880344,NB4,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880346,NB4,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880347,NB4,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880350,NB4,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880352,NB4,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880377,NB4,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880379,NB4,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880380,NB4,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880386,NB4,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880389,NB4,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880392,NB4,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880397,NB4,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880399,NB4,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880403,NB4,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880419,NB4,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880451,NB4,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880468,NB4,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880469,NB4,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880471,NB4,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880472,NB4,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880476,NB4,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880486,NB4,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+880490,NB4,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+466612,OCI-AML2,NVP-AEW541,NVP-AEW541,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467062,OCI-AML2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467534,OCI-AML2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468038,OCI-AML2,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468541,OCI-AML2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+469549,OCI-AML2,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471042,OCI-AML2,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471541,OCI-AML2,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+472043,OCI-AML2,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+474329,OCI-AML2,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475312,OCI-AML2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475809,OCI-AML2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+476283,OCI-AML2,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477275,OCI-AML2,Dovitinib,Dovitinib (CHIR-258),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477779,OCI-AML2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+493467,OCI-AML2,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493487,OCI-AML2,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493497,OCI-AML2,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493500,OCI-AML2,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493501,OCI-AML2,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493505,OCI-AML2,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493520,OCI-AML2,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493525,OCI-AML2,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493533,OCI-AML2,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+493548,OCI-AML2,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+496457,OCI-AML2,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+496871,OCI-AML2,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+511264,OCI-AML2,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+512261,OCI-AML2,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+523470,OCI-AML2,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+524264,OCI-AML2,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+526425,OCI-AML2,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+531722,OCI-AML2,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+540142,OCI-AML2,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+542150,OCI-AML2,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+554716,OCI-AML2,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+560430,OCI-AML2,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+561775,OCI-AML2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+573963,OCI-AML2,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+586413,OCI-AML2,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+597809,OCI-AML2,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+599260,OCI-AML2,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+608463,OCI-AML2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+610079,OCI-AML2,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+613397,OCI-AML2,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+615315,OCI-AML2,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627702,OCI-AML2,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627708,OCI-AML2,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627710,OCI-AML2,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627714,OCI-AML2,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627716,OCI-AML2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627718,OCI-AML2,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627724,OCI-AML2,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627733,OCI-AML2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627740,OCI-AML2,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627741,OCI-AML2,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627742,OCI-AML2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627743,OCI-AML2,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627746,OCI-AML2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627754,OCI-AML2,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627755,OCI-AML2,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+627756,OCI-AML2,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629133,OCI-AML2,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633074,OCI-AML2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+635914,OCI-AML2,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+636212,OCI-AML2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+652250,OCI-AML2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+662069,OCI-AML2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+667059,OCI-AML2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680499,OCI-AML2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+697832,OCI-AML2,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+704093,OCI-AML2,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705711,OCI-AML2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707319,OCI-AML2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+708942,OCI-AML2,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+721171,OCI-AML2,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721172,OCI-AML2,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721173,OCI-AML2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721175,OCI-AML2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721176,OCI-AML2,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721185,OCI-AML2,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721187,OCI-AML2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721188,OCI-AML2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721190,OCI-AML2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721193,OCI-AML2,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721194,OCI-AML2,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721195,OCI-AML2,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721197,OCI-AML2,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721199,OCI-AML2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721200,OCI-AML2,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721201,OCI-AML2,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721202,OCI-AML2,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721203,OCI-AML2,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721204,OCI-AML2,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721205,OCI-AML2,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721206,OCI-AML2,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721207,OCI-AML2,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721208,OCI-AML2,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721212,OCI-AML2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721214,OCI-AML2,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721215,OCI-AML2,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721216,OCI-AML2,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721219,OCI-AML2,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721222,OCI-AML2,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+881978,OCI-AML2,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+881989,OCI-AML2,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882005,OCI-AML2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882016,OCI-AML2,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882017,OCI-AML2,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882018,OCI-AML2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882021,OCI-AML2,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882024,OCI-AML2,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882025,OCI-AML2,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882050,OCI-AML2,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882052,OCI-AML2,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882054,OCI-AML2,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882057,OCI-AML2,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882058,OCI-AML2,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882064,OCI-AML2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882065,OCI-AML2,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882098,OCI-AML2,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882100,OCI-AML2,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882116,OCI-AML2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882118,OCI-AML2,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882131,OCI-AML2,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882134,OCI-AML2,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882137,OCI-AML2,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882149,OCI-AML2,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882158,OCI-AML2,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882160,OCI-AML2,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882161,OCI-AML2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882162,OCI-AML2,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882164,OCI-AML2,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882165,OCI-AML2,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882167,OCI-AML2,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882168,OCI-AML2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882171,OCI-AML2,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882173,OCI-AML2,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882199,OCI-AML2,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882200,OCI-AML2,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882206,OCI-AML2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882209,OCI-AML2,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882212,OCI-AML2,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882217,OCI-AML2,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882219,OCI-AML2,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882223,OCI-AML2,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882240,OCI-AML2,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882272,OCI-AML2,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882285,OCI-AML2,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882291,OCI-AML2,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882292,OCI-AML2,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882294,OCI-AML2,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882299,OCI-AML2,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+882309,OCI-AML2,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+521567,OCI-AML3,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+524801,OCI-AML3,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+528994,OCI-AML3,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+537578,OCI-AML3,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+540804,OCI-AML3,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+561402,OCI-AML3,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+562794,OCI-AML3,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+569469,OCI-AML3,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+574777,OCI-AML3,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576778,OCI-AML3,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576893,OCI-AML3,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576895,OCI-AML3,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576943,OCI-AML3,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576971,OCI-AML3,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+576986,OCI-AML3,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+577008,OCI-AML3,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+577046,OCI-AML3,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+577071,OCI-AML3,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+577118,OCI-AML3,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+582156,OCI-AML3,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+584783,OCI-AML3,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+585583,OCI-AML3,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+591234,OCI-AML3,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+596691,OCI-AML3,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+598111,OCI-AML3,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+598816,OCI-AML3,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+599374,OCI-AML3,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+599865,OCI-AML3,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+606078,OCI-AML3,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+611305,OCI-AML3,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+615308,OCI-AML3,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+652767,OCI-AML3,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+658590,OCI-AML3,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+661493,OCI-AML3,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+664154,OCI-AML3,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+666801,OCI-AML3,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+668818,OCI-AML3,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+669455,OCI-AML3,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+676949,OCI-AML3,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+679036,OCI-AML3,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+679821,OCI-AML3,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680244,OCI-AML3,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680260,OCI-AML3,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680274,OCI-AML3,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680290,OCI-AML3,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680329,OCI-AML3,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680350,OCI-AML3,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680366,OCI-AML3,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680380,OCI-AML3,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+680382,OCI-AML3,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+684727,OCI-AML3,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+685498,OCI-AML3,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+686057,OCI-AML3,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+697391,OCI-AML3,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+698699,OCI-AML3,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+700952,OCI-AML3,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+919762,OCI-AML3,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919773,OCI-AML3,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919790,OCI-AML3,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919802,OCI-AML3,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919803,OCI-AML3,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919804,OCI-AML3,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919808,OCI-AML3,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919812,OCI-AML3,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919813,OCI-AML3,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919841,OCI-AML3,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919844,OCI-AML3,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919846,OCI-AML3,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919847,OCI-AML3,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919850,OCI-AML3,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919851,OCI-AML3,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919857,OCI-AML3,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919858,OCI-AML3,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919899,OCI-AML3,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919900,OCI-AML3,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919902,OCI-AML3,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919919,OCI-AML3,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919921,OCI-AML3,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919933,OCI-AML3,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919936,OCI-AML3,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919941,OCI-AML3,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919953,OCI-AML3,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919964,OCI-AML3,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919966,OCI-AML3,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919967,OCI-AML3,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919968,OCI-AML3,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919969,OCI-AML3,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919971,OCI-AML3,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919973,OCI-AML3,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919975,OCI-AML3,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919976,OCI-AML3,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919979,OCI-AML3,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+919981,OCI-AML3,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920008,OCI-AML3,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920010,OCI-AML3,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920011,OCI-AML3,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920020,OCI-AML3,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920022,OCI-AML3,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920024,OCI-AML3,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920028,OCI-AML3,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920030,OCI-AML3,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920033,OCI-AML3,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920048,OCI-AML3,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920111,OCI-AML3,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920115,OCI-AML3,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920127,OCI-AML3,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920133,OCI-AML3,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920135,OCI-AML3,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920136,OCI-AML3,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920142,OCI-AML3,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920147,OCI-AML3,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920153,OCI-AML3,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+920168,OCI-AML3,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+466613,OCI-AML5,NVP-AEW541,NVP-AEW541,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467063,OCI-AML5,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467535,OCI-AML5,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468039,OCI-AML5,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468542,OCI-AML5,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+469550,OCI-AML5,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471043,OCI-AML5,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471542,OCI-AML5,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+472044,OCI-AML5,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+474330,OCI-AML5,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475313,OCI-AML5,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475810,OCI-AML5,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+476284,OCI-AML5,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477276,OCI-AML5,Dovitinib,Dovitinib (CHIR-258),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477780,OCI-AML5,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+501850,OCI-AML5,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501865,OCI-AML5,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501870,OCI-AML5,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501883,OCI-AML5,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501890,OCI-AML5,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501896,OCI-AML5,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501899,OCI-AML5,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501901,OCI-AML5,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501902,OCI-AML5,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501903,OCI-AML5,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501913,OCI-AML5,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501917,OCI-AML5,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501942,OCI-AML5,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501943,OCI-AML5,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501953,OCI-AML5,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501955,OCI-AML5,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+501964,OCI-AML5,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+506895,OCI-AML5,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+507331,OCI-AML5,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+516547,OCI-AML5,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+534986,OCI-AML5,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+545131,OCI-AML5,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+549382,OCI-AML5,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+567632,OCI-AML5,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+569942,OCI-AML5,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+578793,OCI-AML5,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+578795,OCI-AML5,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+589993,OCI-AML5,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+594451,OCI-AML5,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+599549,OCI-AML5,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+613436,OCI-AML5,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633463,OCI-AML5,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633464,OCI-AML5,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633469,OCI-AML5,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633477,OCI-AML5,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633479,OCI-AML5,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633484,OCI-AML5,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633489,OCI-AML5,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633494,OCI-AML5,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633496,OCI-AML5,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633498,OCI-AML5,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633520,OCI-AML5,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633521,OCI-AML5,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633524,OCI-AML5,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633526,OCI-AML5,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633534,OCI-AML5,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+633535,OCI-AML5,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+634774,OCI-AML5,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+647516,OCI-AML5,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+652356,OCI-AML5,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+653384,OCI-AML5,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+655636,OCI-AML5,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+667068,OCI-AML5,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+682681,OCI-AML5,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+683002,OCI-AML5,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+695829,OCI-AML5,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+704094,OCI-AML5,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705712,OCI-AML5,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707320,OCI-AML5,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+708943,OCI-AML5,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+721223,OCI-AML5,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721224,OCI-AML5,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721225,OCI-AML5,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721227,OCI-AML5,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721228,OCI-AML5,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721237,OCI-AML5,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721239,OCI-AML5,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721240,OCI-AML5,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721242,OCI-AML5,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721245,OCI-AML5,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721246,OCI-AML5,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721247,OCI-AML5,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721249,OCI-AML5,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721251,OCI-AML5,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721252,OCI-AML5,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721253,OCI-AML5,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721254,OCI-AML5,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721255,OCI-AML5,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721256,OCI-AML5,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721257,OCI-AML5,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721258,OCI-AML5,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721259,OCI-AML5,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721260,OCI-AML5,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721264,OCI-AML5,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721266,OCI-AML5,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721267,OCI-AML5,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721268,OCI-AML5,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721271,OCI-AML5,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721274,OCI-AML5,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+1079151,OCI-AML5,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079165,OCI-AML5,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079183,OCI-AML5,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079196,OCI-AML5,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079197,OCI-AML5,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079198,OCI-AML5,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079202,OCI-AML5,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079206,OCI-AML5,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079207,OCI-AML5,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079232,OCI-AML5,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079233,OCI-AML5,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079236,OCI-AML5,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079239,OCI-AML5,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079240,OCI-AML5,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079243,OCI-AML5,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079244,OCI-AML5,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079251,OCI-AML5,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079252,OCI-AML5,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079295,OCI-AML5,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079296,OCI-AML5,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079298,OCI-AML5,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079318,OCI-AML5,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079320,OCI-AML5,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079330,OCI-AML5,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079333,OCI-AML5,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079339,OCI-AML5,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079351,OCI-AML5,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079363,OCI-AML5,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079365,OCI-AML5,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079366,OCI-AML5,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079367,OCI-AML5,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079368,OCI-AML5,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079370,OCI-AML5,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079373,OCI-AML5,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079375,OCI-AML5,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079376,OCI-AML5,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079379,OCI-AML5,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079381,OCI-AML5,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079409,OCI-AML5,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079410,OCI-AML5,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079413,OCI-AML5,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079414,OCI-AML5,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079421,OCI-AML5,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079424,OCI-AML5,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079426,OCI-AML5,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079428,OCI-AML5,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079433,OCI-AML5,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079435,OCI-AML5,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079438,OCI-AML5,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079454,OCI-AML5,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079520,OCI-AML5,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079524,OCI-AML5,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079537,OCI-AML5,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079544,OCI-AML5,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079545,OCI-AML5,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079546,OCI-AML5,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079548,OCI-AML5,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079549,OCI-AML5,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079556,OCI-AML5,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079562,OCI-AML5,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079568,OCI-AML5,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079572,OCI-AML5,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079586,OCI-AML5,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1079594,OCI-AML5,Flavopiridol,Flavopiridol,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+629931,SET-2,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629933,SET-2,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629940,SET-2,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629942,SET-2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629954,SET-2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629962,SET-2,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629965,SET-2,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629982,SET-2,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629984,SET-2,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629985,SET-2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629986,SET-2,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629996,SET-2,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+629999,SET-2,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+630000,SET-2,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+634859,SET-2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+636989,SET-2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+637177,SET-2,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+641563,SET-2,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+645303,SET-2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+664597,SET-2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+664805,SET-2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+678588,SET-2,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+686996,SET-2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+689288,SET-2,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+695607,SET-2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+1035221,SET-2,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035233,SET-2,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035251,SET-2,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035264,SET-2,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035265,SET-2,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035266,SET-2,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035270,SET-2,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035274,SET-2,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035275,SET-2,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035302,SET-2,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035305,SET-2,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035308,SET-2,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035309,SET-2,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035312,SET-2,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035313,SET-2,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035320,SET-2,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035321,SET-2,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035362,SET-2,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035363,SET-2,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035365,SET-2,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035384,SET-2,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035386,SET-2,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035397,SET-2,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035400,SET-2,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035406,SET-2,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035418,SET-2,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035429,SET-2,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035431,SET-2,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035432,SET-2,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035433,SET-2,Cediranib,Cediranib (AZD2171),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035434,SET-2,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035436,SET-2,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035439,SET-2,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035441,SET-2,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035442,SET-2,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035445,SET-2,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035447,SET-2,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035473,SET-2,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035474,SET-2,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035476,SET-2,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035477,SET-2,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035484,SET-2,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035487,SET-2,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035489,SET-2,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035491,SET-2,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035496,SET-2,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035498,SET-2,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035502,SET-2,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035518,SET-2,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035583,SET-2,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035587,SET-2,AZD1480,AZD1480,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035599,SET-2,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035606,SET-2,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035607,SET-2,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035609,SET-2,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035610,SET-2,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035617,SET-2,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035622,SET-2,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035628,SET-2,Ibrutinib,Ibrutinib (PCI-32765),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035632,SET-2,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035643,SET-2,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+1035651,SET-2,Flavopiridol,Flavopiridol,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+510619,THP-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510625,THP-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510638,THP-1,Pelitinib,Pelitinib (EKB-569),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510652,THP-1,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510656,THP-1,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510668,THP-1,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510671,THP-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510673,THP-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510676,THP-1,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510688,THP-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510700,THP-1,JNK Inhibitor V,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510710,THP-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510717,THP-1,Akt inhibitor VIII,AKT Inhibitor IV,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510718,THP-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510723,THP-1,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510728,THP-1,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510731,THP-1,GW2580,GW-2580,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+510750,THP-1,Tozasertib,Tozasertib (VX-680),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+528875,THP-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+541102,THP-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+543101,THP-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+560087,THP-1,AT7519,AT7519,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+567646,THP-1,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+567801,THP-1,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+572166,THP-1,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+580227,THP-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+597869,THP-1,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+600258,THP-1,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+604968,THP-1,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+607935,THP-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+608482,THP-1,GSK1904529A,GSK-1904529A,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639242,THP-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639250,THP-1,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639253,THP-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639254,THP-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639266,THP-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639274,THP-1,Trametinib,Trametinib (GSK1120212),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639282,THP-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639284,THP-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+639291,THP-1,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+640734,THP-1,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+644302,THP-1,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+657093,THP-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+658683,THP-1,nutlin-3A,Nutlin 3a,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+661025,THP-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+672625,THP-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+674389,THP-1,Elesclomol,Elesclomol,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+675038,THP-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+675844,THP-1,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+678235,THP-1,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+681386,THP-1,JNK Inhibitor VIII,JNK Inhibitor II,fuzzy,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+681911,THP-1,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+687332,THP-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+689410,THP-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+696983,THP-1,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+701120,THP-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,GDSC1
+721634,THP-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721635,THP-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721636,THP-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721638,THP-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721639,THP-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721648,THP-1,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721650,THP-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721651,THP-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721653,THP-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721656,THP-1,PONATINIB,Ponatinib (AP24534),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721657,THP-1,Motesanib,Motesanib (AMG-706),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721658,THP-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721660,THP-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721662,THP-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721663,THP-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721664,THP-1,Lestaurtinib,Lestaurtinib (CEP-701),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721665,THP-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721666,THP-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721667,THP-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721668,THP-1,Lenalidomide,Lenalidomide,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721669,THP-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721670,THP-1,Pazopanib hydrochloride,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721674,THP-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721676,THP-1,Vismodegib,Vismodegib (GDC-0449),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721677,THP-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721678,THP-1,roscovitine,Roscovitine (CYC-202),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+721683,THP-1,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,FIMM
+888100,THP-1,5-azacytidine,Azacytidine,fuzzy,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888113,THP-1,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888133,THP-1,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888146,THP-1,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888147,THP-1,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888148,THP-1,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888152,THP-1,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888156,THP-1,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888157,THP-1,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888188,THP-1,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888192,THP-1,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888193,THP-1,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888196,THP-1,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888197,THP-1,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888203,THP-1,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888204,THP-1,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888246,THP-1,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888247,THP-1,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888249,THP-1,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888268,THP-1,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888270,THP-1,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888283,THP-1,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888286,THP-1,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888291,THP-1,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888303,THP-1,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888314,THP-1,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888316,THP-1,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888317,THP-1,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888318,THP-1,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888320,THP-1,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888323,THP-1,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888325,THP-1,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888327,THP-1,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888329,THP-1,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888358,THP-1,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888359,THP-1,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888361,THP-1,MGCD-265,MGCD-265,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888362,THP-1,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888369,THP-1,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888372,THP-1,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888375,THP-1,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888380,THP-1,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888382,THP-1,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888386,THP-1,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888402,THP-1,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888467,THP-1,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888481,THP-1,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888488,THP-1,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888489,THP-1,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888492,THP-1,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888493,THP-1,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888498,THP-1,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888505,THP-1,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+888515,THP-1,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+466746,U-937,NVP-AEW541,NVP-AEW541,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467171,U-937,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+467669,U-937,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468172,U-937,PHA-665752,PHA-665752,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+468676,U-937,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+469684,U-937,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471175,U-937,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+471675,U-937,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+472178,U-937,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+474445,U-937,Palbociclib,Palbociclib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475446,U-937,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+475942,U-937,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+476403,U-937,RAF265,RAF265 (CHIR-265),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477410,U-937,Dovitinib,Dovitinib (CHIR-258),exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+477913,U-937,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CCLE
+704202,U-937,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+705821,U-937,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+707428,U-937,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+709050,U-937,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,GCSI
+889020,U-937,lovastatin,Lovastatin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889040,U-937,Tanespimycin,17-AAG (Tanespimycin),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889053,U-937,Dasatinib,Dasatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889054,U-937,Gefitinib,Gefitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889055,U-937,Erlotinib hydrochloride,Erlotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889059,U-937,Panobinostat,Panobinostat,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889063,U-937,(-)-Rapamycin,Rapamycin,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889064,U-937,KU-55933,KU-55933,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889096,U-937,Imatinib,Imatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889098,U-937,CHIR-99021,CHIR-99021,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889101,U-937,Axitinib,Axitinib (AG-013736),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889102,U-937,Selumetinib,Selumetinib (AZD6244),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889105,U-937,Vandetanib,Vandetanib (ZD6474),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889106,U-937,Sorafenib,Sorafenib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889112,U-937,Nilotinib,Nilotinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889113,U-937,Sunitinib,Sunitinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889156,U-937,Bortezomib,Bortezomib (Velcade),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889157,U-937,ABT-737,ABT-737,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889159,U-937,PI-103,PI-103,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889179,U-937,Olaparib,Olaparib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889181,U-937,Indisulam,Indisulam,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889195,U-937,BMS-754807,BMS-754807,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889198,U-937,Neratinib,Neratinib (HKI-272),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889203,U-937,Tivozanib,Tivozanib (AV-951),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889215,U-937,Tandutinib,Tandutinib (MLN518),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889227,U-937,Linifanib,Linifanib (ABT-869),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889229,U-937,Saracatinib,Saracatinib (AZD0530),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889230,U-937,Afatinib,Afatinib (BIBW-2992),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889231,U-937,Canertinib,Canertinib (CI-1033),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889233,U-937,Masitinib,Masitinib (AB-1010),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889236,U-937,GDC-0879,GDC-0879,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889238,U-937,SNS-032,SNS-032 (BMS-387032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889239,U-937,PLX-4720,PLX-4720,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889242,U-937,TG100-115,TG100-115,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889244,U-937,SU11274,SU11274,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889275,U-937,Foretinib,Foretinib (XL880),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889276,U-937,Regorafenib,Regorafenib (BAY 73-4506),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889278,U-937,Lenvatinib,Lenvatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889284,U-937,Lapatinib,Lapatinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889287,U-937,SGX-523,SGX-523,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889289,U-937,Alisertib,Alisertib (MLN8237),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889291,U-937,Ruxolitinib,Ruxolitinib (INCB018424),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889296,U-937,Quizartinib,Quizartinib (AC220),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889298,U-937,Pazopanib,Pazopanib (GW786034),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889302,U-937,Vemurafenib,Vemurafenib (PLX-4032),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889319,U-937,ETOMOXIR,Etomoxir,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889386,U-937,NVP-ADW742,NVP-ADW742,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889400,U-937,Bosutinib,Bosutinib (SKI-606),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889407,U-937,Doramapimod,Doramapimod (BIRB 796),exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889408,U-937,KW-2449,KW-2449,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889411,U-937,Cyt387,CYT387,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889412,U-937,Idelalisib,Idelalisib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889419,U-937,Birinapant,Birinapant,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889426,U-937,Cabozantinib,Cabozantinib,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2
+889436,U-937,Venetoclax,Venetoclax,exact,,,no_match,0.0,0.0,0.0,0.0,CTRPV2

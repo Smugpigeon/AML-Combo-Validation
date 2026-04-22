@@ -1,0 +1,770 @@
+drugcomb_name,beataml_name,match_source
+(-)-Rapamycin,Rapamycin,exact
+ABT-737,ABT-737,exact
+AT7519,AT7519,exact
+AZD1480,AZD1480,exact
+Afatinib,Afatinib (BIBW-2992),exact
+Alisertib,Alisertib (MLN8237),exact
+Axitinib,Axitinib (AG-013736),exact
+BMS-754807,BMS-754807,exact
+Birinapant,Birinapant,exact
+Bortezomib,Bortezomib (Velcade),exact
+Bosutinib,Bosutinib (SKI-606),exact
+CHIR-99021,CHIR-99021,exact
+CYTARABINE HYDROCHLORIDE,Cytarabine,exact
+Cabozantinib,Cabozantinib,exact
+Canertinib,Canertinib (CI-1033),exact
+Cediranib,Cediranib (AZD2171),exact
+Crizotinib,Crizotinib (PF-2341066),exact
+Cyt387,CYT387,exact
+Dasatinib,Dasatinib,exact
+Doramapimod,Doramapimod (BIRB 796),exact
+Dovitinib,Dovitinib (CHIR-258),exact
+ETOMOXIR,Etomoxir,exact
+Elesclomol,Elesclomol,exact
+Erlotinib hydrochloride,Erlotinib,exact
+Flavopiridol,Flavopiridol,exact
+Foretinib,Foretinib (XL880),exact
+GDC-0879,GDC-0879,exact
+Gefitinib,Gefitinib,exact
+Ibrutinib,Ibrutinib (PCI-32765),exact
+Idelalisib,Idelalisib,exact
+Imatinib,Imatinib,exact
+Indisulam,Indisulam,exact
+KU-55933,KU-55933,exact
+KW-2449,KW-2449,exact
+Lapatinib,Lapatinib,exact
+Lenalidomide,Lenalidomide,exact
+Lenvatinib,Lenvatinib,exact
+Lestaurtinib,Lestaurtinib (CEP-701),exact
+Linifanib,Linifanib (ABT-869),exact
+MGCD-265,MGCD-265,exact
+Masitinib,Masitinib (AB-1010),exact
+Motesanib,Motesanib (AMG-706),exact
+NVP-ADW742,NVP-ADW742,exact
+NVP-AEW541,NVP-AEW541,exact
+Neratinib,Neratinib (HKI-272),exact
+Nilotinib,Nilotinib,exact
+Olaparib,Olaparib,exact
+PHA-665752,PHA-665752,exact
+PI-103,PI-103,exact
+PLX-4720,PLX-4720,exact
+PONATINIB,Ponatinib (AP24534),exact
+Palbociclib,Palbociclib,exact
+Panobinostat,Panobinostat,exact
+Pazopanib,Pazopanib (GW786034),exact
+Pazopanib hydrochloride,Pazopanib (GW786034),exact
+Pelitinib,Pelitinib (EKB-569),exact
+Quizartinib,Quizartinib (AC220),exact
+RAF265,RAF265 (CHIR-265),exact
+Regorafenib,Regorafenib (BAY 73-4506),exact
+Ruxolitinib,Ruxolitinib (INCB018424),exact
+SGX-523,SGX-523,exact
+SNS-032,SNS-032 (BMS-387032),exact
+SU11274,SU11274,exact
+Saracatinib,Saracatinib (AZD0530),exact
+Selumetinib,Selumetinib (AZD6244),exact
+Sorafenib,Sorafenib,exact
+Sunitinib,Sunitinib,exact
+TG100-115,TG100-115,exact
+Tandutinib,Tandutinib (MLN518),exact
+Tanespimycin,17-AAG (Tanespimycin),exact
+Tivozanib,Tivozanib (AV-951),exact
+Tozasertib,Tozasertib (VX-680),exact
+Trametinib,Trametinib (GSK1120212),exact
+Vandetanib,Vandetanib (ZD6474),exact
+Vemurafenib,Vemurafenib (PLX-4032),exact
+Venetoclax,Venetoclax,exact
+Vismodegib,Vismodegib (GDC-0449),exact
+lovastatin,Lovastatin,exact
+roscovitine,Roscovitine (CYC-202),exact
+staurosporine,Staurosporine,exact
+5-azacytidine,Azacytidine,fuzzy
+Akt inhibitor VIII,AKT Inhibitor IV,fuzzy
+"Azacytidine, 5-",Azacytidine,fuzzy
+GSK1904529A,GSK-1904529A,fuzzy
+GW2580,GW-2580,fuzzy
+JNK Inhibitor V,JNK Inhibitor II,fuzzy
+JNK Inhibitor VIII,JNK Inhibitor II,fuzzy
+nutlin-3A,Nutlin 3a,fuzzy
+(-)-Epigallocatechin gallate,,no_match
+"(E)-3-[4-[[[(E)-(2,3-dihydroxy-4-oxo-cyclohexa-2,5-dien-1-ylidene)methyl]amino]carbamoyl]phenyl]prop-2-enehydroxamic acid",,no_match
+"(E,2S,3S,4S)-2-azaniumyl-3,4-dihydroxy-2-(hydroxymethyl)-14-oxo-icos-6-enoate",,no_match
+"1-(beta-D-Ribofuranosyl)-1,2-dihydropyrimidin-2-one",,no_match
+1032350-13-2,,no_match
+1035072-16-2,,no_match
+1080622-86-1,,no_match
+1096708-71-2,,no_match
+1124329-14-1,,no_match
+1125758-85-1,,no_match
+1130067-18-3,,no_match
+1134156-31-2,,no_match
+122111-05-1,,no_match
+1260907-17-2,,no_match
+1262770-73-9,,no_match
+129-56-6,,no_match
+1300031-49-5,,no_match
+1402830-75-4,,no_match
+153436-54-5,,no_match
+158798-73-3,,no_match
+164658-13-3,,no_match
+16beta-Bromoandrosterone,,no_match
+180002-83-9,,no_match
+182498-32-4,,no_match
+199433-58-4,,no_match
+"2,6-Dichloro-3-fluoropyridine",,no_match
+2-(allylamino)-3-chloronaphthoquinone,,no_match
+212631-79-3,,no_match
+219580-11-7,,no_match
+23541-50-6,,no_match
+280744-09-4,,no_match
+284028-89-3,,no_match
+"3,5-Dimethyl-4-Methoxybenzaldehyde",,no_match
+3-Cl-AHPC,,no_match
+301836-41-9,,no_match
+305372-78-5,,no_match
+314245-33-5,,no_match
+315183-21-2,,no_match
+32703-82-5,,no_match
+331771-20-1,,no_match
+356559-20-1,,no_match
+371942-69-7,,no_match
+391210-10-9,,no_match
+3ken,,no_match
+4-Chloro-3-methylphenol,,no_match
+405554-55-4,,no_match
+49843-98-3,,no_match
+5-Aminolevulinic acid hydrochloride,,no_match
+5-Fluoro-2'-deoxyuridine,,no_match
+5-Fluorouracil,,no_match
+500579-04-4,,no_match
+501919-59-1,,no_match
+503468-95-9,,no_match
+547757-23-3,,no_match
+55-86-7,,no_match
+56990-57-9,,no_match
+58131-57-0,,no_match
+59662-49-6,,no_match
+5Z-7-Oxozeaenol,,no_match
+6-Mercaptopurine,,no_match
+6-Thioguanine,,no_match
+629664-81-9,,no_match
+6640-09-1,,no_match
+664993-53-7,,no_match
+667463-62-9,,no_match
+67200-34-4,,no_match
+681640,,no_match
+7-Ethyl-10-hydroxycamptothecin,,no_match
+702675-74-9,,no_match
+7440-06-4,,no_match
+7440-47-3,,no_match
+749872-43-3,,no_match
+7507-89-3,,no_match
+761439-42-3,,no_match
+7803-88-5,,no_match
+781661-94-7,,no_match
+803712-79-0,,no_match
+821794-92-7,,no_match
+832115-62-5,,no_match
+841290-80-0,,no_match
+856243-80-6,,no_match
+865362-74-9,,no_match
+869288-64-2,,no_match
+878739-06-1,,no_match
+915019-65-7,,no_match
+924296-39-9,,no_match
+925434-55-5,,no_match
+937174-76-0,,no_match
+957054-30-7,,no_match
+968,,no_match
+96912-01-5,,no_match
+A-443654,,no_match
+A-770041,,no_match
+ACADESINE,,no_match
+ADM hydrochloride,,no_match
+AGK2,,no_match
+AM580,,no_match
+APR-246,,no_match
+AR-42,,no_match
+AS-605240,,no_match
+AT-406,,no_match
+AT7867,,no_match
+AVICIN D,,no_match
+AZD4547,,no_match
+AZD6482,,no_match
+AZD7545,,no_match
+AZD7762,,no_match
+AZD8055,,no_match
+Aacocf3,,no_match
+Abiraterone,,no_match
+Alectinib,,no_match
+Amuvatinib,,no_match
+Antibiotic AD 32,,no_match
+Antibiotic AY 22989,,no_match
+Austocystin D,,no_match
+Avagacestat,,no_match
+Avrainvillamide,,no_match
+BAS 02002358,,no_match
+BAY 61-3606,,no_match
+BCL-LZH-4,,no_match
+BI 2536,,no_match
+BI-D1870,,no_match
+BIBR 1532,,no_match
+BIX 02189,,no_match
+BIX-01294,,no_match
+BMS-509744,,no_match
+BMS-536924,,no_match
+BMS614,,no_match
+BRD-A02303741,,no_match
+BRD-A02303741:carboplatin (1:1 mol/mol),,no_match
+BRD-A02303741:navitoclax (2:1 mol/mol),,no_match
+BRD-A05715709,,no_match
+BRD-A71883111,,no_match
+BRD-A86708339,,no_match
+BRD-A94377914,,no_match
+BRD-K01737880,,no_match
+BRD-K02492147,,no_match
+BRD-K03536150,,no_match
+BRD-K03911514,,no_match
+BRD-K04800985,,no_match
+BRD-K07442505,,no_match
+BRD-K11533227,,no_match
+BRD-K13185470,,no_match
+BRD-K13999467,,no_match
+BRD-K14844214,,no_match
+BRD-K16130065,,no_match
+BRD-K20514654-001-01-8,,no_match
+BRD-K24690302,,no_match
+BRD-K27188169,,no_match
+BRD-K27188169:navitoclax (2:1 mol/mol),,no_match
+BRD-K27224038,,no_match
+BRD-K27986637,,no_match
+BRD-K28456706,,no_match
+BRD-K29313308,,no_match
+BRD-K30748066,,no_match
+BRD-K33514849,,no_match
+BRD-K34099515,,no_match
+BRD-K34222889,,no_match
+BRD-K35604418,,no_match
+BRD-K42260513,,no_match
+BRD-K49290616,,no_match
+BRD-K50799972,,no_match
+BRD-K51490254,,no_match
+BRD-K51831558,,no_match
+BRD-K55116708,,no_match
+BRD-K55473186-001-01-2,,no_match
+BRD-K58730230,,no_match
+BRD-K61166597,,no_match
+BRD-K63431240,,no_match
+BRD-K66532283,,no_match
+BRD-K71781559,,no_match
+BRD-K71935468,,no_match
+BRD-K79669418,,no_match
+BRD-K80183349,,no_match
+BRD-K85133207,,no_match
+BRD-K86535717,,no_match
+BRD-K88742110,,no_match
+BRD-K92856060,,no_match
+BRD-K94991378,,no_match
+BRD-K96431673,,no_match
+BRD-K96970199,,no_match
+BRD-K97651142,,no_match
+BRD-K99006945,,no_match
+BRD-K99584050,,no_match
+BRD-M00053801,,no_match
+BRD1812,,no_match
+BRD1835,,no_match
+BRD8899,,no_match
+BRD8958,,no_match
+BRD9876:MK-1775 (4:1 mol/mol),,no_match
+BX-912,,no_match
+Barasertib,,no_match
+Bardoxolone methyl,,no_match
+Bax Channel Blocker,,no_match
+Belinostat,,no_match
+Bemcentinib,,no_match
+Bendamustine,,no_match
+Bendamustine hydrochloride,,no_match
+Bexarotene,,no_match
+Blebbistatin,,no_match
+Bleo,,no_match
+Brivanib,,no_match
+Bryostatin 1,,no_match
+C35H30N4O4,,no_match
+C6 ceramide,,no_match
+CABAZITAXEL,,no_match
+CAY10594,,no_match
+CAY10603,,no_match
+CBB1007,,no_match
+CBKinase1_000452,,no_match
+CBKinase1_008869,,no_match
+CCT-018159,,no_match
+CCT007093,,no_match
+CH 55,,no_match
+CHEBI:111569,,no_match
+CHEBI:111607,,no_match
+CHEBI:111640,,no_match
+CHEBI:111682,,no_match
+CHEBI:111710,,no_match
+CHEBI:111732,,no_match
+CHEBI:113699,,no_match
+CHEBI:113844,,no_match
+CHEBI:118719,,no_match
+CHEBI:118782,,no_match
+CHEBI:119728,,no_match
+CHEBI:124186,,no_match
+CHEBI:124244,,no_match
+CHEBI:124319,,no_match
+CHEBI:124400,,no_match
+CHEBI:124436,,no_match
+CHEBI:124710,,no_match
+CHEMBL17639,,no_match
+CHEMBL2143553,,no_match
+CHEMBL2152368,,no_match
+CHEMBL2169939,,no_match
+CHEMBL277800,,no_match
+CHEMBL3182046,,no_match
+CHEMBL3182405,,no_match
+CHEMBL585951,,no_match
+CHM-1,,no_match
+CI 976,,no_match
+CICLOPIROX,,no_match
+CID-2858522,,no_match
+CIL41,,no_match
+CIL55,,no_match
+CIL55A,,no_match
+CIL56,,no_match
+CP-724714,,no_match
+CUDC-101,,no_match
+CX-5461,,no_match
+CYCLOPAMINE,,no_match
+CYTOCHALASIN B,,no_match
+Carboplatinum,,no_match
+Cdk4/6 Inhibitor IV,,no_match
+Clofarabine,,no_match
+Co-V,,no_match
+Compound 1541A,,no_match
+Compound 23 citrate,,no_match
+Compound 7d-cis,,no_match
+Cucurbitacin I,,no_match
+Cylocide,,no_match
+DAMPP,,no_match
+DASA-58,,no_match
+DBeQ,,no_match
+DMOG,,no_match
+Dabrafenib,,no_match
+Dacinostat,,no_match
+Daporinad,,no_match
+Darinaparsin,,no_match
+Decitabine,,no_match
+Deferasirox,,no_match
+Dexrazoxane,,no_match
+Dihydropiplartine,,no_match
+Dinaciclib,,no_match
+EHT 1864,,no_match
+ELCPK,,no_match
+EMBELIN,,no_match
+ERASTIN,,no_match
+ETP-46464,,no_match
+EXEMESTANE,,no_match
+Elocalcitol,,no_match
+Eloxatin (TN) (Sanofi Synthelab),,no_match
+Emcyt (Pharmacia),,no_match
+Entinostat,,no_match
+Enzastaurin,,no_match
+Epothilone B,,no_match
+FGIN-1-27,,no_match
+FH535,,no_match
+FQI-2,,no_match
+FSC231,,no_match
+FTI-277,,no_match
+Fedratinib,,no_match
+Fingolimod,,no_match
+Fludarabine Base,,no_match
+Fulvestrant,,no_match
+GMX-1778,,no_match
+GNF-2,,no_match
+GPP78,,no_match
+GSK 650394,,no_match
+GSK-J4,,no_match
+GSK1059615,,no_match
+GSK1070916,,no_match
+GSK2636771,,no_match
+GSK269962A,,no_match
+GSK4112,,no_match
+GSK429286A,,no_match
+GSK461364,,no_match
+GW 441756,,no_match
+GW843682X,,no_match
+Galunisertib,,no_match
+Genentech Cpd 10,,no_match
+HC-067047,,no_match
+HG-5-113-01,,no_match
+HG-5-88-01,,no_match
+HG6-64-1,,no_match
+HLI373,,no_match
+HMN-214,,no_match
+IC-87114,,no_match
+IKK-3 Inhibitor,,no_match
+IMIQUIMOD,,no_match
+IOX2,,no_match
+IPA-3,,no_match
+IPR-456,,no_match
+ISOX,,no_match
+ISOX:bortezomib (250:1 mol/mol),,no_match
+Incyclinide,,no_match
+Indium nitride,,no_match
+Isoevodiamine,,no_match
+Isonicotinohydroxamic acid,,no_match
+Ispinesib mesylate,,no_match
+Istradefylline,,no_match
+Ixabepilone,,no_match
+Ixazomib,,no_match
+JQ-1:MK-0752 (1:1 mol/mol),,no_match
+JQ-1:UNC0638 (2:1 mol/mol),,no_match
+JQ-1:carboplatin (1:1 mol/mol),,no_match
+JQ-1:navitoclax (2:1 mol/mol),,no_match
+JQ-1:vorinostat (2:1 mol/mol),,no_match
+JQ12,,no_match
+JW 480,,no_match
+JW-7-24-1,,no_match
+JW74,,no_match
+KH-CB19,,no_match
+KIN001-055,,no_match
+KIN001-102,,no_match
+KIN001-236,,no_match
+KIN001-244,,no_match
+KIN001-260,,no_match
+KIN001-266,,no_match
+KIN001-270,,no_match
+KPT-185,,no_match
+KU 0060648,,no_match
+KU-60019,,no_match
+KX2-391,,no_match
+Ki8751,,no_match
+Ko 143,,no_match
+Ku-0063794,,no_match
+LE 135,,no_match
+LRRK2-IN-1,,no_match
+LY2183240,,no_match
+Leptomycin B,,no_match
+Linsitinib,,no_match
+Lisitinib,,no_match
+Lomeguatrib,,no_match
+Luminespib,,no_match
+MEGESTROL ACETATE,,no_match
+METHYLSTAT,,no_match
+MG-132,,no_match
+MI-1,,no_match
+MI-2,,no_match
+MIRA-1,,no_match
+MITHRAMYCIN,,no_match
+MK-0752,,no_match
+MK-1775,,no_match
+ML-210,,no_match
+ML031,,no_match
+ML083,,no_match
+ML239,,no_match
+ML258,,no_match
+ML311,,no_match
+ML312,,no_match
+ML320,,no_match
+ML334 diastereomer,,no_match
+MLN4924,,no_match
+MLS000106215,,no_match
+MLS000585313,,no_match
+MLS002473913,,no_match
+MLS003179190,,no_match
+MPS-1-IN-1,,no_match
+Manumycin A,,no_match
+Marinopyrrole A,,no_match
+Mdivi-1,,no_match
+Melphalan hydrochloride,,no_match
+Merck60,,no_match
+N9-ISOPROPYL-OLOMOUCINE,,no_match
+NG25,,no_match
+NPC-26,,no_match
+NPK76-II-72-1,,no_match
+NSC 95397,,no_match
+NSC-127716,,no_match
+NSC256439,,no_match
+NSC401077,,no_match
+NSC48300,,no_match
+NSC609699,,no_match
+NSC632839,,no_match
+NSC707389,,no_match
+NSC733504,,no_match
+NSC756645,,no_match
+NVP-231,,no_match
+NVP-BHG712,,no_match
+NVP-BSK805,,no_match
+Nakiterpiosin,,no_match
+Narciclasine,,no_match
+Navelbine ditartrate (TN),,no_match
+Navitoclax,,no_match
+Necrostatin-1,,no_match
+Necrostatin-7,,no_match
+Necrosulfonamide,,no_match
+Nelarabine,,no_match
+Neopeltolide,,no_match
+Nintedanib,,no_match
+Nsc 23766,,no_match
+Nutlin-3,,no_match
+OSI-027,,no_match
+OSI-930,,no_match
+OSU-03012,,no_match
+Omipalisib,,no_match
+Onalespib,,no_match
+PD318088,,no_match
+PF 184,,no_match
+PF 4800567 Hydrochloride,,no_match
+PF 750,,no_match
+PF-3758309,,no_match
+PF-4708671,,no_match
+PF-543,,no_match
+PF-562271,,no_match
+PFI-1,,no_match
+PHA-793887,,no_match
+PHENFORMIN,,no_match
+PIK-93,,no_match
+PRL-3 Inhibitor,,no_match
+PX-12,,no_match
+PYR-41,,no_match
+Palmostatin B,,no_match
+Parbendazole,,no_match
+Pemetrexed,,no_match
+Pifithrin-mu,,no_match
+Piperlongumine,,no_match
+Pluripotin,,no_match
+Pralatrexate,,no_match
+Procarbazine hydrochloride,,no_match
+Purmorphamine,,no_match
+QL-VIII-58,,no_match
+QL-X-138,,no_match
+QL-XI-92,,no_match
+QL-XII-47,,no_match
+QL-XII-61,,no_match
+QS11,,no_match
+QW-BI-011,,no_match
+Quinacrine hydrochloride,,no_match
+RITA,,no_match
+RO4929097,,no_match
+Refametinib,,no_match
+Repligen 136,,no_match
+Retinoic acid,,no_match
+Rigosertib,,no_match
+Ro-3306,,no_match
+Romidepsin,,no_match
+Rucaparib phosphate,,no_match
+SB-505124,,no_match
+SB-743921,,no_match
+SB52334,,no_match
+SCH 529074,,no_match
+SCH 79797 dihydrochloride,,no_match
+SCHEMBL16479156,,no_match
+SCHEMBL771524,,no_match
+SGC0946,,no_match
+SID 26681509,,no_match
+SJ-172550,,no_match
+SKI II,,no_match
+SL 0101-1,,no_match
+SNX-2112,,no_match
+SNX-2112:bortezomib (250:1 mol/mol),,no_match
+SR-II-138A,,no_match
+SR1001,,no_match
+SR8278,,no_match
+STF-31,,no_match
+STF-62247,,no_match
+SZ4TA2,,no_match
+Salermide,,no_match
+Semagacestat,,no_match
+Serdemetan,,no_match
+Silmitasertib,,no_match
+Sitagliptin,,no_match
+Skepinone-L,,no_match
+Sonidegib,,no_match
+Sotrastaurin,,no_match
+Spautin-1,,no_match
+StemRegenin 1,,no_match
+T0901317,,no_match
+TAK-715,,no_match
+TGX-221,,no_match
+THZ-2-102-1,,no_match
+THZ-2-49,,no_match
+TL-1-85,,no_match
+TL-2-105,,no_match
+TOPOTECAN HYDROCHLORIDE,,no_match
+TPCA-1,,no_match
+TRIAZOLOTHIADIAZINE,,no_match
+TW-37,,no_match
+Tacedinaline,,no_match
+Talazoparib,,no_match
+Tamoxan,,no_match
+Tamoxifen citrate,,no_match
+Telomerase Inhibitor IX,,no_match
+Temsirolimus,,no_match
+Tigecycline,,no_match
+Tipifarnib,,no_match
+Tivantinib,,no_match
+Tosedostat,,no_match
+Triethylenemelamine,,no_match
+Trisenox,,no_match
+Tubastatin A,,no_match
+UNC0321,,no_match
+UNC0638,,no_match
+UNC0638:navitoclax (1:1 mol/mol),,no_match
+UNC1215,,no_match
+"US9505780, JQ-1",,no_match
+Uramustine,,no_match
+VAF-347,,no_match
+VNLG/124,,no_match
+VX-11e,,no_match
+VX-702,,no_match
+Valdecoxib,,no_match
+Veliparib,,no_match
+Vepesid J,,no_match
+Vinblastine sulfate,,no_match
+Vincristine sulfate,,no_match
+Vorapaxar,,no_match
+Vorinostat,,no_match
+WH-4-023,,no_match
+WZ-1-84,,no_match
+WZ3105,,no_match
+WZ4002,,no_match
+WZ8040,,no_match
+XL765,,no_match
+XMD11-85h,,no_match
+XMD13-2,,no_match
+XMD14-99,,no_match
+XMD15-27,,no_match
+XMD8-85,,no_match
+XMD8-92,,no_match
+YK 4-279,,no_match
+YL54,,no_match
+Z-LLNle-CHO,,no_match
+ZG-10,,no_match
+ZINC214489228,,no_match
+ZSTK474,,no_match
+Zanosar,,no_match
+Zibotentan,,no_match
+Zoledronic acid,,no_match
+actinomycin D,,no_match
+alisertib:navitoclax (2:1 mol/mol),,no_match
+allopurinol,,no_match
+alpelisib,,no_match
+altretamine,,no_match
+amifostine,,no_match
+anastrozole,,no_match
+apicidin,,no_match
+aranidipine,,no_match
+azanide; dichloroplatinum(2+),,no_match
+bafilomycin A1,,no_match
+betulinic acid,,no_match
+bicalutamide,,no_match
+bleomycin,,no_match
+bms270394,,no_match
+brefeldin A,,no_match
+busulfan,,no_match
+camptothecin,,no_match
+carboplatin:UNC0638 (2:1 mol/mol),,no_match
+carboplatin:etoposide (40:17 mol/mol),,no_match
+carmustine,,no_match
+celecoxib,,no_match
+cerulenin,,no_match
+chlorambucil,,no_match
+cimetidine,,no_match
+cis-Platin,,no_match
+compound 1B,,no_match
+crizotinib:PLX-4032 (2:1 mol/mol),,no_match
+curcumin,,no_match
+cyanoquinoline 11,,no_match
+cyclophosphamide,,no_match
+cyclosporine,,no_match
+dacarbazine,,no_match
+decitabine:carboplatin (1:1 mol/mol),,no_match
+decitabine:navitoclax (2:1 mol/mol),,no_match
+dexamethasone,,no_match
+docetaxel,,no_match
+docetaxel:tanespimycin (2:1 mol/mol),,no_match
+doxorubicin:navitoclax (2:1 mol/mol),,no_match
+erlotinib:PLX-4032 (2:1 mol/mol),,no_match
+etoposide,,no_match
+fluvastatin,,no_match
+fqi1,,no_match
+fumonisin b1,,no_match
+gossypol,,no_match
+homoharringtonine,,no_match
+hydroxyurea,,no_match
+hyperforin,,no_match
+ifosfamide,,no_match
+importazole,,no_match
+irinotecan,,no_match
+isoliquiritigenin,,no_match
+itraconazole,,no_match
+"l-685,458",,no_match
+lbw242,,no_match
+letrozole,,no_match
+lfm-a13,,no_match
+lomustine,,no_match
+methotrexate,,no_match
+methoxsalen,,no_match
+mitomycin C,,no_match
+mitotane,,no_match
+mitoxantrone,,no_match
+myricetin,,no_match
+navitoclax:MST-312 (1:1 mol/mol),,no_match
+navitoclax:PLX-4032 (1:1 mol/mol),,no_match
+navitoclax:birinapant (1:1 mol/mol),,no_match
+navitoclax:gemcitabine (1:1 mol/mol),,no_match
+navitoclax:piperlongumine (1:1 mol/mol),,no_match
+navitoclax:pluripotin (1:1 mol/mol),,no_match
+navitoclax:sorafenib (1:1 mol/mol),,no_match
+niclosamide,,no_match
+o6-benzylguanine,,no_match
+oligomycin A,,no_match
+ouabain,,no_match
+paclitaxel,,no_match
+parthenolide,,no_match
+piperlongumine:MST-312 (1:1 mol/mol),,no_match
+pipobroman,,no_match
+pitstop2,,no_match
+prima-1,,no_match
+procarbazine,,no_match
+prochlorperazine,,no_match
+pyrimethamine,,no_match
+rTRAIL,,no_match
+raloxifene,,no_match
+salermide:PLX-4032 (12:1 mol/mol),,no_match
+salubrinal,,no_match
+selumetinib:BRD-A02303741 (4:1 mol/mol),,no_match
+selumetinib:GDC-0941 (4:1 mol/mol),,no_match
+selumetinib:JQ-1 (4:1 mol/mol),,no_match
+selumetinib:MK-2206 (8:1 mol/mol),,no_match
+selumetinib:PLX-4032 (8:1 mol/mol),,no_match
+selumetinib:UNC0638 (4:1 mol/mol),,no_match
+selumetinib:decitabine (4:1 mol/mol),,no_match
+selumetinib:navitoclax (8:1 mol/mol),,no_match
+selumetinib:piperlongumine (8:1 mol/mol),,no_match
+selumetinib:tretinoin (2:1 mol/mol),,no_match
+selumetinib:vorinostat (8:1 mol/mol),,no_match
+serdemetan:SCH-529074 (1:1 mol/mol),,no_match
+shikonin,,no_match
+sildenafil,,no_match
+simvastatin,,no_match
+sirolimus:bortezomib (250:1 mol/mol),,no_match
+tacrolimus,,no_match
+tanespimycin:bortezomib (250:1 mol/mol),,no_match
+tanespimycin:gemcitabine (1:1 mol/mol),,no_match
+temozolomide,,no_match
+teniposide,,no_match
+thalidomide,,no_match
+thapsigargin,,no_match
+thiotepa,,no_match
+tretinoin:carboplatin (2:1 mol/mol),,no_match
+tretinoin:navitoclax (4:1 mol/mol),,no_match
+trifluoperazine,,no_match
+triptolide,,no_match
+tungsten,,no_match
+vincristine,,no_match
+vorinostat:carboplatin (1:1 mol/mol),,no_match
+vorinostat:navitoclax (4:1 mol/mol),,no_match
