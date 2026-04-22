@@ -209,7 +209,28 @@ def compute_combo_mech_scores(
             pair_penalty += overshoot
     pair_penalty *= cfg.toxicity_penalty_scale
 
-    mech_score = cfg.target_weight * target_cov - pair_penalty[None, :, :]
+    # Tiebreaker: prefer pairs with BOTH drugs annotated AND hitting DIFFERENT
+    # target axes. For a FLT3-only-mut patient, (Quizartinib + Venetoclax)
+    # and (Quizartinib + Enasidenib) both cover FLT3, but the former uses
+    # complementary axes (FLT3 + BCL2 apoptosis-priming) while the latter
+    # wastes Enasidenib's IDH2 axis on a non-deficit. The diversity bonus
+    # breaks the tie toward the complementary pair.
+    annotated_mask = np.array(
+        [beat_id in BEATAML_TO_MECH_ID for beat_id in beataml_drug_ids],
+        dtype=np.float32,
+    )  # (n_d,)
+    pair_annot_count = annotated_mask[:, None] + annotated_mask[None, :]  # (n_d, n_d)
+
+    # Axis-diversity: number of target axes that get a contribution ≥ 0.5
+    # from at least one drug in the pair. More axes engaged = more mechanism-
+    # diverse combo. Computed on the drug matrix (patient-independent).
+    axis_active = (tgt_arr >= 0.5).astype(np.float32)   # (n_d, |tgt|)
+    pair_axis_any = np.logical_or(
+        axis_active[:, None, :], axis_active[None, :, :],
+    ).sum(axis=2).astype(np.float32)   # (n_d, n_d)
+
+    tiebreaker = 0.01 * pair_annot_count + 0.005 * pair_axis_any
+    mech_score = cfg.target_weight * target_cov - pair_penalty[None, :, :] + tiebreaker[None, :, :]
     return mech_score
 
 
