@@ -80,16 +80,22 @@ tests/         # pytest
 docs/          # Thesis, methods draft, ablation log
 ```
 
-## Timeline
+## Timeline and status
 
-| Week | Goal | Deliverable |
-|---|---|---|
-| 1 | Data consolidation | 4 canonical tables in `data/canonical/` |
-| 2 | Baseline A | Multi-task single-drug predictor + 5-fold CV |
-| 3 | Hypothesis B | Mechanism prior + Bayesian residual combo predictor |
-| 4 | Head-to-head | `Δ(patient)` distribution + statistical test |
-| 5 | TCGA-LAML validation | Independent cohort consistency |
-| 6 | Writing | 10-page manuscript draft |
+| Week | Goal | Status | Result |
+|---|---|---|---|
+| 1 | Data consolidation | ✅ done | BeatAML 613p × 165d, DrugComb 186 strict pairs, TCGA 173p |
+| 2 | Baseline A | ✅ done | Single-drug MLP, per-patient ρ = 0.704 (gate ≥ 0.40) |
+| 3 | Combo predictor | ✅ done | Factorized additive + synergy residual + mechanism prior |
+| 4 | Head-to-head | ✅ done | **FLT3-mut: Δ = +16.67** [14.98, 18.19]; driver-neg: Δ = -14 |
+| 5 | TCGA validation | ✅ done | Reproduces clinical combos; driver+ median OS 9.5 vs 12.0 mo (p=0.065) |
+| 6 | Manuscript | ✅ done | `docs/manuscript.md` + Figure 1 + Figure 2 |
+
+**Landed outcome**: **C (partial yes)** — combination prediction beats best
+single drug specifically in FLT3-mutated / driver-positive AML patients,
+defining the precision-medicine target population. See
+[`docs/manuscript.md`](docs/manuscript.md) for full write-up and
+[`docs/week4_summary.md`](docs/week4_summary.md) for per-subgroup numerics.
 
 ## Running
 
