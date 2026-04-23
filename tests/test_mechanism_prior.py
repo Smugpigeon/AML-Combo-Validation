@@ -35,11 +35,15 @@ def synthetic_patients():
 
 def test_load_drug_mechanism_matrix():
     m = load_drug_mechanism_matrix()
-    assert len(m) == 20
+    assert len(m) >= 20   # v1 had 20, v2 expanded to 32; allow future growth
     assert "venetoclax" in m.index
     assert "quizartinib" in m.index
+    assert "trametinib" in m.index       # v2 addition
+    assert "ruxolitinib" in m.index      # v2 addition
     assert m.loc["venetoclax", "tgt_BCL2"] == 1.0
     assert m.loc["quizartinib", "tgt_FLT3"] == 1.0
+    assert m.loc["trametinib", "tgt_RAS_MAPK"] == 1.0
+    assert m.loc["ruxolitinib", "tgt_JAK_STAT"] == 1.0
 
 
 def test_patient_target_deficit(synthetic_patients):
@@ -48,11 +52,16 @@ def test_patient_target_deficit(synthetic_patients):
     assert deficit.loc["P_flt3", "tgt_FLT3"] == 1.0
     # NPM1 patient (P_flt3_npm1) should have tgt_MENIN_HOX == 1 (NPM1 → MENIN)
     assert deficit.loc["P_flt3_npm1", "tgt_MENIN_HOX"] == 1.0
-    # Wild-type patient should have no driver deficits
-    assert deficit.loc["P_wild"].sum() == 0.0
     # IDH1 → tgt_IDH1; IDH2 → tgt_IDH2
     assert deficit.loc["P_idh1", "tgt_IDH1"] == 1.0
     assert deficit.loc["P_idh2", "tgt_IDH2"] == 1.0
+    # v2: P_wild has mut_TP53=1 so gets tgt_TP53_PATHWAY=1 (expanded mapping).
+    # The synthetic fixture was written before the v2 expansion; the key
+    # invariant is that P_wild has NO FLT3/IDH1/IDH2/MENIN deficits.
+    assert deficit.loc["P_wild", "tgt_FLT3"] == 0.0
+    assert deficit.loc["P_wild", "tgt_IDH1"] == 0.0
+    assert deficit.loc["P_wild", "tgt_IDH2"] == 0.0
+    assert deficit.loc["P_wild", "tgt_MENIN_HOX"] == 0.0
 
 
 def test_compute_combo_mech_scores_shape(synthetic_patients):
@@ -81,35 +90,35 @@ def test_flt3_patient_rewards_quizartinib_venetoclax(synthetic_patients):
     assert scores[p_flt3, unk_i, unk_i] <= scores[p_flt3, ven_i, quiz_i]
 
 
-def test_wild_type_patient_gets_zero_target_coverage(synthetic_patients):
-    """Patient with no driver mutations should get 0 target coverage.
-
-    (The tiny 0.01 × pair_annot_count tiebreaker is non-zero by design, but
-    the target-coverage component — the only clinically-meaningful one — is 0.)
-    """
-    drug_ids = ["Venetoclax", "Quizartinib (AC220)", "Ivosidenib"]
+def test_targetable_driverless_patient_scores_only_tiebreaker(synthetic_patients):
+    """A patient with no FLT3/IDH/NPM1/KMT2A driver and no RAS/TP53/spliceosome
+    mutation would have near-zero target coverage. Our fixture's P_flt3_npm1
+    row has mut_FLT3=1 + mut_NPM1=1 — use a different patient."""
+    # Build a minimal no-driver patient on the fly
+    drugs = ["Venetoclax", "Quizartinib (AC220)", "Ivosidenib"]
+    empty = synthetic_patients.loc[["P_flt3"]].copy() * 0
+    empty.index = ["P_empty"]
     scores = compute_combo_mech_scores(
-        synthetic_patients, drug_ids,
-        cfg=MechPriorConfig(toxicity_penalty_scale=0.0),  # no penalty to isolate coverage
+        empty, drugs, cfg=MechPriorConfig(toxicity_penalty_scale=0.0),
     )
-    p_wild = 3  # row 3 = P_wild
-    # All pair scores for the wild-type patient must be at most the tiebreaker
-    # ceiling (annotation + axis-diversity bonuses). No target coverage contributes.
-    # With current tiebreaker weights (0.01 annot + 0.005 per axis), pair scores
-    # top out near 0.1.
+    # All pair scores should come only from tiebreakers (annot + diversity)
+    # bounded by ~0.05 with current weights.
     for i in range(3):
         for j in range(3):
-            assert scores[p_wild, i, j] <= 0.12
+            assert scores[0, i, j] <= 0.12
 
 
 def test_diagnostics(synthetic_patients):
     drug_ids = ["Venetoclax", "Quizartinib (AC220)", "SomeUnknownDrug"]
     diag = diagnostics(synthetic_patients, drug_ids)
     assert diag["n_patients"] == 5
-    assert diag["n_patients_with_any_deficit"] == 4  # all except P_wild
+    # v2: P_wild has mut_TP53=1 so now counts as having a deficit (TP53_PATHWAY).
+    # All 5 synthetic patients have at least one driver now.
+    assert diag["n_patients_with_any_deficit"] == 5
     assert diag["n_drugs_with_mech_annotation"] == 2  # Ven + Quiz; not Unknown
     assert diag["target_axis_coverage"]["tgt_FLT3"] == 2   # P_flt3 + P_flt3_npm1
     assert diag["target_axis_coverage"]["tgt_MENIN_HOX"] == 1  # P_flt3_npm1 (NPM1)
+    assert diag["target_axis_coverage"]["tgt_TP53_PATHWAY"] == 1  # P_wild (TP53)
 
 
 def test_beataml_to_mech_id_keys_are_real_beataml_names():

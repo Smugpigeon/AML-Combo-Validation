@@ -49,22 +49,36 @@ _DEFAULT_DRUG_MATRIX_PATH = (
 
 
 # Mapping from patient feature column → mechanism target axis.
-# Drives `patient_target_deficit` below. Only mutations where a targeted
-# therapy exists in our drug vocab are included.
+# Drives `patient_target_deficit` below. Expanded in v2 after adding mech
+# vectors for RAS/MAPK and TP53-pathway drugs.
 _MUT_TO_TGT: dict[str, str] = {
+    # ---- Primary AML driver → direct target axis ----
     "mut_FLT3":   "tgt_FLT3",
     "mut_IDH1":   "tgt_IDH1",
     "mut_IDH2":   "tgt_IDH2",
     "mut_NPM1":   "tgt_MENIN_HOX",       # NPM1-mut confers MENIN-HOX dependency
     "mut_KMT2A":  "tgt_MENIN_HOX",       # KMT2A-r also MENIN-dependent
+    # ---- v2: RAS/MAPK axis (hit by trametinib, selumetinib, sorafenib) ----
+    "mut_NRAS":   "tgt_RAS_MAPK",
+    "mut_KRAS":   "tgt_RAS_MAPK",
+    "mut_PTPN11": "tgt_RAS_MAPK",        # SHP2 → RAS activation
+    # ---- v2: TP53 pathway (adverse-risk marker; matches nothing we have;
+    #          kept for future TP53-pathway agents) ----
+    "mut_TP53":   "tgt_TP53_PATHWAY",
+    # ---- v2: Spliceosome (research-stage splicing-modulator drugs,
+    #          currently no annotated drug but flag the deficit) ----
+    "mut_SRSF2":  "tgt_SPLICEOSOME",
+    "mut_SF3B1":  "tgt_SPLICEOSOME",
+    "mut_U2AF1":  "tgt_SPLICEOSOME",
     # DNA damage / topoisomerase / HMA are universal deficits for intensive
     # or HMA-based regimens; not patient-specific. Left out.
 }
 
-# BeatAML drug_id (165 vocab) → mechanism-matrix drug_id (20 vocab).
+# BeatAML drug_id (165 vocab) → mechanism-matrix drug_id (32 vocab after v2).
 # Only includes drugs where BeatAML has the drug AND we have mechanism
-# annotation. Built manually from inspection.
+# annotation. Built manually from inspection of BeatAML drug name strings.
 BEATAML_TO_MECH_ID: dict[str, str] = {
+    # ---- v1: AML-approved / registrational (10) ----
     "Venetoclax": "venetoclax",
     "Azacytidine": "azacitidine_injectable",
     "Midostaurin": "midostaurin",
@@ -75,6 +89,19 @@ BEATAML_TO_MECH_ID: dict[str, str] = {
     "Cytarabine": "cytarabine_intensive_context",
     "Daunorubicin": "daunorubicin_intensive_context",
     "Idarubicin": "idarubicin_intensive_context",
+    # ---- v2 (Problem-3 fix): AML clinical-filter drugs (12 more) ----
+    "Trametinib (GSK1120212)": "trametinib",
+    "Selumetinib (AZD6244)": "selumetinib",
+    "Ruxolitinib (INCB018424)": "ruxolitinib",
+    "Sorafenib": "sorafenib",
+    "Dasatinib": "dasatinib",
+    "Imatinib": "imatinib",
+    "Nilotinib": "nilotinib",
+    "Ponatinib": "ponatinib",
+    "Crenolanib": "crenolanib",
+    "Crizotinib (PF-2341066)": "crizotinib",
+    "Alisertib (MLN8237)": "alisertib",
+    "Pacritinib": "pacritinib",
     # Olutasidenib, Decitabine, Gemtuzumab-ozogamicin, Glasdegib not in BeatAML.
 }
 
@@ -229,7 +256,18 @@ def compute_combo_mech_scores(
         axis_active[:, None, :], axis_active[None, :, :],
     ).sum(axis=2).astype(np.float32)   # (n_d, n_d)
 
-    tiebreaker = 0.01 * pair_annot_count + 0.005 * pair_axis_any
+    # Redundancy: axes where BOTH drugs are active (≥ 0.5). Penalized to
+    # discourage double-target-hit combos like dual-MEKi or dual-FLT3i that
+    # have no clinical rationale and get picked up by argsort ties.
+    pair_both_active = np.logical_and(
+        axis_active[:, None, :], axis_active[None, :, :],
+    ).sum(axis=2).astype(np.float32)  # (n_d, n_d)
+
+    tiebreaker = (
+        0.01 * pair_annot_count            # both drugs curated
+        + 0.01 * pair_axis_any             # mechanistic diversity
+        - 0.02 * pair_both_active          # redundancy penalty
+    )
     mech_score = cfg.target_weight * target_cov - pair_penalty[None, :, :] + tiebreaker[None, :, :]
     return mech_score
 
