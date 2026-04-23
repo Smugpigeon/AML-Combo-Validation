@@ -32,3 +32,6 @@ build/
 *.onnx
 *.joblib
 *.pkl
+# Exception: the BeatAML RNA preprocessor bundle IS the kit artifact —
+# it must ship with the canonical data so new patients can be featurized.
+!data/canonical/beataml_rna_preprocessor.joblib

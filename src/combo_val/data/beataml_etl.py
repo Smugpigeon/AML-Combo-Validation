@@ -133,6 +133,7 @@ def extract_rna_pca_features(
     n_pca: int,
     top_n_variable_genes: int,
     random_state: int,
+    preprocessor_out: Path | None = None,
 ) -> tuple[pd.DataFrame, dict]:
     """Extract patient × RNA PCA features.
 
@@ -141,6 +142,10 @@ def extract_rna_pca_features(
       2. Keep the top-N most-variable genes (robust to normalization scale)
       3. Sample-level PCA (50 components)
       4. Average per patient if multiple samples
+
+    If `preprocessor_out` is given, persist a reusable projection bundle
+    (gene list + PCA components + mean + PC column names) to that path so
+    new patients' RNA-Seq can be projected into the same PC space.
     """
     # expr is gene × sample. Impute NaN → 0 (unexpressed in that sample).
     X = expr.to_numpy(dtype=np.float64)
@@ -190,6 +195,30 @@ def extract_rna_pca_features(
         ),
         "n_pca": int(n_pca),
     }
+
+    # --- Persist preprocessor bundle so new patients can be projected
+    if preprocessor_out is not None:
+        import joblib  # optional dep
+        preprocessor_out.parent.mkdir(parents=True, exist_ok=True)
+        bundle = {
+            "schema_version": "beataml_rna_pca_v1",
+            "kept_genes": kept_genes,                 # 5000 gene symbols
+            "pc_columns": [f"rna_pc{i+1:02d}" for i in range(n_pca)],
+            "pca_components_": pca.components_.astype(np.float32),  # (n_pca, n_genes)
+            "pca_mean_": pca.mean_.astype(np.float32),              # (n_genes,)
+            "n_pca": int(n_pca),
+            "preprocessing_steps": [
+                "nan_to_num(nan=0, posinf=0, neginf=0)",
+                "clip(min=0)",
+                "log2(x + 1)",
+                "select top_n_variable_genes (by training-set variance)",
+                "(x - pca.mean_) @ pca.components_.T → PC scores",
+            ],
+        }
+        joblib.dump(bundle, preprocessor_out)
+        print(f"[etl] RNA preprocessor bundle saved: {preprocessor_out}  "
+              f"({len(kept_genes)} genes, {n_pca} PCs)")
+
     return patient_pca, meta
 
 
@@ -234,42 +263,148 @@ def extract_mutation_features(
 
 
 def extract_clinical_features(clinical: pd.DataFrame) -> tuple[pd.DataFrame, dict]:
-    """Extract ~5 clinical covariates per patient.
+    """Extract EXTENDED clinical covariates from the 95-col clinical table.
 
-    Columns: age, eln_ordinal, blast_pct, secondary_aml_flag, fit_for_intensive_flag.
+    Feature groups (target ~29 new columns):
+      Core (5, kept for back-compat):
+        clin_age, clin_eln_ordinal, clin_blast_pct,
+        clin_secondary_aml, clin_fit_for_intensive
+      Demographics (2):
+        clin_sex_male, clin_is_relapse
+      CBC / basic labs (7, log-transformed where skewed):
+        clin_wbc_log, clin_platelet_log, clin_hemoglobin,
+        clin_ldh_log, clin_alt_log, clin_ast_log, clin_albumin
+      FLT3 detail (3) — replaces coarse mut_FLT3 binary:
+        clin_flt3_itd, clin_flt3_allelic_ratio, clin_flt3_tkd
+      CEBPA detail (1):
+        clin_cebpa_biallelic
+      Fusion one-hot (5):
+        fusion_PML_RARA, fusion_KMT2A_r, fusion_CBFB_MYH11,
+        fusion_RUNX1_RUNX1T1, fusion_other
+      Karyotype flags (3):
+        karyo_complex, karyo_monosomy_5_or_7, karyo_del_17p
+      Disease state (3):
+        clin_prior_mds, clin_prior_chemo, clin_is_initial_diagnosis
     """
     df = clinical.copy()
     df = df.drop_duplicates("dbgap_subject_id", keep="last").set_index("dbgap_subject_id")
 
     out = pd.DataFrame(index=df.index)
 
-    # age
+    # ---- Core (5) ----
     out["clin_age"] = pd.to_numeric(df.get("ageAtDiagnosis"), errors="coerce")
-
-    # ELN ordinal
     out["clin_eln_ordinal"] = df.get("ELN2017", pd.Series(index=df.index)).map(ELN_ORDINAL)
-
-    # blast_pct — average of BM and PB blast columns if both present
     bm = pd.to_numeric(df.get("%.Blasts.in.BM"), errors="coerce")
     pb = pd.to_numeric(df.get("%.Blasts.in.PB"), errors="coerce")
-    combined = bm.fillna(pb).fillna((bm + pb) / 2)
-    out["clin_blast_pct"] = combined
-
-    # secondary AML flag (any of therapy-related or MDS-related)
+    out["clin_blast_pct"] = bm.fillna(pb).fillna((bm + pb) / 2)
     tr = df.get("therapy_related_flag", pd.Series(index=df.index)).astype(str).isin(["1", "1.0", "True"])
-    mds = df.get("priorMDS", pd.Series(index=df.index)).astype(str).str.lower().isin(["y", "yes", "1"])
-    mpn = df.get("priorMPN", pd.Series(index=df.index)).astype(str).str.lower().isin(["y", "yes", "1"])
-    out["clin_secondary_aml"] = (tr | mds | mpn).astype(int)
-
-    # Fit for intensive: age <= 65 AND ECOG <= 2 (ECOG may be missing → default fit if age young)
+    mds_bin = df.get("priorMDS", pd.Series(index=df.index)).astype(str).str.lower().isin(["y", "yes", "1", "true"])
+    mpn_bin = df.get("priorMPN", pd.Series(index=df.index)).astype(str).str.lower().isin(["y", "yes", "1", "true"])
+    out["clin_secondary_aml"] = (tr | mds_bin | mpn_bin).astype(int)
     out["clin_fit_for_intensive"] = ((out["clin_age"].fillna(100) <= 65)).astype(int)
 
+    # ---- Demographics (2) ----
+    sex = df.get("consensus_sex", pd.Series(index=df.index)).astype(str).str.lower()
+    out["clin_sex_male"] = sex.isin(["male", "m"]).astype(int)
+    relapse = df.get("isRelapse", pd.Series(index=df.index)).astype(str).str.lower()
+    out["clin_is_relapse"] = relapse.isin(["y", "yes", "true", "1"]).astype(int)
+
+    # ---- CBC / labs (7) ----
+    def _log(s: pd.Series) -> pd.Series:
+        return np.log1p(s.clip(lower=0))
+
+    out["clin_wbc_log"] = _log(pd.to_numeric(df.get("wbcCount"), errors="coerce"))
+    out["clin_platelet_log"] = _log(pd.to_numeric(df.get("plateletCount"), errors="coerce"))
+    out["clin_hemoglobin"] = pd.to_numeric(df.get("hemoglobin"), errors="coerce")
+    out["clin_ldh_log"] = _log(pd.to_numeric(df.get("LDH"), errors="coerce"))
+    out["clin_alt_log"] = _log(pd.to_numeric(df.get("ALT"), errors="coerce"))
+    out["clin_ast_log"] = _log(pd.to_numeric(df.get("AST"), errors="coerce"))
+    out["clin_albumin"] = pd.to_numeric(df.get("albumin"), errors="coerce")
+
+    # ---- FLT3 detail (3) ----
+    # BeatAML `FLT3-ITD` is "positive" / "negative" / NaN. allelic_ratio is numeric.
+    # TKD is inferred from variantSummary (done in extract_mutation; here we
+    # look at any FLT3 variant that's TKD — the clinical table doesn't carry
+    # this explicitly, so we use allelic_ratio presence + ITD-negative as proxy).
+    flt3_itd_raw = df.get("FLT3-ITD", pd.Series(index=df.index)).astype(str).str.lower()
+    out["clin_flt3_itd"] = flt3_itd_raw.isin(["positive", "1", "yes", "y", "true"]).astype(int)
+    out["clin_flt3_allelic_ratio"] = pd.to_numeric(df.get("allelic_ratio"), errors="coerce").fillna(0.0)
+    # If ITD-negative but a FLT3 mutation flag exists in the specific gene columns, it's likely TKD.
+    # BeatAML has no explicit FLT3-TKD column; set to 0 here and let mut_FLT3 from variantSummary
+    # carry the signal.
+    out["clin_flt3_tkd"] = 0
+
+    # ---- CEBPA biallelic (1) ----
+    cebpa_bi = df.get("CEBPA_Biallelic", pd.Series(index=df.index)).astype(str).str.lower()
+    out["clin_cebpa_biallelic"] = cebpa_bi.isin(["positive", "y", "yes", "1", "true"]).astype(int)
+
+    # ---- Fusion one-hot (5) ----
+    fus = df.get("consensusAMLFusions", pd.Series(index=df.index)).fillna("").astype(str)
+    fus_u = fus.str.upper()
+    out["fusion_PML_RARA"] = fus_u.str.contains("PML-RARA").astype(int)
+    out["fusion_KMT2A_r"] = (
+        fus_u.str.contains("KMT2A") | fus_u.str.contains("MLLT") | fus_u.str.contains("^MLL$")
+    ).astype(int)
+    out["fusion_CBFB_MYH11"] = fus_u.str.contains("CBFB-MYH11").astype(int)
+    out["fusion_RUNX1_RUNX1T1"] = fus_u.str.contains("RUNX1-RUNX1T1").astype(int)
+    # 'other' = any non-empty fusion that's none of the four above
+    has_fusion = (fus.str.len() > 0)
+    any_known = (
+        out["fusion_PML_RARA"] + out["fusion_KMT2A_r"]
+        + out["fusion_CBFB_MYH11"] + out["fusion_RUNX1_RUNX1T1"]
+    ) > 0
+    out["fusion_other"] = (has_fusion & ~any_known).astype(int)
+
+    # ---- Karyotype flags (3) — parsed from `karyotype` text ----
+    karyo = df.get("karyotype", pd.Series(index=df.index)).fillna("").astype(str)
+    # Complex karyotype: >= 3 discrete abnormalities (rough heuristic: count commas or slashes
+    # inside clone brackets). This is a conservative approximation; refined version lives
+    # in feature_builder for kit inputs.
+    def _complex(s: str) -> int:
+        # Count number of aberration tokens: t(, del(, inv(, add(, +n, -n
+        s_low = s.lower()
+        hits = (
+            s_low.count("t(") + s_low.count("del(") + s_low.count("inv(")
+            + s_low.count("add(") + s_low.count("der(") + s_low.count("dup(")
+        )
+        return int(hits >= 3)
+
+    out["karyo_complex"] = karyo.apply(_complex)
+    out["karyo_monosomy_5_or_7"] = (
+        karyo.str.contains(r"-5[^0-9]|-7[^0-9]|monosomy 5|monosomy 7", regex=True, case=False)
+    ).astype(int)
+    out["karyo_del_17p"] = karyo.str.contains(r"del\(17", regex=True, case=False).astype(int)
+
+    # ---- Disease state (3) ----
+    out["clin_prior_mds"] = mds_bin.astype(int)
+    out["clin_prior_chemo"] = df.get("cumulativeChemo", pd.Series(index=df.index)).astype(str).str.lower().isin(
+        ["y", "yes", "true", "1"]
+    ).astype(int)
+    stage = df.get("diseaseStageAtSpecimenCollection", pd.Series(index=df.index)).astype(str)
+    out["clin_is_initial_diagnosis"] = (stage == "Initial Diagnosis").astype(int)
+
     out.index.name = "patient_id"
+
     meta = {
         "n_patients": int(len(out)),
-        "age_stats": {"mean": float(out["clin_age"].mean()), "median": float(out["clin_age"].median())},
-        "eln_distribution": df["ELN2017"].value_counts().head(5).to_dict() if "ELN2017" in df.columns else {},
+        "age_stats": {
+            "mean": float(out["clin_age"].mean()),
+            "median": float(out["clin_age"].median()),
+        },
+        "eln_distribution": df["ELN2017"].value_counts().head(6).to_dict()
+        if "ELN2017" in df.columns else {},
         "secondary_aml_rate": float(out["clin_secondary_aml"].mean()),
+        "relapse_rate": float(out["clin_is_relapse"].mean()),
+        "flt3_itd_rate": float(out["clin_flt3_itd"].mean()),
+        "fusion_prevalence": {
+            "PML_RARA": int(out["fusion_PML_RARA"].sum()),
+            "KMT2A_r": int(out["fusion_KMT2A_r"].sum()),
+            "CBFB_MYH11": int(out["fusion_CBFB_MYH11"].sum()),
+            "RUNX1_RUNX1T1": int(out["fusion_RUNX1_RUNX1T1"].sum()),
+            "other": int(out["fusion_other"].sum()),
+        },
+        "karyo_complex_rate": float(out["karyo_complex"].mean()),
+        "n_feature_cols": int(out.shape[1]),
     }
     return out, meta
 
@@ -334,6 +469,7 @@ def run_beataml_etl(cfg: BeatAMLConfig | None = None) -> dict:
         n_pca=cfg.n_pca,
         top_n_variable_genes=cfg.top_n_variable_genes,
         random_state=cfg.random_state,
+        preprocessor_out=cfg.out_dir / "beataml_rna_preprocessor.joblib",
     )
     print(f"      {rna_pca.shape[0]} patients × {rna_pca.shape[1]} PCs  "
           f"(cum var @ PC50 = {rna_meta['explained_variance_ratio_cumulative'][-1]:.3f})")
@@ -351,14 +487,41 @@ def run_beataml_etl(cfg: BeatAMLConfig | None = None) -> dict:
     # --- Merge patient features ---
     print("[etl] Merging patient features ...")
     features = rna_pca.join(mut_feat, how="left").join(clin_feat, how="left")
-    # Fill NA with 0 for mutations (no call = absent), median for clinical numerics
+    # Fill NA with 0 for mutations (no call = absent).
     for c in mut_feat.columns:
         features[c] = features[c].fillna(0).astype(int)
-    for c in ["clin_age", "clin_blast_pct", "clin_eln_ordinal"]:
+
+    # For clinical features: binary/categorical → 0; numeric → median.
+    # Persist the medians so new patients can be imputed the SAME way.
+    clinical_medians: dict[str, float] = {}
+    numeric_clinical = [
+        "clin_age", "clin_eln_ordinal", "clin_blast_pct",
+        "clin_wbc_log", "clin_platelet_log", "clin_hemoglobin",
+        "clin_ldh_log", "clin_alt_log", "clin_ast_log", "clin_albumin",
+        "clin_flt3_allelic_ratio",
+    ]
+    binary_clinical = [
+        "clin_secondary_aml", "clin_fit_for_intensive",
+        "clin_sex_male", "clin_is_relapse",
+        "clin_flt3_itd", "clin_flt3_tkd",
+        "clin_cebpa_biallelic",
+        "fusion_PML_RARA", "fusion_KMT2A_r", "fusion_CBFB_MYH11",
+        "fusion_RUNX1_RUNX1T1", "fusion_other",
+        "karyo_complex", "karyo_monosomy_5_or_7", "karyo_del_17p",
+        "clin_prior_mds", "clin_prior_chemo", "clin_is_initial_diagnosis",
+    ]
+
+    for c in numeric_clinical:
         if c in features.columns:
-            features[c] = features[c].fillna(features[c].median())
-    for c in ["clin_secondary_aml", "clin_fit_for_intensive"]:
+            med = float(features[c].median())
+            # If column is entirely NaN for the feature cohort, use 0.
+            if np.isnan(med):
+                med = 0.0
+            clinical_medians[c] = med
+            features[c] = features[c].fillna(med)
+    for c in binary_clinical:
         if c in features.columns:
+            clinical_medians[c] = 0.0
             features[c] = features[c].fillna(0).astype(int)
     features.index.name = "patient_id"
 
@@ -409,8 +572,22 @@ def run_beataml_etl(cfg: BeatAMLConfig | None = None) -> dict:
     }
 
     manifest_path = out_dir / "beataml_feature_manifest.json"
+    manifest["clinical_medians_for_imputation"] = clinical_medians
     manifest_path.write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     print(f"[etl] Done. Manifest at {manifest_path}")
+
+    # Also update the preprocessor bundle with clinical medians so the
+    # new-patient feature builder can impute identically.
+    preproc_path = out_dir / "beataml_rna_preprocessor.joblib"
+    if preproc_path.exists():
+        import joblib
+        bundle = joblib.load(preproc_path)
+        bundle["clinical_medians"] = clinical_medians
+        bundle["feature_columns"] = features.columns.tolist()
+        bundle["mutation_genes"] = list(cfg.mutation_genes)
+        joblib.dump(bundle, preproc_path)
+        print(f"[etl] Preprocessor bundle updated with clinical_medians + feature_columns")
+
     return manifest
 
 
