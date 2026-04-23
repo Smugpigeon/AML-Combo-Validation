@@ -25,6 +25,7 @@ import subprocess
 from datetime import datetime
 from pathlib import Path
 
+from combo_val.clinical.dna_report import CORE_DRIVER_GENES
 from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
 
 
@@ -104,6 +105,81 @@ def _executive_summary(kit: KitInput, kit_out: KitOutput) -> str:
         f"基于分子特征与已发表临床试验证据，**一线方案首选 {top_reg_name}{cr_str}**。"
         f"详见下文各节。"
     )
+
+
+def _detected_mutations_table(driver_mutations: list[dict]) -> str:
+    """Markdown table of all detected drivers with Tier, VAF, targetable drugs.
+
+    `driver_mutations` comes from `kit_out.dna_summary["driver_mutations"]` —
+    same source the DNA-profile PNG is built from, so the table always matches
+    the figure.
+    """
+    if not driver_mutations:
+        return ("> **未检出 25-gene 核心 panel 中的驱动基因突变**。"
+                "如 lab 报告包含其他 (panel 外) 基因变异，请人工结合原始报告解读。\n")
+
+    lines = [
+        "| # | 基因 | 变异类型 | VAF | Tier | 可靶向药物 | ELN 意义 |",
+        "|---|------|----------|-----|------|------------|----------|",
+    ]
+    for i, m in enumerate(driver_mutations, 1):
+        gene = m.get("gene", "—")
+        var = m.get("variant_type") or "—"
+        if m.get("allelic_ratio") is not None:
+            var = f"{var} (AR={m['allelic_ratio']:.2f})"
+        if m.get("is_biallelic"):
+            var = f"{var} · biallelic"
+        vaf = m.get("vaf")
+        vaf_str = f"{vaf:.2f}" if isinstance(vaf, (int, float)) else "—"
+        tier = m.get("tier", "—")
+        tier_str = f"T{tier}" if isinstance(tier, int) else str(tier)
+        drugs = m.get("targetable_by") or []
+        drugs_str = ", ".join(drugs[:3]) + (f" (+{len(drugs) - 3})" if len(drugs) > 3 else "")
+        drugs_str = drugs_str or "无 FDA 批准靶向药"
+        eln = m.get("eln_implication") or "—"
+        # Cell-wrap for long text
+        eln_short = eln if len(eln) <= 38 else eln[:36] + "…"
+        lines.append(f"| {i} | **{gene}** | {var} | {vaf_str} | {tier_str} | "
+                     f"{drugs_str} | {eln_short} |")
+    return "\n".join(lines)
+
+
+def _panel_coverage_table(driver_mutations: list[dict]) -> str:
+    """A 25-gene core-panel checklist: which were detected, which were not.
+
+    Groups genes by Tier so the clinician immediately sees whether any
+    actionable (Tier 1) gene went untested or is wild-type.
+    """
+    detected_genes = {m.get("gene", "").upper() for m in driver_mutations}
+
+    tier_groups = {
+        "Tier 1 (FDA-targetable)": ["FLT3", "IDH1", "IDH2", "KMT2A"],
+        "Tier 2 (prognostic / intensity-modifier)":
+            ["NPM1", "TP53", "RUNX1", "ASXL1", "CEBPA"],
+        "Tier 3a (epigenetic / HMA-responsive)":
+            ["DNMT3A", "TET2"],
+        "Tier 3b (RAS-MAPK)":
+            ["NRAS", "KRAS", "PTPN11", "KIT"],
+        "Tier 3c (MDS-related / splice / other)":
+            ["WT1", "BCOR", "STAG2", "PHF6", "SRSF2", "SF3B1", "U2AF1",
+             "EZH2", "MECOM", "CBFB"],
+    }
+
+    lines = [
+        "| Tier 组 | 基因 (✓ = 检出 · ✗ = 野生型) |",
+        "|---------|------------------------------|",
+    ]
+    for group, genes in tier_groups.items():
+        gene_cells = []
+        for g in genes:
+            mark = "**✓**" if g in detected_genes else "✗"
+            gene_cells.append(f"{g} {mark}")
+        lines.append(f"| *{group}* | {' · '.join(gene_cells)} |")
+    total_panel = sum(len(g) for g in tier_groups.values())
+    lines.append("")
+    lines.append(f"_25-gene 核心 panel 总覆盖: {len(detected_genes)}/{total_panel} "
+                 f"检出突变 (野生型 = 正常序列, 不代表无遗传改变 — 仍可能有 panel 外变异)_")
+    return "\n".join(lines)
 
 
 def _mutation_narrative(mutations: list[MutationCall]) -> str:
@@ -433,26 +509,35 @@ def build_clinical_report_markdown(
             "风险分层依据高亮。**报告正文的叙事均以此图数据为基础**。",
             "",
         ]
+    driver_muts_summary = dna.get("driver_mutations", []) or []
     sections.extend([
         "## 三、分子特征 (Molecular Profile)",
         "",
         *figure_block,
-        "### 3.1 核心驱动突变",
+        "### 3.1 检出的核心驱动突变（速查表）",
+        "",
+        _detected_mutations_table(driver_muts_summary),
+        "",
+        "### 3.2 25-gene 核心 panel 覆盖情况",
+        "",
+        _panel_coverage_table(driver_muts_summary),
+        "",
+        "### 3.3 核心驱动突变 — 临床解读",
         "",
         _mutation_narrative(kit.mutations or []),
         "",
-        "### 3.2 融合基因",
+        "### 3.4 融合基因",
         "",
         _fusion_narrative(kit.fusions or []),
         "",
-        "### 3.3 细胞遗传学",
+        "### 3.5 细胞遗传学",
         "",
         _cytogenetic_narrative(
             dna.get("cytogenetics", []),
             kit.karyotype_text,
         ),
         "",
-        "### 3.4 ELN 2017 风险分层",
+        "### 3.6 ELN 2017 风险分层",
         "",
         _eln_rationale_prose(kit, kit_out),
         "",
@@ -638,9 +723,15 @@ a:hover { text-decoration: underline; }
 ul, ol { padding-left: 1.5em; }
 li { margin: 0.2em 0; }
 .footnote { font-size: 90%; color: #666; }
+img { max-width: 100%; height: auto; display: block;
+      margin: 1em auto; page-break-inside: avoid; }
+figure { margin: 1em 0; text-align: center; page-break-inside: avoid; }
+figcaption { font-size: 90%; color: #555; margin-top: 0.3em; }
 @media print {
   body { max-width: none; margin: 0; }
   h1, h2 { page-break-after: avoid; }
+  img { max-width: 100%; max-height: 90vh; }
+  @page { size: letter; margin: 1.5cm; }
 }
 """
 

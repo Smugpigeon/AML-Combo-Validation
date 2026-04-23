@@ -110,6 +110,22 @@ def _mk_output(kit: KitInput, eln: str, driver_flags: dict | None = None,
                 {"finding": "Normal karyotype", "present": True,
                  "interpretation": "No ELN 2017 high-risk markers"},
             ],
+            "driver_mutations": [
+                {
+                    "gene": m.gene.upper(),
+                    "variant_type": "ITD" if m.is_ITD else (m.variant_type or "unknown"),
+                    "vaf": m.vaf,
+                    "allelic_ratio": m.allelic_ratio,
+                    "is_biallelic": m.is_biallelic,
+                    "tier": 1 if m.gene.upper() in ("FLT3", "IDH1", "IDH2", "KMT2A")
+                            else 2 if m.gene.upper() in ("NPM1", "TP53", "RUNX1",
+                                                          "ASXL1", "CEBPA")
+                            else 3,
+                    "targetable_by": ["Midostaurin"] if m.gene.upper() == "FLT3" else [],
+                    "eln_implication": "(test fixture)",
+                }
+                for m in (kit.mutations or [])
+            ],
         },
         driver_flags=driver_flags or {"FLT3_ITD": True, "NPM1": True},
         fitness_flag="fit_for_intensive",
@@ -247,13 +263,52 @@ def test_build_markdown_section_numbering_is_consistent():
     kit = _flt3_npm1_kit()
     out = _mk_output(kit, eln="Intermediate")
     md = build_clinical_report_markdown(kit, out)
-    # Section 3 subsections (Molecular Profile)
-    assert "### 3.1 核心驱动突变" in md
-    assert "### 3.4 ELN 2017 风险分层" in md
+    # Section 3 subsections (Molecular Profile) — 6 subsections after tables
+    assert "### 3.1 检出的核心驱动突变" in md
+    assert "### 3.2 25-gene 核心 panel 覆盖情况" in md
+    assert "### 3.3 核心驱动突变 — 临床解读" in md
+    assert "### 3.4 融合基因" in md
+    assert "### 3.5 细胞遗传学" in md
+    assert "### 3.6 ELN 2017 风险分层" in md
     # Section 4 subsections (Treatment Recommendations) must be 4.x
     assert "### 4.1 首选方案" in md
     # Must NOT re-use 3.1 numbering for section 4
     assert md.count("### 3.1 首选方案") == 0
+
+
+def test_detected_mutations_table_has_required_columns():
+    """The clinician's quick-scan table must show Gene / Variant / VAF / Tier / Drugs."""
+    kit = _flt3_npm1_kit()
+    out = _mk_output(kit, eln="Intermediate")
+    md = build_clinical_report_markdown(kit, out)
+    # Table headers
+    for col in ("基因", "变异类型", "VAF", "Tier", "可靶向药物"):
+        assert col in md, f"Missing table column: {col}"
+
+
+def test_panel_coverage_table_marks_detected_and_wt():
+    """The 25-gene panel table must show ✓ for detected, ✗ for wild-type."""
+    kit = _flt3_npm1_kit()
+    out = _mk_output(kit, eln="Intermediate")
+    # Only one mutation present: FLT3
+    out.dna_summary["driver_mutations"] = [
+        {"gene": "FLT3", "variant_type": "ITD", "vaf": 0.45, "tier": 1,
+         "targetable_by": ["Midostaurin"], "eln_implication": "x"}
+    ]
+    md = build_clinical_report_markdown(kit, out)
+    # All 25 genes must appear somewhere
+    panel_25 = [
+        "FLT3", "IDH1", "IDH2", "KMT2A", "NPM1", "TP53", "RUNX1", "ASXL1",
+        "CEBPA", "DNMT3A", "TET2", "KIT", "NRAS", "KRAS", "PTPN11",
+        "WT1", "BCOR", "STAG2", "PHF6", "SRSF2", "SF3B1", "U2AF1",
+        "EZH2", "MECOM", "CBFB",
+    ]
+    for g in panel_25:
+        assert g in md, f"Gene {g} missing from panel coverage table"
+    # FLT3 must be marked as detected (bold check)
+    assert "FLT3 **✓**" in md
+    # A wild-type gene must be marked with ✗
+    assert "TP53 ✗" in md
 
 
 def test_build_markdown_references_major_trials():
