@@ -1,0 +1,18 @@
+{
+  "v2_checkpoint": "runs/set_drug_predictor_v2_stable/final_model.pt",
+  "v3_checkpoint": "runs/set_drug_predictor_v3_pair_ft/final_model.pt",
+  "n_pair_samples": 186,
+  "n_train": 159,
+  "n_val": 27,
+  "n_drugs_in_pairs": 19,
+  "best_epoch": 2,
+  "best_val_pair_mse": 148.855,
+  "final_anchor_mae": 7.56,
+  "elapsed_s": 1.2,
+  "target_combo_auc_stats": {
+    "mean": 173.8,
+    "std": 26.47,
+    "min": 69.88,
+    "max": 236.59
+  }
+}

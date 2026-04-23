@@ -1,0 +1,95 @@
+{
+  "gate_summary": {
+    "E1": "PASS",
+    "E2": "PASS",
+    "E3": "PASS (in-sample)",
+    "E4": "FAIL (Gilt+Ven still not top-5)",
+    "E5": "PASS",
+    "E6": "FAIL (v3 did not move toward MLP)"
+  },
+  "experiments": {
+    "E1": {
+      "name": "E1 Singleton retention (v2 vs v3)",
+      "n_patients_tested": 50,
+      "mean_spearman_v2_vs_v3": 0.9979,
+      "gate_pass_rho_ge_0.90": true,
+      "verdict": "PASS"
+    },
+    "E2": {
+      "name": "E2 Pair fit on training targets",
+      "n_pairs": 186,
+      "null_mse_predict_mean": 697.03,
+      "v2_mse": 560.28,
+      "v3_mse": 310.04,
+      "v2_pearson": 0.7279,
+      "v3_pearson": 0.7585,
+      "gate_pass_v3_beats_null_and_v2": true,
+      "verdict": "PASS"
+    },
+    "E3": {
+      "name": "E3 Pair rank correlation (in-sample, flagged)",
+      "spearman_all_186": 0.8149,
+      "spearman_p_value": 0.0,
+      "per_fold_spearman": [
+        0.8781,
+        0.7288,
+        0.8063,
+        0.8111,
+        0.7337
+      ],
+      "mean_per_fold": 0.7916,
+      "gate_pass_rho_gt_0.50": true,
+      "verdict": "PASS (in-sample)",
+      "note": "In-sample: v3 was trained on all 186 pairs. True OOD CV would require leave-one-out with re-fine-tune per fold (scope)."
+    },
+    "E4": {
+      "name": "E4 Gilteritinib+Venetoclax rank on FLT3-mut patients",
+      "n_patients_tested": 50,
+      "median_rank_v2": 10.0,
+      "median_rank_v3": 10.0,
+      "mean_rank_v2": 9.8,
+      "mean_rank_v3": 9.76,
+      "v3_improved_vs_v2": false,
+      "gate_pass_median_rank_le_5": false,
+      "verdict": "FAIL (Gilt+Ven still not top-5)"
+    },
+    "E5": {
+      "name": "E5 Aza+Ven+Gilt vs 20 random non-FLT3i triplets (FLT3-mut patients)",
+      "n_patients": 50,
+      "v2_win_rate": 1.0,
+      "v3_win_rate": 1.0,
+      "v2_mean_auc_delta": 30.5,
+      "v3_mean_auc_delta": 28.58,
+      "gate_pass_v3_win_rate_ge_0.55": true,
+      "verdict": "PASS"
+    },
+    "E6": {
+      "name": "E6 Head-to-head on synthetic FLT3-mut patient",
+      "mlp_top5": [
+        "Gilteritinib + Venetoclax",
+        "Quizartinib (AC220) + Venetoclax",
+        "Midostaurin + Venetoclax",
+        "Gilteritinib + Trametinib (GSK1120212)",
+        "Sorafenib + Venetoclax"
+      ],
+      "v2_top5": [
+        "Azacytidine + Trametinib (GSK1120212)",
+        "Alisertib (MLN8237) + Trametinib (GSK1120212)",
+        "Ruxolitinib (INCB018424) + Trametinib (GSK1120212)",
+        "Gilteritinib + Trametinib (GSK1120212)",
+        "Quizartinib (AC220) + Trametinib (GSK1120212)"
+      ],
+      "v3_top5": [
+        "Azacytidine + Trametinib (GSK1120212)",
+        "Ruxolitinib (INCB018424) + Trametinib (GSK1120212)",
+        "Alisertib (MLN8237) + Trametinib (GSK1120212)",
+        "Gilteritinib + Trametinib (GSK1120212)",
+        "Quizartinib (AC220) + Trametinib (GSK1120212)"
+      ],
+      "jaccard_mlp_v2_top5": 0.111,
+      "jaccard_mlp_v3_top5": 0.111,
+      "v3_moved_toward_mlp": false,
+      "verdict": "FAIL (v3 did not move toward MLP)"
+    }
+  }
+}
