@@ -36,7 +36,7 @@
       "vaf": 0.48,
       "tier": 3,
       "targetable_by": [],
-      "eln_implication": null,
+      "eln_implication": "no specific ELN 2017 rule (Tier-3 background)",
       "is_adverse_driver": false,
       "notes": "Common background in AML; moderate prognostic signal. HMA (aza/dec) synergy reported."
     }

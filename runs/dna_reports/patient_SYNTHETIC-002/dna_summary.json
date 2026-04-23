@@ -6,7 +6,7 @@
       "vaf": 0.42,
       "tier": 2,
       "targetable_by": [],
-      "eln_implication": null,
+      "eln_implication": "Adverse per ELN 2017 (driver mutation category)",
       "is_adverse_driver": true,
       "notes": "ADVERSE. Often co-mutates with SRSF2 in MDS-AML."
     },
@@ -16,7 +16,7 @@
       "vaf": 0.55,
       "tier": 2,
       "targetable_by": [],
-      "eln_implication": null,
+      "eln_implication": "Adverse per ELN 2017 (driver mutation category)",
       "is_adverse_driver": true,
       "notes": "ADVERSE. Conventional induction poorly effective. Trial enrollment + SCT priority."
     }

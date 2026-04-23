@@ -204,6 +204,16 @@ def _mutation_detail(mut: MutationCall) -> dict:
             else "monoallelic → NOT automatically favorable (verify second hit)"
         )
 
+    # ELN interpretation text: prefer specific rule strings; fall back to
+    # boolean "Adverse" / "Favorable" markers so tier-2 adverse drivers
+    # (TP53, RUNX1, ASXL1) aren't reported as "no specific rule".
+    eln_text = info.get("eln_adverse_if") or info.get("eln_favorable_if")
+    if not eln_text:
+        if info.get("eln_adverse") is True:
+            eln_text = "Adverse per ELN 2017 (driver mutation category)"
+        elif info.get("tier") == 3:
+            eln_text = "no specific ELN 2017 rule (Tier-3 background)"
+
     return {
         "gene": gene,
         "variant_type": mut.variant_type,
@@ -212,7 +222,7 @@ def _mutation_detail(mut: MutationCall) -> dict:
         **cebpa_extra,
         "tier": info.get("tier"),
         "targetable_by": info.get("targetable_by", []),
-        "eln_implication": info.get("eln_adverse_if") or info.get("eln_favorable_if"),
+        "eln_implication": eln_text,
         "is_adverse_driver": info.get("eln_adverse") is True,
         "notes": info.get("notes", ""),
     }
@@ -371,6 +381,31 @@ def export_dna_summary_csv(summary: dict, patient_id: str, out_dir: Path | str) 
                 mdf[c] = mdf[c].apply(
                     lambda v: "; ".join(map(str, v)) if isinstance(v, list) else v
                 )
+        # Distinguish "not applicable" (FLT3-specific on a non-FLT3 row) from
+        # "no data / no targeted therapy". Clinicians reading a blank cell in a
+        # clinical report assume it means "not tested" — which is wrong for us.
+        # Cast to object dtype first so we can write string markers into any column.
+        mdf = mdf.astype(object)
+        flt3_only_cols = {"allelic_ratio", "ar_interpretation"}
+        cebpa_only_cols = {"biallelic", "allelic_interpretation"}
+        for idx, row in mdf.iterrows():
+            g = str(row.get("gene", "")).upper()
+            for c in mdf.columns:
+                v = row[c]
+                if v is None or (isinstance(v, float) and pd.isna(v)) or v == "":
+                    # Decide the right marker based on WHY it's empty
+                    if c in flt3_only_cols and g != "FLT3":
+                        mdf.at[idx, c] = "n/a (FLT3-only field)"
+                    elif c in cebpa_only_cols and g != "CEBPA":
+                        mdf.at[idx, c] = "n/a (CEBPA-only field)"
+                    elif c == "targetable_by":
+                        mdf.at[idx, c] = "no targeted therapy available"
+                    elif c == "eln_implication":
+                        mdf.at[idx, c] = "no specific ELN 2017 rule"
+                    elif c == "tier":
+                        mdf.at[idx, c] = "untiered (gene not in core panel)"
+                    else:
+                        mdf.at[idx, c] = "—"
         p = out / "driver_mutations.csv"
         mdf.to_csv(p, index=False)
         paths["driver_mutations"] = str(p)
