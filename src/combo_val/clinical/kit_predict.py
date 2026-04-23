@@ -496,6 +496,43 @@ def predict_for_patient(
     # ---- DNA-level profile (core genes, mutations, targetability) ----
     dna_summary = build_dna_summary(kit, computed_eln=diag["eln_predicted"])
 
+    # ---- RNA expression-outlier analysis (if full transcriptome provided) ----
+    from combo_val.clinical.expression_outlier import (
+        compute_expression_outliers,
+    )
+    mutated_gene_symbols = {m.gene.upper() for m in (kit.mutations or [])}
+    try:
+        rna_rows, rna_meta = compute_expression_outliers(
+            rna_expression=kit.rna_expression_full,
+            mutated_genes=mutated_gene_symbols,
+        )
+        rna_outlier = {
+            "rows": [
+                {
+                    "gene": r.gene,
+                    "tier_group": r.tier_group,
+                    "input_value": r.input_value,
+                    "ref_mean": r.ref_mean,
+                    "ref_std": r.ref_std,
+                    "z_score": r.z_score,
+                    "direction": r.direction,
+                    "dna_status": r.dna_status,
+                    "note": r.note,
+                    "available": r.available,
+                }
+                for r in rna_rows
+            ],
+            "meta": rna_meta,
+        }
+    except FileNotFoundError:
+        # Ref stats file missing — degrade silently but leave a note
+        rna_outlier = {
+            "rows": [],
+            "meta": {"scale_note":
+                     "reference stats file not found; run "
+                     "scripts/build_driver_gene_ref_stats.py"},
+        }
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
@@ -504,6 +541,7 @@ def predict_for_patient(
         top_regimens=top_regimens,
         clonal_coverage=clonal_coverage,
         dna_summary=dna_summary,
+        rna_outlier=rna_outlier,
         driver_flags=driver_flags,
         fitness_flag=fitness_flag,
         cautions=_check_kit_cautions(kit, driver_flags),

@@ -40,6 +40,69 @@ def _synthetic_rna_counts(kept_genes: list[str], profile: str) -> pd.Series:
     return pd.Series(counts, index=kept_genes)
 
 
+# Per-profile perturbations applied on BeatAML's log2-CPM-scale reference means
+# for the 25-gene driver panel + expression-hint genes. Values are Δ from the
+# BeatAML population mean (so a +2.0 entry makes the gene ~+2 SD above typical).
+_PROFILE_EXPR_DELTAS: dict[str, dict[str, float]] = {
+    "young_flt3": {
+        # FLT3-ITD + NPM1-mut signature: high FLT3, high HOXA9/MEIS1 co-program
+        "FLT3": +1.8, "NPM1": +0.3, "DNMT3A": +0.2,
+        "HOXA9": +1.6, "MEIS1": +1.2,
+        "BCL2": +1.5,  # justifies Ven in triplet
+        "MECOM": -0.2,
+        "TP53": +0.1,  # not deleted
+    },
+    "elderly_tp53": {
+        # TP53 + complex-karyo + del(5q)/del(7q) pattern: low TP53, high MECOM,
+        # high MCL1 (Ven-resistance hint), high BAALC
+        "TP53": -2.2, "MECOM": +2.2, "MCL1": +1.5,
+        "BAALC": +1.8, "MN1": +1.1,
+        "FLT3": -0.1, "NPM1": -0.2,
+        "HOXA9": +0.3,
+    },
+    "apl": {
+        # PML-RARA (APL): high BCL2 (differentiation block), high CD33
+        # (Mylotarg rationale), normal-ish HOX, low BAALC
+        "BCL2": +2.0, "CD33": +1.8, "IL3RA": +0.6,
+        "HOXA9": -0.3, "MEIS1": -0.2,
+        "BAALC": -0.8, "MN1": -0.4,
+        "FLT3": +0.2, "TP53": +0.2,
+    },
+}
+
+
+def _synthetic_rna_expression_full(profile: str,
+                                     ref_stats_path: Path | str | None = None,
+                                     ) -> pd.Series:
+    """Generate a full-transcriptome-style Series for the 25-gene core panel +
+    expression-hint genes, on BeatAML Sheet1 log2-CPM scale.
+
+    Baseline = BeatAML population mean for each gene; profile-specific deltas
+    simulate the transcriptional fingerprint of that subtype (e.g., FLT3-ITD
+    raises HOXA9/MEIS1, TP53-mut pushes MECOM and MCL1 up, APL raises BCL2/CD33).
+    Noise = N(0, 0.25) so the values aren't flat per profile.
+    """
+    import json
+    from pathlib import Path as _P
+    if ref_stats_path is None:
+        ref_stats_path = _P("data/canonical/driver_gene_ref_stats.json")
+        if not _P(ref_stats_path).exists():
+            ref_stats_path = (_P("/Users/ericktom/AML-combo-validation") /
+                              "data/canonical/driver_gene_ref_stats.json")
+    stats = json.loads(_P(ref_stats_path).read_text())
+    gene_stats = stats["genes"]
+    deltas = _PROFILE_EXPR_DELTAS.get(profile, {})
+
+    rng = np.random.default_rng({"young_flt3": 17, "elderly_tp53": 42,
+                                  "apl": 31}.get(profile, 0))
+
+    expr = {}
+    for g, s in gene_stats.items():
+        base = s["mean"] + s["std"] * float(deltas.get(g, 0.0))
+        expr[g] = base + rng.normal(0, 0.25)
+    return pd.Series(expr)
+
+
 def demo():
     warnings.filterwarnings("ignore")
     bundle = joblib.load("data/canonical/beataml_rna_preprocessor.joblib")

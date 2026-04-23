@@ -26,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 
 from combo_val.clinical.dna_report import CORE_DRIVER_GENES
+from combo_val.clinical.expression_outlier import build_rnaseq_outlier_markdown
 from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
 
 
@@ -179,6 +180,83 @@ def _panel_coverage_table(driver_mutations: list[dict]) -> str:
     lines.append("")
     lines.append(f"_25-gene 核心 panel 总覆盖: {len(detected_genes)}/{total_panel} "
                  f"检出突变 (野生型 = 正常序列, 不代表无遗传改变 — 仍可能有 panel 外变异)_")
+    return "\n".join(lines)
+
+
+def _rnaseq_outlier_section(kit: KitInput, kit_out: KitOutput) -> str:
+    """Render Section 3.3 — RNA-Seq expression outlier analysis.
+
+    Uses the cached `kit_out.rna_outlier` data if present; otherwise
+    computes on-the-fly from `kit.rna_expression_full` (fallback path
+    for test fixtures that build KitOutput directly).
+    """
+    import pandas as pd  # local import to avoid hard dep at import time
+
+    # Preferred: use the precomputed rna_outlier in kit_out (set by
+    # predict_for_patient). Rebuild a Markdown table from its rows so the
+    # report can regenerate without re-running the kit.
+    rna_outlier = getattr(kit_out, "rna_outlier", None) or {}
+    rows = rna_outlier.get("rows", []) if rna_outlier else []
+    meta = rna_outlier.get("meta", {}) if rna_outlier else {}
+
+    if rows:
+        return _render_rna_outlier_table_from_rows(rows, meta)
+
+    # Fallback: compute live from kit.rna_expression_full (useful in unit tests)
+    rna_expr = getattr(kit, "rna_expression_full", None)
+    if rna_expr is None:
+        return ("> **RNA-Seq 表达谱数据未提供** —— 本节为空。"
+                "要启用本分析，请在 `KitInput.rna_expression_full` 提供全转录组 "
+                "(log2-CPM 或 raw counts 均可, kit 会自动判断).\n")
+    mutated_genes = {m.gene.upper() for m in (kit.mutations or [])}
+    try:
+        return build_rnaseq_outlier_markdown(rna_expr, mutated_genes)
+    except FileNotFoundError:
+        return ("> 参考分布统计文件缺失 —— 请运行 "
+                "`python scripts/build_driver_gene_ref_stats.py` 生成。\n")
+
+
+def _render_rna_outlier_table_from_rows(rows: list[dict], meta: dict) -> str:
+    """Render the RNA outlier table from cached dict rows (no pd required)."""
+    if meta.get("n_genes_available", 0) == 0 and not any(r.get("available") for r in rows):
+        return (
+            "> **RNA-Seq 表达谱数据未提供** —— 本节为空。"
+            "如 lab 出的 RNA-Seq 表达矩阵可用, 请通过 "
+            "`KitInput.rna_expression_full` 传入后重跑报告。\n"
+        )
+
+    lines = [
+        f"*基于 {meta.get('ref_cohort', 'BeatAML 2.0')} "
+        f"(n = {meta.get('ref_n_samples', '?')}) 的参考分布, 本患者 "
+        f"{meta.get('n_genes_available', 0)} 个基因可计算 z-score, "
+        f"其中 **高表达离群 (z ≥ +1.5) {meta.get('n_outliers_high', 0)} 个**, "
+        f"**低表达离群 (z ≤ -1.5) {meta.get('n_outliers_low', 0)} 个**。 "
+        f"[scale: {meta.get('scale_note', '')}]*",
+        "",
+        "| Tier 组 | 基因 | DNA 状态 | 表达 z-score | 方向 | 备注 |",
+        "|---------|------|----------|-------------:|:----:|------|",
+    ]
+    prev_group = None
+    for r in rows:
+        group = r.get("tier_group", "")
+        group_cell = group if group != prev_group else ""
+        prev_group = group
+        z = r.get("z_score")
+        z_str = f"{z:+.2f}" if isinstance(z, (int, float)) else "n/a"
+        gene = r.get("gene", "")
+        gene_cell = (f"**{gene}**" if (isinstance(z, (int, float))
+                                         and abs(z) >= 1.5)
+                     else gene)
+        note = (r.get("note") or "").replace("|", "\\|")
+        lines.append(f"| {group_cell} | {gene_cell} | {r.get('dna_status', '')} | "
+                     f"{z_str} | {r.get('direction', 'n/a')} | {note} |")
+    lines.append("")
+    lines.append(
+        "*图例*: ↑↑↑ z≥+2.5 · ↑↑ z≥+1.5 · ↑ z≥+0.75 · · 正常 · "
+        "↓ z≤-0.75 · ↓↓ z≤-1.5 · ↓↓↓ z≤-2.5. "
+        "**「双证据支持」**=DNA 检出突变且表达升高; "
+        "**「⚠ 野生型但表达异常高」**=NGS 阴性但转录本上调, 建议复核 cytogenetics/FISH."
+    )
     return "\n".join(lines)
 
 
@@ -522,22 +600,26 @@ def build_clinical_report_markdown(
         "",
         _panel_coverage_table(driver_muts_summary),
         "",
-        "### 3.3 核心驱动突变 — 临床解读",
+        "### 3.3 RNA-Seq 表达离群分析 (25-gene panel + 表达提示基因)",
+        "",
+        _rnaseq_outlier_section(kit, kit_out),
+        "",
+        "### 3.4 核心驱动突变 — 临床解读",
         "",
         _mutation_narrative(kit.mutations or []),
         "",
-        "### 3.4 融合基因",
+        "### 3.5 融合基因",
         "",
         _fusion_narrative(kit.fusions or []),
         "",
-        "### 3.5 细胞遗传学",
+        "### 3.6 细胞遗传学",
         "",
         _cytogenetic_narrative(
             dna.get("cytogenetics", []),
             kit.karyotype_text,
         ),
         "",
-        "### 3.6 ELN 2017 风险分层",
+        "### 3.7 ELN 2017 风险分层",
         "",
         _eln_rationale_prose(kit, kit_out),
         "",

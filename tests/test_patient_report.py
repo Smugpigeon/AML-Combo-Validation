@@ -71,6 +71,8 @@ def _tp53_kit() -> KitInput:
 
 def _mk_output(kit: KitInput, eln: str, driver_flags: dict | None = None,
                top_regimens: list[dict] | None = None) -> KitOutput:
+    rna_outlier = {"rows": [], "meta": {"n_genes_available": 0,
+                                          "scale_note": "no input"}}
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=eln,
@@ -99,6 +101,7 @@ def _mk_output(kit: KitInput, eln: str, driver_flags: dict | None = None,
                 "coverage_score": 0.82,
             }],
         },
+        rna_outlier=rna_outlier,
         dna_summary={
             "sample_qc": {
                 "n_mutations_called": len(kit.mutations or []),
@@ -266,10 +269,11 @@ def test_build_markdown_section_numbering_is_consistent():
     # Section 3 subsections (Molecular Profile) — 6 subsections after tables
     assert "### 3.1 检出的核心驱动突变" in md
     assert "### 3.2 25-gene 核心 panel 覆盖情况" in md
-    assert "### 3.3 核心驱动突变 — 临床解读" in md
-    assert "### 3.4 融合基因" in md
-    assert "### 3.5 细胞遗传学" in md
-    assert "### 3.6 ELN 2017 风险分层" in md
+    assert "### 3.3 RNA-Seq 表达离群分析" in md
+    assert "### 3.4 核心驱动突变 — 临床解读" in md
+    assert "### 3.5 融合基因" in md
+    assert "### 3.6 细胞遗传学" in md
+    assert "### 3.7 ELN 2017 风险分层" in md
     # Section 4 subsections (Treatment Recommendations) must be 4.x
     assert "### 4.1 首选方案" in md
     # Must NOT re-use 3.1 numbering for section 4

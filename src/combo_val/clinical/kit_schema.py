@@ -58,6 +58,14 @@ class KitInput:
     prior_chemo: Optional[bool] = None
     is_initial_diagnosis: Optional[bool] = None
     eln2017: Optional[str] = None           # precomputed; if None we compute from karyotype+mutations
+    # --- Full-transcriptome RNA for expression-outlier analysis (optional) ---
+    # If provided, the kit computes per-gene z-scores vs BeatAML for the 25-gene
+    # core driver panel + expression-hint genes (HOXA9, BCL2, MECOM/EVI1, ...).
+    # Distinct from the `rna` argument of predict_for_patient, which is the
+    # 5000-gene panel used by the Layer-3 MLP. The 25-gene driver panel has
+    # minimal overlap with the 5000-gene MLP panel (only KIT, WT1, MECOM are
+    # shared), so the full transcriptome is needed to cover all 25 drivers.
+    rna_expression_full: Optional[object] = None  # pd.Series(gene_symbol → expr)
     # --- Intent (for kit report framing; not a model feature) ---
     intent_comment: Optional[str] = None
 
@@ -82,6 +90,7 @@ class KitOutput:
     top_regimens: list[dict]                # Layer 1: Route C trial-evidence regimens w/ published CR/OS
     clonal_coverage: dict                   # Layer 2: Path A biology — patient clones + top doublets/triplets by coverage
     dna_summary: dict                       # Per-patient DNA profile: driver mutations, fusions, cytogenetics, targetability, sample QC
+    rna_outlier: dict                       # RNA expression outliers for 25-gene panel + hint genes (z-scores vs BeatAML); empty dict if rna_expression_full not provided
     driver_flags: dict                      # {FLT3_ITD: bool, NPM1: bool, IDH2: bool, ...}
     fitness_flag: str                       # "fit_for_intensive" | "unfit"
     cautions: list[str]                     # e.g. "TLS risk with Venetoclax; baseline LDH elevated"

@@ -19,7 +19,10 @@ from pathlib import Path
 
 import joblib
 
-from combo_val.clinical.demo_kit_run import _synthetic_rna_counts
+from combo_val.clinical.demo_kit_run import (
+    _synthetic_rna_counts,
+    _synthetic_rna_expression_full,
+)
 from combo_val.clinical.dna_report import (
     export_dna_summary_csv,
     generate_patient_readme,
@@ -65,6 +68,7 @@ def main():
 
     # --- Patient 1: FLT3-ITD + NPM1 (young, fit) ---
     rna1 = _synthetic_rna_counts(kept, "young_flt3")
+    rna1_full = _synthetic_rna_expression_full("young_flt3")
     kit1 = KitInput(
         patient_id="SYNTHETIC-001",
         mutations=[
@@ -77,11 +81,13 @@ def main():
         wbc=95.0, platelet=32.0, hemoglobin=8.5, ldh=1240.0,
         alt=28.0, ast=35.0, albumin=3.5,
         age=45, sex="female", is_initial_diagnosis=True,
+        rna_expression_full=rna1_full,
     )
     _run_patient("SYNTHETIC-001", rna1, kit1, out_root)
 
     # --- Patient 2: TP53 + complex karyotype (elderly, unfit) ---
     rna2 = _synthetic_rna_counts(kept, "elderly_tp53")
+    rna2_full = _synthetic_rna_expression_full("elderly_tp53")
     kit2 = KitInput(
         patient_id="SYNTHETIC-002",
         mutations=[
@@ -93,11 +99,13 @@ def main():
         wbc=12.0, platelet=25.0, hemoglobin=7.8, ldh=850.0,
         alt=22.0, ast=30.0, albumin=2.9,
         age=72, sex="male", prior_mds=True, is_initial_diagnosis=True,
+        rna_expression_full=rna2_full,
     )
     _run_patient("SYNTHETIC-002", rna2, kit2, out_root)
 
     # --- Patient 3: APL (PML-RARA) — to show fusion-driven recommendations ---
     rna3 = _synthetic_rna_counts(kept, "young_flt3")  # placeholder RNA
+    rna3_full = _synthetic_rna_expression_full("apl")
     kit3 = KitInput(
         patient_id="SYNTHETIC-003-APL",
         mutations=[],
@@ -106,6 +114,7 @@ def main():
         wbc=2.5, platelet=30.0, hemoglobin=9.0, ldh=320.0,
         alt=25.0, ast=28.0, albumin=4.0,
         age=38, sex="female", is_initial_diagnosis=True,
+        rna_expression_full=rna3_full,
     )
     _run_patient("SYNTHETIC-003-APL", rna3, kit3, out_root)
 
