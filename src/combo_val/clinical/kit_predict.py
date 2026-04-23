@@ -1,14 +1,27 @@
 """End-to-end kit prediction: KitInput + RNA counts → KitOutput (top combos).
 
-Chains together:
-  1. feature_builder.build_patient_features_from_raw → 104-dim vector
-  2. Trained Baseline A MLP → predicted AUC for all 165 drugs
-  3. mechanism_prior.compute_combo_mech_scores for ALL drug pairs
-  4. Factorized combo AUC: 0.5 * (AUC_d1 + AUC_d2) - mech_prior_scale * mech_score
-  5. Rank, format, emit KitOutput
+Three-layer recommendation stack, all patient-specific:
 
-This is the "kit API" a clinical operator would call after running the
-NGS + CBC + karyotype workup on a new patient.
+  Layer 1 — Evidence (Route C — regimen retrieval)
+    match_patient() → top 5 trial-matched regimens with published CR/OS.
+    Covers drugs outside BeatAML vocab (ATRA, ATO, GO).
+
+  Layer 2 — Biology (Path A — Clonal-Coverage × IDA)
+    Decompose patient into clonal archetypes, score every combo (any arity)
+    by Bliss-IDA coverage. Scales to N drugs without retraining. Biology-
+    grounded, fully interpretable.
+
+  Layer 3 — Prediction (Baseline A MLP + factorized combo)
+    Continuous predicted AUC for all drug pairs in the clinical filter.
+    Each pair also annotated with its Path A coverage score for audit.
+
+Pipeline:
+  1. feature_builder.build_patient_features_from_raw → 104-dim vector + QC
+  2. Trained Baseline A MLP → predicted AUC for all 165 drugs
+  3. mechanism_prior.compute_combo_mech_scores → 2-drug pair scores
+  4. clonal_coverage → patient clones + N-arity coverage scores
+  5. regimen_matcher.match_patient → trial-matched regimens
+  6. Assemble + rank + emit KitOutput
 """
 
 from __future__ import annotations
@@ -214,7 +227,7 @@ def predict_for_patient(
             + ("..." if diag["n_imputed_fields"] > 6 else "")
         )
 
-    # ---- Route C: regimen retrieval from curated trial DB ----
+    # ---- Route C (Layer 1): regimen retrieval from curated trial DB ----
     # Runs independently of the MLP so it can ALWAYS produce a recommendation
     # even for drugs the MLP has no vocab for (ATRA/ATO, Decitabine, etc.).
     from combo_val.clinical.regimen_matcher import match_patient as _match_regimen
@@ -231,12 +244,79 @@ def predict_for_patient(
         s["rank"] = rank
         top_regimens.append(s)
 
+    # ---- Path A (Layer 2): Clonal-Coverage × IDA ----
+    # Patient-specific clonal decomposition + N-arity coverage scoring.
+    # Provides a biology-grounded ranking independent of MLP training data.
+    from combo_val.combo.clonal_coverage import (
+        build_patient_clone_matrix,
+        build_drug_clone_coverage,
+        rank_top_combos_per_patient,
+        score_combo_for_patient,
+    )
+
+    pf_df_for_clones = pd.DataFrame(
+        [patient_feat_dict], index=[kit.patient_id], columns=feature_cols_ckpt,
+    )
+    patient_clones = build_patient_clone_matrix(pf_df_for_clones)
+    drug_clone_cov = build_drug_clone_coverage(list(drug_vocab_filt))
+
+    # Top doublets and triplets by PURE clonal coverage (biology-only)
+    def _coverage_ranking_to_dicts(df: pd.DataFrame) -> list[dict]:
+        out = []
+        drug_cols = [c for c in df.columns if c.startswith("drug")]
+        for _, row in df.iterrows():
+            entry = {
+                "rank": int(row["rank"]),
+                "drugs": [str(row[c]) for c in drug_cols if pd.notna(row[c])],
+                "coverage_score": round(float(row["score"]), 3),
+                "arity": int(row["arity"]),
+            }
+            out.append(entry)
+        return out
+
+    cov_k2 = rank_top_combos_per_patient(
+        patient_clones, drug_clone_cov, arity=2, top_k=top_k,
+    )
+    cov_k3 = rank_top_combos_per_patient(
+        patient_clones, drug_clone_cov, arity=3, top_k=top_k,
+    )
+
+    # Annotate each MLP combo with its Path A coverage score (audit)
+    clones_arr = patient_clones.iloc[0].to_numpy(dtype=np.float64)
+    drug_cov_np = drug_clone_cov.to_numpy(dtype=np.float64)
+    drug_to_idx = {d: i for i, d in enumerate(drug_clone_cov.index)}
+    for c in top_combos:
+        i1 = drug_to_idx.get(c["drug1"])
+        i2 = drug_to_idx.get(c["drug2"])
+        if i1 is not None and i2 is not None:
+            cov, _ = score_combo_for_patient(
+                clones_arr, drug_cov_np[[i1, i2]],
+            )
+            c["clonal_coverage_score"] = round(float(cov), 3)
+        else:
+            c["clonal_coverage_score"] = None
+
+    # Per-patient clone structure (biology explanation)
+    present_clones = patient_clones.iloc[0]
+    present_clones = present_clones[present_clones > 0].sort_values(ascending=False)
+
+    clonal_coverage = {
+        "patient_clones": {
+            str(k): round(float(v), 2) for k, v in present_clones.items()
+        },
+        "n_clones_present": int(len(present_clones)),
+        "dominant_clones": [str(k) for k in present_clones.head(3).index],
+        "top_doublets_by_coverage": _coverage_ranking_to_dicts(cov_k2),
+        "top_triplets_by_coverage": _coverage_ranking_to_dicts(cov_k3),
+    }
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
         top_combinations=top_combos,
         top_single_drugs=top_single,
         top_regimens=top_regimens,
+        clonal_coverage=clonal_coverage,
         driver_flags=driver_flags,
         fitness_flag=fitness_flag,
         cautions=_check_kit_cautions(kit, driver_flags),
@@ -250,16 +330,33 @@ def pretty_print_kit_output(out: KitOutput) -> str:
         f"╔═══ Patient {out.patient_id} — AML Combo-Prediction Kit Report ═══",
         f"║ Predicted ELN 2017: {out.predicted_eln2017:<12s}  Fitness: {out.fitness_flag}",
         f"║ Driver flags: {', '.join(k for k, v in out.driver_flags.items() if v) or 'none detected'}",
+    ]
+
+    # ---- Layer 2 (biology summary, headline) — patient clone structure ----
+    cc = out.clonal_coverage or {}
+    clones = cc.get("patient_clones") or {}
+    if clones:
+        clones_str = ", ".join(
+            f"{name} ({w:.1f})" for name, w in list(clones.items())[:5]
+        )
+        lines.append(
+            f"║ Clonal structure ({cc.get('n_clones_present', 0)} present): {clones_str}"
+        )
+
+    lines += [
         "║",
-        "║ TOP RECOMMENDED COMBINATIONS (lower predicted AUC = more cell kill)",
+        "║ LAYER 3 — TOP COMBINATIONS (MLP predicted AUC, ★ = both drugs mech-annotated)",
     ]
     for c in out.top_combinations:
         mark = "★" if c["both_mech_annotated"] else " "
+        cov = c.get("clonal_coverage_score")
+        cov_str = f"  cov={cov:+.2f}" if cov is not None else ""
         lines.append(
             f"║  {c['rank']}.{mark} {c['drug1']:<22s} + {c['drug2']:<22s}  "
-            f"predicted combo AUC = {c['predicted_combo_auc']:6.1f}  "
-            f"(mech score = {c['mech_score']:+.2f})"
+            f"AUC = {c['predicted_combo_auc']:6.1f}  "
+            f"(mech {c['mech_score']:+.2f}{cov_str})"
         )
+
     lines += [
         "║",
         "║ TOP SINGLE DRUGS (reference)",
@@ -268,12 +365,35 @@ def pretty_print_kit_output(out: KitOutput) -> str:
         lines.append(
             f"║  {s['rank']}. {s['drug']:<30s}  predicted AUC = {s['predicted_auc']:6.1f}"
         )
-    # Route C: trial-evidence-based regimens (covers ATRA+ATO, triplets,
-    # regimens with drugs outside the MLP vocab)
+
+    # ---- Layer 2 (biology, detail) — Path A coverage rankings ----
+    if cc.get("top_doublets_by_coverage") or cc.get("top_triplets_by_coverage"):
+        lines += [
+            "║",
+            "║ LAYER 2 — BIOLOGY (Path A clonal-coverage, biology-only ranking)",
+        ]
+        doublets = cc.get("top_doublets_by_coverage") or []
+        triplets = cc.get("top_triplets_by_coverage") or []
+        if doublets:
+            lines.append("║  Doublets (covers N clones via Bliss-IDA):")
+            for d in doublets[:3]:
+                drugs_str = " + ".join(d["drugs"])
+                lines.append(
+                    f"║    {d['rank']}. {drugs_str:<50s}  coverage = {d['coverage_score']:.3f}"
+                )
+        if triplets:
+            lines.append("║  Triplets:")
+            for d in triplets[:3]:
+                drugs_str = " + ".join(d["drugs"])
+                lines.append(
+                    f"║    {d['rank']}. {drugs_str:<50s}  coverage = {d['coverage_score']:.3f}"
+                )
+
+    # ---- Layer 1 (evidence) — Route C trial-matched regimens ----
     if out.top_regimens:
         lines += [
             "║",
-            "║ RECOMMENDED REGIMENS (from curated AML trial evidence)",
+            "║ LAYER 1 — EVIDENCE (trial-matched regimens with published CR/OS)",
         ]
         for r in out.top_regimens:
             drugs_str = " + ".join(r["drugs"])

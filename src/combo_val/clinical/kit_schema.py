@@ -64,12 +64,20 @@ class KitInput:
 
 @dataclass
 class KitOutput:
-    """Structured output the kit reports back to the clinical team."""
+    """Structured output the kit reports back to the clinical team.
+
+    Three complementary recommendation layers, all patient-specific:
+
+      Layer 1 (evidence)    → top_regimens       — Route C: trial-matched regimens
+      Layer 2 (biology)     → clonal_coverage    — Path A: clonal-coverage × IDA
+      Layer 3 (prediction)  → top_combinations   — MLP: continuous AUC prediction
+    """
     patient_id: str
     predicted_eln2017: str                  # computed or passed through
-    top_combinations: list[dict]            # [{rank, drug1, drug2, predicted_auc, mech_score, …}]
+    top_combinations: list[dict]            # Layer 3: MLP [{rank, drug1, drug2, predicted_auc, mech_score, clonal_coverage_score, …}]
     top_single_drugs: list[dict]            # [{rank, drug, predicted_auc}]
-    top_regimens: list[dict]                # Route C: trial-evidence-based regimens w/ published CR/OS
+    top_regimens: list[dict]                # Layer 1: Route C trial-evidence regimens w/ published CR/OS
+    clonal_coverage: dict                   # Layer 2: Path A biology — patient clones + top doublets/triplets by coverage
     driver_flags: dict                      # {FLT3_ITD: bool, NPM1: bool, IDH2: bool, ...}
     fitness_flag: str                       # "fit_for_intensive" | "unfit"
     cautions: list[str]                     # e.g. "TLS risk with Venetoclax; baseline LDH elevated"
