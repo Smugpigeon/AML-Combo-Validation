@@ -46,6 +46,66 @@ from combo_val.combo.mechanism_prior import (
 from combo_val.combo.set_drug_inference import load_set_drug_predictor
 
 
+# ---------------------------------------------------------------------------
+# Backbone registry
+# ---------------------------------------------------------------------------
+#
+# Each backbone is a tuple of (checkpoint_path, kind), where kind determines
+# how it's loaded / used:
+#
+#   "mlp"                    Baseline A SingleDrugMLP — factorized combo +
+#                            mechanism prior. Default; aligns with clinical
+#                            literature (FLT3i+BCL2i at rank 1 for FLT3-mut).
+#
+#   "st"                     Set Transformer family. Covers v2 stable and all
+#                            v3 variants (bliss / distill / pair-ft) — same
+#                            architecture, different training data. Loaded via
+#                            SetDrugInference.
+#
+#   "mlp+synergy"            MLP for singles + Route 4 SynergyHead for pair
+#                            residuals. combo_auc = 0.5*(a1+a2) + synergy.
+
+BACKBONE_REGISTRY: dict[str, dict] = {
+    "mlp": {
+        "kind": "mlp",
+        "checkpoint": "runs/baseline_single_drug_mlp/final_model.pt",
+        "label": "BaselineA-MLP + mech-prior",
+        "description": "Single-drug MLP + factorized (0.5·(AUC_i+AUC_j) − k·mech_score)",
+    },
+    "st-v2": {
+        "kind": "st",
+        "checkpoint": "runs/set_drug_predictor_v2_stable/final_model.pt",
+        "label": "SetTransformer-v2-stable",
+        "description": "Multi-seed stable ST; single-drug-trained only",
+    },
+    "st-v3-bliss": {
+        "kind": "st",
+        "checkpoint": "runs/set_drug_predictor_v3_bliss/final_model.pt",
+        "label": "SetTransformer-v3-BlissIDA",
+        "description": "ST fine-tuned on synthetic Bliss-IDA pair labels (mechanism-blind)",
+    },
+    "st-v3-distill": {
+        "kind": "st",
+        "checkpoint": "runs/set_drug_predictor_v3_distilled/final_model.pt",
+        "label": "SetTransformer-v3-Distill",
+        "description": "ST distilled from Path A clonal-coverage teacher (biology-aligned ranking)",
+    },
+    "st-v3-186pair": {
+        "kind": "st",
+        "checkpoint": "runs/set_drug_predictor_v3_pair_ft/final_model.pt",
+        "label": "SetTransformer-v3-186Pair",
+        "description": "ST fine-tuned on 186 real ALMANAC-HL60 pair measurements",
+    },
+    "mlp+synergy": {
+        "kind": "mlp+synergy",
+        "checkpoint": "runs/baseline_single_drug_mlp/final_model.pt",
+        "synergy_checkpoint": "runs/set_drug_predictor_v3_route4/synergy_head.pt",
+        "label": "BaselineA-MLP + Route4-SynergyHead",
+        "description": "MLP singles + learned synergy residual from 186 ALMANAC pairs",
+    },
+}
+
+
 # Clinical filter matches Week 4 — drops pan-cytotoxic pipeline drugs
 # that can artificially dominate single-drug picks.
 CLINICALLY_RELEVANT_AML_DRUGS = (
@@ -110,47 +170,90 @@ def predict_for_patient(
     kit: KitInput,
     checkpoint_path: Path = Path("runs/baseline_single_drug_mlp/final_model.pt"),
     preprocessor_path: Path = Path("data/canonical/beataml_rna_preprocessor.joblib"),
-    set_transformer_checkpoint: Path = Path("runs/set_drug_predictor_v2_stable/final_model.pt"),
     top_k: int = 5,
     drug_filter: tuple[str, ...] | None = CLINICALLY_RELEVANT_AML_DRUGS,
     mech_prior_scale: float = 30.0,
-    prefer_set_transformer: bool = False,
+    backbone: str = "mlp",
+    # Deprecated aliases
+    set_transformer_checkpoint: Path | None = None,
+    prefer_set_transformer: bool | None = None,
 ) -> KitOutput:
     """Run the full kit prediction pipeline for one new patient.
 
-    Layer 3 backbone selection:
-      - Default (prefer_set_transformer=False): Baseline A MLP + factorized
-        combo AUC + mechanism-prior bonus. This matches clinical literature
-        for canonical pairs (FLT3i+BCL2i at rank 1 for FLT3-mut patients).
-      - Opt-in (prefer_set_transformer=True AND checkpoint exists): Set
-        Transformer. Gives arity-generalizable predictions (2-6 drugs from
-        same model), but trained on single-drug data only — pair rankings
-        do NOT reproduce canonical clinical combos without additional
-        pair-level supervision. Use for exploration / 3+ drug triplets, not
-        as sole recommender.
+    Layer 3 backbone (``backbone`` kwarg, default ``"mlp"``):
+
+      Clinical-recommender backbones (aligned with published evidence):
+        "mlp"             Baseline A MLP + factorized combo + mech prior.
+                          Default. Canonical FLT3i+BCL2i at rank 1 for FLT3-mut.
+
+      Diagnostic / research backbones (report-only — do NOT replace "mlp" for
+      clinical recommendation; each one's failure mode is documented):
+        "st-v2"           Set Transformer, single-drug training only.
+        "st-v3-bliss"     ST + synthetic Bliss-IDA (mechanism-blind).
+        "st-v3-distill"   ST distilled from Path A clonal-coverage teacher.
+        "st-v3-186pair"   ST fine-tuned on 186 real ALMANAC-HL60 pair
+                          measurements (HL-60 is FLT3-wt → no FLT3-mut rules).
+        "mlp+synergy"     MLP singles + Route-4 SynergyHead pair residual.
+
+    Availability gracefully falls back to "mlp" if the requested backbone's
+    checkpoint is missing.
     """
+    # Back-compat: legacy prefer_set_transformer / set_transformer_checkpoint
+    if prefer_set_transformer is True and backbone == "mlp":
+        backbone = "st-v2"
+    if set_transformer_checkpoint is not None:
+        warnings.warn(
+            "set_transformer_checkpoint is deprecated; use backbone='st-v2' "
+            "and rely on BACKBONE_REGISTRY for the checkpoint path.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+
+    if backbone not in BACKBONE_REGISTRY:
+        available = ", ".join(BACKBONE_REGISTRY.keys())
+        raise ValueError(
+            f"Unknown backbone '{backbone}'. Available: {available}"
+        )
+    spec = BACKBONE_REGISTRY[backbone]
+    if not Path(spec["checkpoint"]).exists():
+        warnings.warn(
+            f"Backbone '{backbone}' checkpoint missing at {spec['checkpoint']}; "
+            f"falling back to 'mlp'.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
+        backbone = "mlp"
+        spec = BACKBONE_REGISTRY["mlp"]
+
     # --- 1. Features ---
     features, diag = build_patient_features_from_raw(
         rna_counts, kit, preprocessor_path=preprocessor_path,
     )
 
-    # --- 2. Layer 3 predictions (Set Transformer preferred, MLP fallback) ---
-    st_predictor = (load_set_drug_predictor(set_transformer_checkpoint)
-                    if prefer_set_transformer else None)
+    # --- 2. Layer 3 predictions — select by backbone kind ---
+    synergy_predictor = None  # only set for mlp+synergy
 
-    if st_predictor is not None:
-        layer3_backbone = "SetTransformer"
+    if spec["kind"] == "st":
+        st_predictor = load_set_drug_predictor(Path(spec["checkpoint"]))
+        if st_predictor is None:
+            raise RuntimeError(
+                f"Failed to load ST backbone '{backbone}' — checkpoint at "
+                f"{spec['checkpoint']} exists but SetDrugInference returned None."
+            )
+        layer3_backbone = spec["label"]
         drug_vocab: list[str] = st_predictor.drug_vocab
         feature_cols_ckpt = st_predictor.feature_cols
         if len(feature_cols_ckpt) != len(features):
             raise ValueError(
-                f"Feature-schema mismatch (Set Transformer): checkpoint expects "
+                f"Feature-schema mismatch (ST '{backbone}'): checkpoint expects "
                 f"{len(feature_cols_ckpt)} features, builder produced {len(features)}."
             )
-        pred_auc = st_predictor.predict_singles(features)  # (n_drugs,)
+        pred_auc = st_predictor.predict_singles(features)
     else:
-        layer3_backbone = "BaselineA-MLP"
-        model, ckpt = _load_mlp(checkpoint_path)
+        # "mlp" OR "mlp+synergy" — both use MLP for singles
+        layer3_backbone = spec["label"]
+        mlp_ckpt_path = Path(spec["checkpoint"])
+        model, ckpt = _load_mlp(mlp_ckpt_path)
         drug_vocab = ckpt["drug_vocab"]
         feature_cols_ckpt = ckpt["feature_cols"]
         scaler_mean = np.array(ckpt["scaler_mean"], dtype=np.float32)
@@ -165,6 +268,23 @@ def predict_for_patient(
         pf_tensor = torch.tensor(standardized, dtype=torch.float32)
         with torch.no_grad():
             pred_auc = model.predict_all_drugs_for_patient(pf_tensor, torch.device("cpu")).numpy()
+
+        # If mlp+synergy, also load the Route 4 synergy head
+        if spec["kind"] == "mlp+synergy":
+            from combo_val.combo.synergy_inference import SynergyInference
+            syn_path = Path(spec["synergy_checkpoint"])
+            if not syn_path.exists():
+                warnings.warn(
+                    f"Synergy head missing at {syn_path}; falling back to pure MLP.",
+                    RuntimeWarning, stacklevel=2,
+                )
+            else:
+                synergy_predictor = SynergyInference(syn_path, device="cpu")
+                layer3_backbone = spec["label"]
+
+    # For ST backbones, we still need the MLP's drug_vocab alignment is
+    # identical (both train on same beataml_drug_response_long.csv → sorted()).
+    # Confirmed equal by construction; no extra validation needed.
 
     # --- 3. Drug filter ---
     if drug_filter:
@@ -193,15 +313,39 @@ def predict_for_patient(
     mech_scores = mech_scores[0]                                      # (n_d, n_d)
 
     n_d = len(drug_vocab_filt)
-    if layer3_backbone == "SetTransformer":
-        # Predicted pair AUC directly from the Set Transformer (learned combo).
+    if spec["kind"] == "st":
+        # ST family: learned pair AUC direct from the set transformer.
         filt_st_indices = [st_predictor.drug_to_int[d] for d in drug_vocab_filt]
         combo_auc = st_predictor.predict_pairs(features, filt_st_indices)
-        # Force symmetry via (A + Aᵀ) / 2 — the architecture is already
-        # permutation-invariant but finite-precision can leave 1e-6 asymmetries.
-        combo_auc = 0.5 * (combo_auc + combo_auc.T)
+        combo_auc = 0.5 * (combo_auc + combo_auc.T)   # enforce symmetry
+    elif spec["kind"] == "mlp+synergy" and synergy_predictor is not None:
+        # Route 4: MLP singles + learned synergy residual from ALMANAC pairs.
+        filt_syn_indices = [
+            synergy_predictor.drug_to_int[d] for d in drug_vocab_filt
+            if d in synergy_predictor.drug_to_int
+        ]
+        # Build full synergy matrix (n_d, n_d) padding missing drugs with 0
+        syn_matrix = np.zeros((n_d, n_d), dtype=np.float32)
+        if len(filt_syn_indices) == n_d:
+            syn_matrix = synergy_predictor.predict_synergy_matrix(filt_syn_indices)
+        else:
+            # Partial coverage: build matrix in the subset, leave others at 0
+            subset_syn = synergy_predictor.predict_synergy_matrix(filt_syn_indices)
+            subset_lookup = {
+                d: i for i, d in enumerate(drug_vocab_filt)
+                if d in synergy_predictor.drug_to_int
+            }
+            subset_order = [subset_lookup[d] for d in drug_vocab_filt
+                            if d in subset_lookup]
+            for a_i, a_full in enumerate(subset_order):
+                for b_i, b_full in enumerate(subset_order):
+                    syn_matrix[a_full, b_full] = subset_syn[a_i, b_i]
+        combo_auc = (
+            0.5 * (pred_auc_filt[:, None] + pred_auc_filt[None, :])
+            + syn_matrix                       # synergy_loewe sign convention: negative = synergistic
+        )
     else:
-        # Factorized: 0.5·(AUC_i + AUC_j) − mech_scale·mech_score
+        # "mlp" default: factorized + mech prior.
         combo_auc = (
             0.5 * (pred_auc_filt[:, None] + pred_auc_filt[None, :])
             - mech_prior_scale * mech_scores
