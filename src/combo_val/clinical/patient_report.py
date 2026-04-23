@@ -1,0 +1,816 @@
+"""Clinical-grade per-patient report generator — Markdown + PDF.
+
+Output is a narrative-first clinical report modeled on Foundation Medicine /
+Caris molecular tumor-board report conventions, intended for MDT review
+without requiring the clinician to learn the kit's internal data structures.
+
+Sections:
+  1. Executive summary (3-4 sentences the MDT reads aloud)
+  2. Patient demographics and specimen QC
+  3. Molecular profile narrative (mutations + fusions + cytogenetics in prose)
+  4. ELN 2017 risk stratification with rationale
+  5. Treatment recommendations (top 3, paragraph each with trial PMID + CR/OS)
+  6. Model-based combination prediction (optional)
+  7. Clonal biology rationale
+  8. Confidence + limitations + reviewer checklist
+  9. Methodology + key references
+
+PDF rendering via pandoc (already installed on user's machine).
+"""
+
+from __future__ import annotations
+
+import os
+import subprocess
+from datetime import datetime
+from pathlib import Path
+
+from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
+
+
+def _weasyprint_env() -> dict[str, str]:
+    """Return an env with DYLD_FALLBACK_LIBRARY_PATH patched for Homebrew dylibs.
+
+    On macOS (especially Apple Silicon), WeasyPrint needs pango/cairo libraries
+    that Homebrew installs under /opt/homebrew/lib, but Anaconda's Python
+    doesn't search there by default. Adding this path lets weasyprint find
+    libpango/libcairo without root privileges.
+    """
+    env = os.environ.copy()
+    homebrew_lib = "/opt/homebrew/lib"
+    if Path(homebrew_lib).exists():
+        existing = env.get("DYLD_FALLBACK_LIBRARY_PATH", "")
+        env["DYLD_FALLBACK_LIBRARY_PATH"] = (
+            f"{homebrew_lib}:{existing}" if existing else homebrew_lib
+        )
+    return env
+
+
+# ---------------------------------------------------------------------------
+# Prose generators (narrative building blocks)
+# ---------------------------------------------------------------------------
+
+
+_GENE_PROSE: dict[str, str] = {
+    "FLT3": "**FLT3** 是 AML 最常见的可靶向驱动基因（发生率约 25-30%）。FLT3-ITD (内部串联重复) 与 FLT3-TKD (tyrosine kinase domain point mutation) 临床意义不同：ITD 使 FLT3 受体持续激活，带来更差预后；TKD 相对 ITD 预后更好。FDA 批准的 FLT3 抑制剂包括 Midostaurin (多激酶，一线与 7+3 联用)、Quizartinib (ITD 专选，与 7+3 联用)、Gilteritinib (ITD+TKD 均活性，R/R 单药或联合 Ven)。",
+    "NPM1": "**NPM1** 突变出现在约 30% AML 患者，是 WHO 2022 的独立 AML 亚型。Isolated NPM1 或与 FLT3-ITD low-AR 合并时预后良好；与 FLT3-ITD high-AR 合并时需 ELN 2017 修正归为 Intermediate。Menin 抑制剂 (Revumenib, FDA 2024 KMT2A-r 批准，NPM1 indication 在研究阶段) 对 NPM1-mut AML 的 HOXA/MEIS1 表达程序有靶向性。",
+    "IDH1": "**IDH1** R132 neomorphic 突变产生 2-hydroxyglutarate (2-HG)，阻断分化。**Ivosidenib** (FDA 2018 R/R 批准, AGILE 2022 一线批准联合 Aza) 是特异性 IDH1 抑制剂；**Olutasidenib** 2022 年 FDA 批准用于 R/R。",
+    "IDH2": "**IDH2** R140/R172 突变机制类似 IDH1。**Enasidenib** (FDA 2017 R/R 批准) 是特异性 IDH2 抑制剂。Enasidenib + Venetoclax (ENAVEN 试验) 对 IDH2-mut 有强协同。",
+    "TP53": "**TP53** 突变是 AML 最不良预后因素之一。传统 7+3 诱导对 TP53-mut 患者 CR 率低 (~20-30%)，中位 OS 约 4-6 个月。WHO 2022 将 multi-hit TP53 (双等位命中或伴 complex karyotype) 定义为独立 adverse 亚型。治疗方面，传统方案效果差，应考虑**临床试验入组** + **早期 allo-SCT 桥接**。",
+    "RUNX1": "**RUNX1** 突变按 ELN 2017 归为 Adverse (尽管在 ELN 2022 有例外，de novo 情境下与 CBF 融合共存时可能 Intermediate)。无特异性靶向药。",
+    "ASXL1": "**ASXL1** 突变常见于继发性 AML (MDS/MPN 转化)，按 ELN 2017 归为 Adverse。常与 SRSF2、TET2、DNMT3A 共突变形成 CHIP-AML 模式。",
+    "CEBPA": "**CEBPA** 双等位突变 (biallelic) 按 ELN 2017 归为 Favorable；单等位 (monoallelic) 无此优势。WHO 2022 要求 bZIP domain 特异性检测以精确分类。",
+    "DNMT3A": "**DNMT3A** 突变是 AML 最常见背景事件 (~25%)，多为 R882H 热点。独立预后影响中等偏负。HMA (Azacitidine, Decitabine) 对 DNMT3A-mut 克隆有证据支持的协同。",
+    "TET2": "**TET2** 突变也是 epigenetic 背景事件，与 DNMT3A 功能相关。HMA 响应预测弱阳性。",
+    "KIT": "**c-KIT** 突变在 core-binding factor AML (t(8;21) 或 inv(16)) 中出现时恶化预后。Dasatinib 有研究阶段应用。",
+    "NRAS": "**NRAS** 激活 RAS-MAPK 通路，与 AML 治疗抵抗相关。MEK 抑制剂 (Trametinib) 有研究阶段数据。",
+    "KRAS": "**KRAS** 激活 RAS-MAPK 通路，AML 中较 NRAS 少见。",
+    "PTPN11": "**PTPN11** 激活 RAS-MAPK 通路，某些队列中 adverse。",
+    "KMT2A": "**KMT2A** (MLL1) 基因突变罕见。真正临床重要的是 **KMT2A-r** (KMT2A 融合)，menin 抑制剂 Revumenib 2024 FDA 批准。",
+    "MECOM": "**MECOM** 常通过 inv(3)/t(3;3) 融合激活，ELN 2017 uniformly adverse。无靶向药。",
+    "CBFB": "**CBFB** 通过 inv(16) 或 t(16;16) 与 MYH11 融合，core-binding factor AML，ELN 2017 Favorable。7+3 + GO 是标准方案。",
+}
+
+
+_FUSION_PROSE: dict[str, str] = {
+    "PML-RARA": "**PML-RARA** 融合定义急性早幼粒细胞白血病 (APL)，是 AML 的特殊亚型。**ATRA (维甲酸) + ATO (三氧化二砷) 是 APL 的一线方案**，可治愈率 > 90%。**7+3 诱导对 APL 不适当**，因为存在分化综合症风险且不如 ATRA+ATO 有效。WBC ≥ 10 × 10^9/L 的 high-risk APL 可加 GO 或 Idarubicin。",
+    "KMT2A-r": "**KMT2A (11q23) 重排** 通过多种融合伴侣 (MLLT3、AFDN、ENL、ELL 等) 驱动 AML。按 ELN 2017，t(9;11) KMT2A-MLLT3 为 Intermediate，其他 KMT2A 融合为 Adverse。**Revumenib** (FDA 2024 批准) 是 menin 抑制剂，针对 KMT2A-r AML 的 HOXA/MEIS1 程序。",
+    "CBFB-MYH11": "**inv(16) 或 t(16;16)** 产生 CBFB-MYH11 融合，属 core-binding factor AML (CBF-AML)。ELN 2017 Favorable，5 年 OS ~60-70% 用标准 7+3 + GO。",
+    "RUNX1-RUNX1T1": "**t(8;21)** 产生 RUNX1-RUNX1T1 融合，属 core-binding factor AML。ELN 2017 Favorable，标准治疗 7+3 + GO，高治愈率。KIT 共突变恶化预后。",
+}
+
+
+def _executive_summary(kit: KitInput, kit_out: KitOutput) -> str:
+    """3-4 sentence clinical summary at the top of the report."""
+    age_str = f"{kit.age:.0f} 岁" if kit.age else "年龄未知"
+    sex_cn = {"male": "男性", "female": "女性"}.get((kit.sex or "").lower(), "")
+    eln = kit_out.predicted_eln2017
+    fitness = "适合强化诱导" if kit_out.fitness_flag == "fit_for_intensive" else "不适合强化诱导"
+
+    # Key drivers
+    driver_flags = kit_out.driver_flags
+    active_drivers = [k.replace("_", "-") for k, v in driver_flags.items() if v]
+    driver_str = "、".join(active_drivers) if active_drivers else "未检出核心驱动突变"
+
+    # Top regimen
+    top_regimen = (kit_out.top_regimens or [{}])[0]
+    top_reg_name = top_regimen.get("name", "方案待定")
+    top_reg_cr = top_regimen.get("published_cr_cri_rate")
+    cr_str = f"（CR/CRi {100 * top_reg_cr:.0f}%）" if top_reg_cr else ""
+
+    return (
+        f"本患者为 **{age_str} {sex_cn}**，分子分型提示 **{driver_str}**，"
+        f"综合 ELN 2017 风险分层为 **{eln}**，临床评估为 **{fitness}**。"
+        f"基于分子特征与已发表临床试验证据，**一线方案首选 {top_reg_name}{cr_str}**。"
+        f"详见下文各节。"
+    )
+
+
+def _mutation_narrative(mutations: list[MutationCall]) -> str:
+    """Build a prose paragraph describing each driver mutation's clinical meaning."""
+    if not mutations:
+        return "NGS 突变 panel 未检出核心驱动基因 (25-gene panel)。不排除其他 panel 外基因突变或样本敏感度限制，建议回顾 lab 原始 variant list。"
+
+    lines = []
+    for m in mutations:
+        gene = m.gene.upper()
+        vaf_str = f"VAF {m.vaf:.2f}" if m.vaf is not None else "VAF 未报告"
+        variant = m.variant_type or "未分类"
+
+        specific = ""
+        if gene == "FLT3":
+            if m.is_ITD:
+                ar = m.allelic_ratio or 0
+                ar_flag = ("**高负荷 ITD (AR ≥ 0.5)**" if ar >= 0.5
+                           else "低负荷 ITD (AR < 0.5)")
+                specific = f" 检测到 **FLT3-ITD** (AR={ar:.2f})，属于 {ar_flag}。"
+            elif m.is_TKD:
+                specific = " 检测到 **FLT3-TKD** 点突变 (通常 D835Y/F691L 等)。"
+        elif gene == "CEBPA" and m.is_biallelic:
+            specific = " 为 **biallelic** (双等位突变)，按 ELN 2017 归 Favorable。"
+
+        prose = _GENE_PROSE.get(gene, "")
+        lines.append(f"- **{gene}** ({variant}, {vaf_str}).{specific}\n  {prose}")
+    return "\n".join(lines)
+
+
+def _fusion_narrative(fusions: list[str]) -> str:
+    if not fusions:
+        return "细胞遗传学未报告融合基因。核型分析详见第 2.3 节。"
+    lines = []
+    for f in fusions:
+        prose = ""
+        for known, desc in _FUSION_PROSE.items():
+            if known.upper() in f.upper():
+                prose = desc
+                break
+        lines.append(f"- **{f}**\n  {prose or '此融合临床意义需文献核查。'}")
+    return "\n".join(lines)
+
+
+def _cytogenetic_narrative(cytogenetics: list[dict], karyotype_text: str | None) -> str:
+    if not karyotype_text:
+        return "无核型报告。建议血液科 / 细胞遗传学补充分析。"
+    lines = [f"**原始核型**: `{karyotype_text}`\n"]
+    abnormal = [c for c in cytogenetics
+                if c.get("present") and "Normal" not in c.get("finding", "")]
+    normal_flag = next((c for c in cytogenetics
+                         if "Normal" in c.get("finding", "")), None)
+
+    if not abnormal:
+        if normal_flag and normal_flag.get("present"):
+            lines.append("核型分析示**正常核型 (46,XX or 46,XY)**，未检出 ELN 2017 高危异常。")
+        else:
+            lines.append("核型解析未检出显著异常。")
+    else:
+        lines.append("**检出的 cytogenetic 异常：**\n")
+        for c in abnormal:
+            lines.append(f"- **{c['finding']}** — {c.get('interpretation', '')}")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def _eln_rationale_prose(kit: KitInput, kit_out: KitOutput) -> str:
+    """Narrative explanation of WHY the patient got their ELN category."""
+    eln = kit_out.predicted_eln2017
+    flags = kit_out.driver_flags
+    drivers_active = [k for k, v in flags.items() if v]
+    fusions_str = " ".join(kit.fusions or []).upper()
+
+    if eln == "Favorable":
+        # APL is a distinct ELN Favorable subtype — NOT CBF-AML
+        if "PML-RARA" in fusions_str or "PML_RARA" in fusions_str:
+            return ("ELN 2017 分层为 **Favorable**，依据: **PML-RARA 融合 (APL)**。"
+                    "**急性早幼粒细胞白血病是独立亚型，治疗方案与其他 AML 完全不同**: "
+                    "首选 ATRA+ATO (low-risk) 或 ATRA+ATO+Idarubicin (high-risk)，"
+                    "可治愈率 > 90%。**不适用 7+3 诱导**。")
+        # CBF-AML (true core-binding factor)
+        if any(f in fusions_str for f in
+               ("RUNX1-RUNX1T1", "RUNX1_RUNX1T1", "AML1-ETO",
+                "CBFB-MYH11", "CBFB_MYH11", "INV(16)")):
+            return ("ELN 2017 分层为 **Favorable**，依据: **core-binding factor 融合** "
+                    "(t(8;21) RUNX1-RUNX1T1 或 inv(16) CBFB-MYH11)。"
+                    "标准 7+3 + GO (Mylotarg) 有效，5 年 OS 60-70%。")
+        if flags.get("NPM1") and not flags.get("FLT3_ITD"):
+            return ("ELN 2017 分层为 **Favorable**，依据: NPM1 突变存在且无 FLT3-ITD。"
+                    "该亚型预后好，5-year OS 可达 60-70%，强化治疗反应率高。")
+        if "CEBPA_biallelic" in drivers_active:
+            return ("ELN 2017 分层为 **Favorable**，依据: CEBPA biallelic 双等位突变。"
+                    "此为 WHO 2022 独立 AML 亚型，预后好。")
+        return ("ELN 2017 分层为 **Favorable**，依据综合 favorable 特征。"
+                "标准强化诱导方案有效。")
+
+    if eln == "Adverse":
+        parts = ["ELN 2017 分层为 **Adverse**，依据："]
+        if flags.get("TP53"):
+            parts.append("TP53 突变 (ELN 2017 明确 adverse)")
+        if flags.get("RUNX1"):
+            parts.append("RUNX1 突变 (ELN 2017 adverse)")
+        if flags.get("FLT3_ITD") and not flags.get("NPM1"):
+            parts.append("FLT3-ITD 高负荷 (无 NPM1 修正)")
+        return (", ".join(parts) +
+                "。此组预后差，传统 7+3 效果有限，建议临床试验入组 + allo-SCT 早期桥接。")
+
+    if eln == "Intermediate":
+        if flags.get("NPM1") and flags.get("FLT3_ITD"):
+            return ("ELN 2017 分层为 **Intermediate**，依据: NPM1 突变 + FLT3-ITD 高负荷组合 "
+                    "(按 ELN 2017 修正规则，高 AR FLT3-ITD 原为 adverse，但 NPM1 "
+                    "co-mutation 将整体归为 Intermediate)。"
+                    "建议强化诱导 + FLT3 抑制剂 + 考虑 allo-SCT。")
+        return ("ELN 2017 分层为 **Intermediate**。无明确 favorable 或 adverse 特征。"
+                "具体治疗强度选择根据患者体能状态 + 共突变分布综合判断。")
+
+    return f"ELN 2017 分层: {eln}。"
+
+
+def _regimen_section(kit_out: KitOutput) -> str:
+    """Render top 3 regimens as narrative paragraphs."""
+    regimens = kit_out.top_regimens or []
+    if not regimens:
+        return "*未返回匹配方案。可能原因：患者驱动基因组合超出数据库覆盖范围；建议按 ELN 风险 + 体能状态由临床医生选择。*"
+
+    lines = []
+    for i, r in enumerate(regimens[:3], 1):
+        name = r.get("name", f"Regimen {i}")
+        drugs = " + ".join(r.get("drugs", []))
+        trial = r.get("trial_name", "")
+        phase = r.get("trial_phase", "")
+        pmid = r.get("pmid")
+        cr = r.get("published_cr_cri_rate")
+        os_m = r.get("published_median_os_months")
+
+        cr_str = f"**CR/CRi = {100 * cr:.0f}%**" if cr else ""
+        os_str = f"，中位 OS = {os_m:.1f} 月" if os_m else ""
+        pmid_link = f" (PMID [{pmid}](https://pubmed.ncbi.nlm.nih.gov/{pmid}/))" if pmid else ""
+
+        match_reason = r.get("biomarker_matches") or []
+        match_str = ("患者匹配该方案的依据: " + "、".join(match_reason) + "。"
+                      if match_reason else "")
+
+        cautions = r.get("cautions") or []
+        caution_str = ("\n\n  **用药警告**:\n" +
+                        "\n".join(f"  - {c}" for c in cautions)
+                        if cautions else "")
+
+        rank_prefix = {1: "### 4.1 首选方案", 2: "### 4.2 次选方案",
+                       3: "### 4.3 备选方案"}.get(i, f"### 4.{i} 方案")
+        lines.append(
+            f"{rank_prefix}: {name}\n\n"
+            f"**组成**: {drugs}\n\n"
+            f"**证据**: {phase} {trial}{pmid_link}. 原始试验报告 {cr_str}{os_str}。\n\n"
+            f"{match_str}{caution_str}"
+        )
+    return "\n\n".join(lines)
+
+
+def _combo_prediction_narrative(kit_out: KitOutput) -> str:
+    """Layer 3 MLP prediction summary."""
+    combos = kit_out.top_combinations or []
+    if not combos:
+        return "*模型未返回组合预测。*"
+    top = combos[0]
+    backbone = top.get("layer3_backbone", "unknown")
+    lines = [
+        f"基于 `{backbone}` backbone 在 BeatAML 2.0 (613 患者 × 165 药) 数据集上训练，"
+        f"对本患者预测 AUC 最低 (理论细胞杀伤最强) 的 top-3 组合：\n",
+    ]
+    for c in combos[:3]:
+        pair = f"{c['drug1']} + {c['drug2']}"
+        auc = c.get("predicted_combo_auc", "?")
+        mech = c.get("mech_score", 0)
+        cov = c.get("clonal_coverage_score")
+        cov_str = f"，克隆覆盖 {cov:.2f}" if cov is not None else ""
+        lines.append(
+            f"- **{pair}** — 预测 AUC {auc:.1f} (机制先验 {mech:+.2f}{cov_str})"
+        )
+    lines.append(
+        "\n*注意*: 组合 AUC 预测基于 ex-vivo (体外) 数据，不等同于临床 CR 预测。"
+        "建议对照第三节的临床试验证据综合判断。"
+    )
+    return "\n".join(lines)
+
+
+def _clonal_coverage_narrative(kit_out: KitOutput) -> str:
+    cc = kit_out.clonal_coverage or {}
+    if not cc:
+        return "*克隆分析未可用。*"
+    clones = cc.get("patient_clones", {})
+    if not clones:
+        return "患者突变 panel 未识别显著 clonal archetype。"
+    clone_list = "、".join(f"{k} (权重 {v})" for k, v in clones.items())
+    dominant = cc.get("dominant_clones", [])
+    dom_str = f" 主要克隆: {'、'.join(dominant)}。" if dominant else ""
+
+    top_triplets = cc.get("top_triplets_by_coverage", [])
+    triplet_lines = []
+    for t in top_triplets[:3]:
+        drugs = " + ".join(t.get("drugs", []))
+        cov = t.get("coverage_score", 0)
+        triplet_lines.append(f"- {drugs} — 覆盖 {cov:.2f}")
+
+    narrative = (
+        f"本患者分子分型在 Palmer-Sorger Independent Drug Action (IDA) 框架下分解为 "
+        f"{cc.get('n_clones_present', 0)} 个活跃克隆原型: {clone_list}。{dom_str}\n\n"
+        f"按 Bliss-IDA 理论，三药联合能覆盖更多克隆:\n"
+    )
+    return narrative + "\n".join(triplet_lines)
+
+
+def _confidence_narrative(kit_out: KitOutput) -> str:
+    """Sample QC + confidence caveats in prose."""
+    dna = kit_out.dna_summary or {}
+    qc = dna.get("sample_qc", {})
+    notes = kit_out.confidence_notes or []
+
+    lines = []
+    n_mut = qc.get("n_mutations_called", 0)
+    n_above = qc.get("n_above_vaf_0_20", 0)
+    karyotype_ok = qc.get("karyotype_parsed", False)
+    fusions_n = qc.get("fusions_reported", 0)
+
+    lines.append(f"**样本质控**:\n")
+    lines.append(f"- NGS 突变检出: {n_mut} 个，其中 VAF ≥ 0.20 的有 {n_above} 个")
+    lines.append(f"- 核型解析: {'成功' if karyotype_ok else '未成功或未提供'}")
+    lines.append(f"- 融合报告: {fusions_n} 个\n")
+
+    if notes:
+        lines.append("**模型置信度说明**:\n")
+        for n in notes:
+            lines.append(f"- {n}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def _cautions_section(kit_out: KitOutput) -> str:
+    cautions = kit_out.cautions or []
+    if not cautions:
+        return "*未检测到特殊用药禁忌。*"
+    return "\n".join(f"- {c}" for c in cautions)
+
+
+# ---------------------------------------------------------------------------
+# Main report builder
+# ---------------------------------------------------------------------------
+
+
+def build_clinical_report_markdown(kit: KitInput, kit_out: KitOutput) -> str:
+    """Build a complete clinical-grade Markdown report for one patient."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+    dna = kit_out.dna_summary or {}
+
+    sections = [
+        # ---- Header ----
+        f"# AML 精准用药评估报告",
+        f"**Patient ID**: `{kit.patient_id}`  ",
+        f"**报告时间**: {timestamp}  ",
+        f"**Kit 版本**: v0.2 — research use only, not for clinical diagnosis  ",
+        f"**报告性质**: 辅助决策，不替代主治医师判断",
+        "",
+        "---",
+        "",
+        # ---- Section 1: Executive Summary ----
+        "## 一、临床快报 (Executive Summary)",
+        "",
+        _executive_summary(kit, kit_out),
+        "",
+        "---",
+        "",
+        # ---- Section 2: Patient + Specimen ----
+        "## 二、患者基本信息与样本",
+        "",
+        "### 2.1 基本信息",
+        "",
+        f"- **患者 ID**: {kit.patient_id}",
+        f"- **年龄**: {kit.age or '未知'} 岁",
+        f"- **性别**: {'男性' if (kit.sex or '').lower() == 'male' else '女性' if (kit.sex or '').lower() == 'female' else '未知'}",
+        f"- **体能状态**: {kit_out.fitness_flag}",
+        f"- **疾病阶段**: {'复发/难治' if kit.is_relapse else '新诊断'}{' (继发于 MDS)' if kit.prior_mds else ''}",
+        "",
+        "### 2.2 化验室指标",
+        "",
+    ]
+
+    # Labs
+    labs = []
+    if kit.wbc is not None:
+        labs.append(f"- **WBC**: {kit.wbc:.1f} × 10⁹/L")
+    if kit.platelet is not None:
+        labs.append(f"- **血小板**: {kit.platelet:.0f} × 10⁹/L")
+    if kit.hemoglobin is not None:
+        labs.append(f"- **血红蛋白**: {kit.hemoglobin:.1f} g/dL")
+    if kit.ldh is not None:
+        labs.append(f"- **LDH**: {kit.ldh:.0f} U/L")
+    if kit.blast_pct_bm is not None:
+        labs.append(f"- **骨髓原始细胞比例**: {kit.blast_pct_bm:.0f}%")
+    if kit.blast_pct_pb is not None:
+        labs.append(f"- **外周原始细胞比例**: {kit.blast_pct_pb:.0f}%")
+    sections.extend(labs if labs else ["_化验数据未提供_"])
+    sections.extend(["", "---", ""])
+
+    # ---- Section 3: Molecular Profile ----
+    sections.extend([
+        "## 三、分子特征 (Molecular Profile)",
+        "",
+        "### 3.1 核心驱动突变",
+        "",
+        _mutation_narrative(kit.mutations or []),
+        "",
+        "### 3.2 融合基因",
+        "",
+        _fusion_narrative(kit.fusions or []),
+        "",
+        "### 3.3 细胞遗传学",
+        "",
+        _cytogenetic_narrative(
+            dna.get("cytogenetics", []),
+            kit.karyotype_text,
+        ),
+        "",
+        "### 3.4 ELN 2017 风险分层",
+        "",
+        _eln_rationale_prose(kit, kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 4: Treatment Recommendations ----
+    sections.extend([
+        "## 四、治疗方案推荐",
+        "",
+        "以下方案按综合证据强度排序 (临床试验阶段、患者生物标志物匹配度、适应症严格度)。**每个方案的选择责任最终在主治医师**，本报告为辅助信息。",
+        "",
+        _regimen_section(kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 5: Model Prediction ----
+    sections.extend([
+        "## 五、模型辅助预测 (Research-grade)",
+        "",
+        "### 5.1 组合 AUC 预测 (Layer 3)",
+        "",
+        _combo_prediction_narrative(kit_out),
+        "",
+        "### 5.2 克隆生物学 rationale (Layer 2)",
+        "",
+        _clonal_coverage_narrative(kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 6: Cautions ----
+    sections.extend([
+        "## 六、用药警告与注意事项",
+        "",
+        _cautions_section(kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 7: QC & Limitations ----
+    sections.extend([
+        "## 七、质量控制与局限 (Confidence & Limitations)",
+        "",
+        _confidence_narrative(kit_out),
+        "",
+        "### 7.1 已知限制",
+        "",
+        "- **Panel 覆盖**: 25 个核心驱动基因 panel，未覆盖 comprehensive gene list。"
+        "  如 lab 报告含其他基因，请人工结合原始报告解读。",
+        "- **ELN 版本**: 本报告使用 ELN 2017 (因 BeatAML 训练队列 2014-2019，ELN 2017 "
+        "  label 才有质)。ELN 2022 升级已入 roadmap，主要差异:"
+        "  (1) FLT3-ITD 不再天然 adverse; "
+        "  (2) MDS-related 基因组 (BCOR, EZH2, SF3B1, SRSF2, STAG2, U2AF1) 进 adverse;"
+        "  (3) TP53 multi-hit 独立分层。",
+        "- **核型解析**: 正则启发式，覆盖约 85% 常见 ISCN 模式。"
+        "  复杂/罕见核型（如 i(17q), idic(X), chromothripsis）需 cytogeneticist 人工审阅。",
+        "- **组合预测**: 基于 613 BeatAML 患者的 ex-vivo drug sensitivity (AUC)，"
+        "  **未经前瞻性临床验证**。AUC 预测与临床 CR 率相关性已在本 kit Route B 测试"
+        "  中验证无显著相关 (Pearson ≈ 0.05)，建议以第三节试验证据为主。",
+        "",
+        "### 7.2 审核建议 (Checklist)",
+        "",
+        "请 MDT 团队核查以下项目：",
+        "",
+        "- [ ] ELN 风险分层与院内 cytogenetics 报告一致",
+        "- [ ] 推荐方案在本地药物可及性 + 保险范围内",
+        "- [ ] 患者知情同意 + 适合接受推荐强度治疗",
+        "- [ ] 特殊用药警告 (TLS、QT 延长、心肝肾功能) 已核查",
+        "- [ ] FLT3-ITD allelic ratio 与 lab 报告数值一致 (不同 lab denominator 定义可能略异)",
+        "- [ ] TP53 如存在，是否已进行 allelic state (mono vs multi-hit) 判断",
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 8: Methodology ----
+    sections.extend([
+        "## 八、方法学背景",
+        "",
+        "本报告由 **AML Combo-Prediction Kit v0.2** 自动生成。该工具集成三层推荐：",
+        "",
+        "1. **Layer 1 — Evidence-based retrieval**: "
+        "20 个已发表 AML 临床试验方案数据库 (覆盖 FDA 批准 + Phase 2/3 阶段)，"
+        "按患者 biomarker 驱动 + 分期 + 体能状态做严格匹配。",
+        "2. **Layer 2 — Biology (Clonal Coverage × Bliss-IDA)**: "
+        "基于 Palmer-Sorger Independent Drug Action 框架，"
+        "将患者分解为克隆原型，对组合计算 Bliss 独立性覆盖率。",
+        "3. **Layer 3 — Prediction (MLP + Mechanism Prior)**: "
+        "多任务 MLP 在 BeatAML 2.0 (613 患者 × 165 药 × 55K ex-vivo 测量) 上训练，"
+        "叠加 39-轴手工机制先验 (target / cell-state / regimen-role / toxicity)。",
+        "",
+        "**数据来源**:",
+        "- BeatAML 2.0 (Tyner et al., 2018): 613 AML 患者的 RNA-Seq + NGS + ex-vivo 药敏",
+        "- DrugComb v1.5: 186 AML 细胞系组合协同数据 (ALMANAC-HL60)",
+        "- TCGA-LAML: 173 独立队列验证",
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 9: References ----
+    sections.extend([
+        "## 九、关键参考文献",
+        "",
+        "### 9.1 指南",
+        "",
+        "- Döhner H et al. **ELN 2017**. *Blood* 2017, [PMID 27895058](https://pubmed.ncbi.nlm.nih.gov/27895058)",
+        "- Döhner H et al. **ELN 2022**. *Blood* 2022, [PMID 35797463](https://pubmed.ncbi.nlm.nih.gov/35797463)",
+        "- Khoury JD et al. **WHO 2022 Hematolymphoid Classification**. *Leukemia* 2022, [PMID 35732831](https://pubmed.ncbi.nlm.nih.gov/35732831)",
+        "- NCCN Clinical Practice Guidelines in Oncology: AML v2.2024",
+        "",
+        "### 9.2 关键临床试验",
+        "",
+        "- Stone RM et al. **RATIFY** (Mid + 7+3). *NEJM* 2017, [PMID 28644114](https://pubmed.ncbi.nlm.nih.gov/28644114)",
+        "- DiNardo CD et al. **VIALE-A** (Ven + Aza). *NEJM* 2020, [PMID 32813947](https://pubmed.ncbi.nlm.nih.gov/32813947)",
+        "- Perl AE et al. **ADMIRAL** (Gilteritinib mono R/R). *NEJM* 2019, [PMID 31665578](https://pubmed.ncbi.nlm.nih.gov/31665578)",
+        "- Montesinos P et al. **AGILE** (Aza + Ivo IDH1-mut). *NEJM* 2022, [PMID 35443106](https://pubmed.ncbi.nlm.nih.gov/35443106)",
+        "- Short NJ, Daver N et al. **Aza + Ven + Gilt triplet**. *JCO* 2024, [PMID 38277619](https://pubmed.ncbi.nlm.nih.gov/38277619)",
+        "- Erba HP et al. **QUANTUM-First** (Quiz + 7+3). *Lancet* 2023, [PMID 37116523](https://pubmed.ncbi.nlm.nih.gov/37116523)",
+        "",
+        "### 9.3 方法学",
+        "",
+        "- Palmer AC, Sorger PK. **Independent Drug Action**. *Cancer Discov* 2022, [PMID 34983746](https://pubmed.ncbi.nlm.nih.gov/34983746)",
+        "- Julkunen H et al. **comboFM: Multi-way drug combination prediction**. *Nat Commun* 2020, [PMID 33262326](https://pubmed.ncbi.nlm.nih.gov/33262326)",
+        "- Li MM et al. **AMP/ASCO/CAP Standards for Somatic Variant Interpretation**. *J Mol Diagn* 2017, [PMID 27993330](https://pubmed.ncbi.nlm.nih.gov/27993330)",
+        "",
+        "---",
+        "",
+        "## 免责声明",
+        "",
+        "本报告由 AML Combo-Prediction Kit v0.2 自动生成。所有推荐为**研究辅助性质**，",
+        "不构成诊断或医疗建议。最终治疗决策必须由具备执业资质的血液肿瘤专科医师",
+        "结合全面临床评估做出。报告中引用的文献与 FDA 标签信息可能随时间更新，",
+        "请以最新版本为准。",
+        "",
+        "---",
+        "",
+        f"*Generated by AML Combo-Prediction Kit v0.2 on {timestamp}*  ",
+        f"*For research use only · Not for clinical diagnosis*  ",
+        f"*Full reading guide: `docs/clinical_reader_guide.md`*",
+    ])
+
+    return "\n".join(sections)
+
+
+# ---------------------------------------------------------------------------
+# PDF rendering
+# ---------------------------------------------------------------------------
+
+
+_HTML_CSS = """
+body {
+  font-family: -apple-system, "Helvetica Neue", "PingFang SC",
+               "Microsoft YaHei", sans-serif;
+  max-width: 860px;
+  margin: 2em auto;
+  padding: 0 2em;
+  line-height: 1.65;
+  color: #222;
+}
+h1 { border-bottom: 3px solid #1a5490; padding-bottom: 0.3em; color: #1a5490; }
+h2 { border-bottom: 1px solid #ccc; padding-bottom: 0.2em; margin-top: 2em;
+     color: #1a5490; }
+h3 { color: #333; margin-top: 1.5em; }
+h4 { color: #555; }
+hr { border: 0; border-top: 1px solid #ddd; margin: 1.5em 0; }
+code { background: #f4f4f4; padding: 0.1em 0.3em; border-radius: 3px;
+       font-size: 90%; }
+pre { background: #f4f4f4; padding: 1em; border-radius: 5px; overflow-x: auto; }
+blockquote { border-left: 4px solid #1a5490; padding-left: 1em;
+             color: #555; margin-left: 0; }
+table { border-collapse: collapse; margin: 1em 0; }
+th, td { border: 1px solid #ccc; padding: 0.4em 0.8em; }
+th { background: #f0f0f0; }
+a { color: #1a5490; text-decoration: none; }
+a:hover { text-decoration: underline; }
+ul, ol { padding-left: 1.5em; }
+li { margin: 0.2em 0; }
+.footnote { font-size: 90%; color: #666; }
+@media print {
+  body { max-width: none; margin: 0; }
+  h1, h2 { page-break-after: avoid; }
+}
+"""
+
+
+def render_markdown_to_html(
+    md_path: Path | str,
+    html_path: Path | str,
+    pandoc_bin: str = "pandoc",
+) -> str:
+    """Convert Markdown → standalone HTML via pandoc (always available).
+
+    HTML is a universal fallback: any browser opens it, and the user can
+    hit Cmd-P / Ctrl-P → Save as PDF from the browser.
+    """
+    md_path = Path(md_path)
+    html_path = Path(html_path)
+    html_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write CSS to a sibling file to inline into the HTML
+    css_path = html_path.parent / "_report_style.css"
+    css_path.write_text(_HTML_CSS, encoding="utf-8")
+
+    result = subprocess.run(
+        [pandoc_bin, str(md_path), "-o", str(html_path),
+         "--standalone",
+         "--metadata", "title=AML 精准用药评估报告",
+         "--css", css_path.name,
+         "--toc", "--toc-depth=2"],
+        capture_output=True, text=True, timeout=60,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"pandoc HTML render failed: {result.stderr}")
+    return str(html_path)
+
+
+_CHROME_CANDIDATES = [
+    "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "/Applications/Chromium.app/Contents/MacOS/Chromium",
+    "/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge",
+    "/Applications/Brave Browser.app/Contents/MacOS/Brave Browser",
+    "/usr/bin/google-chrome",
+    "/usr/bin/chromium-browser",
+    "/usr/bin/chromium",
+]
+
+
+def _find_chrome_binary() -> str | None:
+    """Locate a headless-capable Chromium-family browser binary, or None."""
+    for cand in _CHROME_CANDIDATES:
+        if Path(cand).exists():
+            return cand
+    # PATH-based lookup
+    for name in ("google-chrome", "chromium", "chromium-browser"):
+        probe = subprocess.run(["which", name], capture_output=True, text=True)
+        if probe.returncode == 0 and probe.stdout.strip():
+            return probe.stdout.strip()
+    return None
+
+
+def _render_via_chrome(html_path: Path, pdf_path: Path) -> str:
+    """Use headless Chrome/Chromium to print HTML → PDF. Most reliable for CJK."""
+    chrome = _find_chrome_binary()
+    if not chrome:
+        raise FileNotFoundError("No Chrome/Chromium binary found on this system")
+    result = subprocess.run(
+        [chrome, "--headless", "--disable-gpu", "--no-pdf-header-footer",
+         "--no-sandbox", f"--print-to-pdf={pdf_path}",
+         f"file://{html_path.resolve()}"],
+        capture_output=True, text=True, timeout=120,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"chrome print-to-pdf failed: {result.stderr[:300]}")
+    if not pdf_path.exists():
+        raise RuntimeError("chrome print-to-pdf produced no output file")
+    return str(pdf_path)
+
+
+def render_markdown_to_pdf(
+    md_path: Path | str,
+    pdf_path: Path | str,
+    pandoc_bin: str = "pandoc",
+) -> str:
+    """Convert Markdown → PDF via the first available engine.
+
+    Engine chain (best for rich HTML + CJK first):
+      1. Headless Chrome/Chromium   — renders the styled HTML, most reliable
+      2. xelatex / pdflatex         — classic pandoc LaTeX, needs MacTeX installed
+      3. wkhtmltopdf                — standalone Qt-WebKit binary
+      4. weasyprint                 — Python native (needs pango dylibs on PATH)
+
+    Raises RuntimeError with actionable install hint if all fail.
+    """
+    md_path = Path(md_path)
+    pdf_path = Path(pdf_path)
+    pdf_path.parent.mkdir(parents=True, exist_ok=True)
+
+    tried: list[str] = []
+    last_err = None
+
+    # --- Preferred: headless Chrome via the pre-rendered HTML ---
+    html_path = md_path.with_suffix(".html")
+    if not html_path.exists():
+        try:
+            render_markdown_to_html(md_path, html_path, pandoc_bin=pandoc_bin)
+        except Exception as e:
+            last_err = f"HTML prep for chrome failed: {e}"
+    if html_path.exists():
+        try:
+            return _render_via_chrome(html_path, pdf_path)
+        except Exception as e:
+            tried.append("chrome")
+            last_err = str(e)
+
+    # --- pandoc-based engines ---
+    engines = ["xelatex", "pdflatex", "wkhtmltopdf", "weasyprint"]
+    for engine in engines:
+        probe = subprocess.run(["which", engine], capture_output=True, text=True)
+        if probe.returncode != 0:
+            continue
+        tried.append(engine)
+        try:
+            args = [pandoc_bin, str(md_path), "-o", str(pdf_path),
+                    f"--pdf-engine={engine}", "--standalone"]
+            if engine in ("xelatex", "pdflatex"):
+                args += ["--variable", "geometry:margin=2cm",
+                         "--variable", "fontsize=11pt",
+                         "--variable", "mainfont=Helvetica",
+                         "--variable", "CJKmainfont=PingFang SC",
+                         "--variable", "colorlinks=true",
+                         "--variable", "linkcolor=blue"]
+            env = _weasyprint_env() if engine == "weasyprint" else None
+            result = subprocess.run(
+                args, capture_output=True, text=True, timeout=180, env=env,
+            )
+            if result.returncode == 0:
+                return str(pdf_path)
+            last_err = result.stderr[:300]
+        except subprocess.TimeoutExpired:
+            last_err = f"{engine}: timed out after 180s"
+            continue
+
+    raise RuntimeError(
+        f"No PDF engine available. Tried: {tried or ['<none>']}. "
+        f"Last error: {last_err}\n"
+        f"Options: install Google Chrome, or run "
+        f"`brew install --cask mactex` (xelatex), "
+        f"`brew install wkhtmltopdf`, or `pip install weasyprint`. "
+        f"The HTML file at {html_path} is already fully styled and can be "
+        f"opened in any browser, then printed to PDF (Cmd-P → Save as PDF)."
+    )
+
+
+def export_clinical_report(
+    kit: KitInput,
+    kit_out: KitOutput,
+    out_dir: Path | str,
+    also_render_pdf: bool = True,
+    also_render_html: bool = True,
+) -> dict[str, str]:
+    """One-shot: generate Markdown + HTML + (optional) PDF + return paths.
+
+    Returns:
+      {"markdown": ..., "html": ... or None, "pdf": ... or None,
+       "pdf_error": ... (only on failure)}
+
+    HTML is the reliable fallback: always produced, opens in any browser,
+    user can Cmd-P → "Save as PDF" if the native PDF engine is unavailable.
+    """
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    md = build_clinical_report_markdown(kit, kit_out)
+    md_path = out_dir / "clinical_report.md"
+    md_path.write_text(md, encoding="utf-8")
+
+    paths: dict[str, str] = {"markdown": str(md_path)}
+
+    if also_render_html:
+        html_path = out_dir / "clinical_report.html"
+        try:
+            render_markdown_to_html(md_path, html_path)
+            paths["html"] = str(html_path)
+        except Exception as e:
+            paths["html"] = ""
+            paths["html_error"] = str(e)
+
+    if also_render_pdf:
+        pdf_path = out_dir / "clinical_report.pdf"
+        try:
+            render_markdown_to_pdf(md_path, pdf_path)
+            paths["pdf"] = str(pdf_path)
+        except Exception as e:
+            # Don't fail the whole pipeline if PDF rendering fails;
+            # the Markdown + HTML are still useful.
+            paths["pdf"] = ""
+            paths["pdf_error"] = str(e)
+
+    return paths

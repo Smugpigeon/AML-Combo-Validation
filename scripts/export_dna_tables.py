@@ -27,6 +27,7 @@ from combo_val.clinical.dna_report import (
 )
 from combo_val.clinical.kit_predict import predict_for_patient
 from combo_val.clinical.kit_schema import KitInput, MutationCall
+from combo_val.clinical.patient_report import export_clinical_report
 
 
 def _run_patient(patient_id: str, rna, kit, out_root: Path):
@@ -42,6 +43,13 @@ def _run_patient(patient_id: str, rna, kit, out_root: Path):
         out.dna_summary, patient_id, kit_output=out, out_path=readme_path,
     )
     paths["readme"] = str(readme_path)
+
+    # Full clinical-grade narrative report (Markdown + PDF)
+    report_paths = export_clinical_report(
+        kit, out, out_root / f"patient_{patient_id}", also_render_pdf=True,
+    )
+    paths["clinical_report_md"] = report_paths.get("markdown", "")
+    paths["clinical_report_pdf"] = report_paths.get("pdf") or "(PDF render skipped)"
 
     print(f"\n=== {patient_id} — ELN: {out.predicted_eln2017} ===")
     for name, p in paths.items():
