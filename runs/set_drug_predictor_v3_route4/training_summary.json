@@ -1,0 +1,81 @@
+{
+  "cfg": {
+    "hidden_dim": 64,
+    "dropout": 0.15,
+    "batch_size": 32,
+    "lr": 0.001,
+    "weight_decay": 0.0001,
+    "max_epochs": 50,
+    "patience": 8,
+    "min_epochs": 10,
+    "random_state": 42,
+    "n_folds": 5,
+    "synergy_col": "synergy_loewe",
+    "backbone_checkpoint": "runs/set_drug_predictor_v2_stable/final_model.pt",
+    "init_mode": "fresh"
+  },
+  "fold_metrics": [
+    {
+      "fold": 1,
+      "n_train": 148,
+      "n_val": 38,
+      "val_mae": 8.481,
+      "val_rmse": 10.596,
+      "pearson_r": -0.0045,
+      "spearman_r": -0.0306,
+      "best_epoch": 7
+    },
+    {
+      "fold": 2,
+      "n_train": 149,
+      "n_val": 37,
+      "val_mae": 10.723,
+      "val_rmse": 13.962,
+      "pearson_r": 0.3945,
+      "spearman_r": 0.3716,
+      "best_epoch": 13
+    },
+    {
+      "fold": 3,
+      "n_train": 149,
+      "n_val": 37,
+      "val_mae": 13.7,
+      "val_rmse": 17.133,
+      "pearson_r": 0.5412,
+      "spearman_r": 0.5195,
+      "best_epoch": 50
+    },
+    {
+      "fold": 4,
+      "n_train": 149,
+      "n_val": 37,
+      "val_mae": 11.346,
+      "val_rmse": 14.079,
+      "pearson_r": 0.3667,
+      "spearman_r": 0.2275,
+      "best_epoch": 50
+    },
+    {
+      "fold": 5,
+      "n_train": 149,
+      "n_val": 37,
+      "val_mae": 7.911,
+      "val_rmse": 10.309,
+      "pearson_r": 0.3519,
+      "spearman_r": 0.3031,
+      "best_epoch": 14
+    }
+  ],
+  "pooled_cv": {
+    "mae": 10.422,
+    "rmse": 13.441,
+    "pearson_r": 0.4065,
+    "spearman_r": 0.3066,
+    "n_pairs": 186
+  },
+  "data_std": 14.664,
+  "outputs": {
+    "synergy_head": "runs/set_drug_predictor_v3_route4/synergy_head.pt",
+    "cv_predictions": "runs/set_drug_predictor_v3_route4/cv_predictions.csv"
+  }
+}

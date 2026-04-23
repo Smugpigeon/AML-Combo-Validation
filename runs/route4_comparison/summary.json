@@ -1,0 +1,44 @@
+{
+  "A_MLP_only": {
+    "median_best_FLT3i_Ven_rank": 1,
+    "mean_best_FLT3i_Ven_rank": 9.7,
+    "pct_FLT3i_Ven_top5": 68.7,
+    "mean_jaccard_top5_vs_B": 0.633,
+    "mean_pair_auc": 176.9
+  },
+  "B_MLP_plus_mech_prior": {
+    "median_best_FLT3i_Ven_rank": 1,
+    "mean_best_FLT3i_Ven_rank": 7.8,
+    "pct_FLT3i_Ven_top5": 72.1,
+    "mean_jaccard_top5_vs_B": 1.0,
+    "mean_pair_auc": 159.2
+  },
+  "C_MLP_plus_Route4": {
+    "median_best_FLT3i_Ven_rank": 1,
+    "mean_best_FLT3i_Ven_rank": 12.9,
+    "pct_FLT3i_Ven_top5": 67.0,
+    "mean_jaccard_top5_vs_B": 0.518,
+    "mean_pair_auc": 163.7
+  },
+  "D_ST_only": {
+    "median_best_FLT3i_Ven_rank": 10,
+    "mean_best_FLT3i_Ven_rank": 9.7,
+    "pct_FLT3i_Ven_top5": 3.4,
+    "mean_jaccard_top5_vs_B": 0.059,
+    "mean_pair_auc": 185.0
+  },
+  "E_ST_plus_mech_prior": {
+    "median_best_FLT3i_Ven_rank": 5,
+    "mean_best_FLT3i_Ven_rank": 6.1,
+    "pct_FLT3i_Ven_top5": 60.9,
+    "mean_jaccard_top5_vs_B": 0.177,
+    "mean_pair_auc": 167.3
+  },
+  "F_ST_plus_Route4": {
+    "median_best_FLT3i_Ven_rank": 9,
+    "mean_best_FLT3i_Ven_rank": 8.2,
+    "pct_FLT3i_Ven_top5": 10.1,
+    "mean_jaccard_top5_vs_B": 0.166,
+    "mean_pair_auc": 172.7
+  }
+}

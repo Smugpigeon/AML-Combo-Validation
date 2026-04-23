@@ -1,0 +1,7 @@
+,A_MLP_only,B_MLP_plus_mech_prior,C_MLP_plus_Route4,D_ST_only,E_ST_plus_mech_prior,F_ST_plus_Route4
+A_MLP_only,1.0,0.942,0.987,0.731,0.723,0.759
+B_MLP_plus_mech_prior,0.942,1.0,0.923,0.669,0.784,0.696
+C_MLP_plus_Route4,0.987,0.923,1.0,0.708,0.693,0.77
+D_ST_only,0.731,0.669,0.708,1.0,0.921,0.937
+E_ST_plus_mech_prior,0.723,0.784,0.693,0.921,1.0,0.852
+F_ST_plus_Route4,0.759,0.696,0.77,0.937,0.852,1.0
