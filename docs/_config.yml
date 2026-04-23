@@ -1,0 +1,28 @@
+title: AML Combo Validation
+description: Mechanism-aware combination therapy prediction for acute myeloid leukemia
+theme: jekyll-theme-cayman
+
+# Cayman theme options
+show_downloads: false
+
+# Site-wide settings
+lang: en
+timezone: Asia/Shanghai
+
+# Exclude files from site build (but keep in repo)
+exclude:
+  - "*.joblib"
+  - "*.pt"
+  - "Gemfile"
+  - "Gemfile.lock"
+  - vendor/
+  - node_modules/
+
+# Markdown processor
+markdown: kramdown
+kramdown:
+  syntax_highlighter: rouge
+  toc_levels: "2..3"
+
+# Permalinks
+permalink: pretty
