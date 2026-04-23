@@ -71,16 +71,46 @@ _PROFILE_EXPR_DELTAS: dict[str, dict[str, float]] = {
 }
 
 
+# Per-profile perturbations to a small handful of non-curated genes — these
+# are classic AML "extra" outliers that let Section C of the RNA report show
+# content for demo patients. In real patients with full RNA-Seq, these
+# extras come naturally from the full transcriptome.
+_PROFILE_EXTRA_DELTAS: dict[str, dict[str, float]] = {
+    "young_flt3": {
+        "GATA2":   +3.5,    # high GATA2: HSC/LSC program, classic in FLT3-ITD
+        "PROM1":   +3.2,    # CD133: LSC marker, high in FLT3-ITD
+        "MPO":     -3.1,    # mature myeloid marker, low in primitive AML
+        "CD34":    +3.3,    # blast marker
+    },
+    "elderly_tp53": {
+        "ERG":     +3.6,    # ERG overexpression — classic TP53/complex karyo
+        "S100A8":  +3.3,    # inflammatory signature, often high in MDS→AML
+        "DNMT1":   +3.1,    # HMA target, expression varies
+        "NFKB1":   -3.2,    # reduced NF-kB activity in TP53-null
+    },
+    "apl": {
+        "PRAM1":   +4.0,    # PRAM/PML-related, very high in APL
+        "CTSG":    +3.8,    # Cathepsin G, promyelocytic marker
+        "ELANE":   +3.7,    # elastase, promyelocytic marker
+        "FUT3":    +3.2,    # fucosyltransferase, APL-specific
+    },
+}
+
+
 def _synthetic_rna_expression_full(profile: str,
                                      ref_stats_path: Path | str | None = None,
+                                     full_ref_stats_path: Path | str | None = None,
                                      ) -> pd.Series:
-    """Generate a full-transcriptome-style Series for the 25-gene core panel +
-    expression-hint genes, on BeatAML Sheet1 log2-CPM scale.
+    """Generate a full-transcriptome-style Series that covers:
+      (a) the 25-gene core panel + 8 expression-hint genes on BeatAML
+          log-CPM scale, with profile-specific perturbations,
+      (b) a handful of profile-specific "extra" outliers (GATA2, PROM1,
+          ERG, PRAM1, etc.) so the report's Section C can demonstrate
+          the full-transcriptome scan feature,
+      (c) all remaining BeatAML genes at their population mean + N(0, 0.25)
+          noise so the full transcriptome is available for scanning.
 
-    Baseline = BeatAML population mean for each gene; profile-specific deltas
-    simulate the transcriptional fingerprint of that subtype (e.g., FLT3-ITD
-    raises HOXA9/MEIS1, TP53-mut pushes MECOM and MCL1 up, APL raises BCL2/CD33).
-    Noise = N(0, 0.25) so the values aren't flat per profile.
+    Baseline = BeatAML population mean for each gene. Noise = N(0, 0.25).
     """
     import json
     from pathlib import Path as _P
@@ -92,14 +122,49 @@ def _synthetic_rna_expression_full(profile: str,
     stats = json.loads(_P(ref_stats_path).read_text())
     gene_stats = stats["genes"]
     deltas = _PROFILE_EXPR_DELTAS.get(profile, {})
+    extras = _PROFILE_EXTRA_DELTAS.get(profile, {})
 
     rng = np.random.default_rng({"young_flt3": 17, "elderly_tp53": 42,
                                   "apl": 31}.get(profile, 0))
 
     expr = {}
+    # 25+8 core genes with targeted perturbations
     for g, s in gene_stats.items():
         base = s["mean"] + s["std"] * float(deltas.get(g, 0.0))
         expr[g] = base + rng.normal(0, 0.25)
+
+    # Optional: load the full-transcriptome ref file to populate remaining
+    # genes. If missing, we just ship the 25+8 + extras — the kit's
+    # transcriptome scan will still find the extras.
+    if full_ref_stats_path is None:
+        full_ref_stats_path = _P(
+            "data/canonical/full_transcriptome_ref_stats.npz",
+        )
+        if not _P(full_ref_stats_path).exists():
+            full_ref_stats_path = (
+                _P("/Users/ericktom/AML-combo-validation") /
+                "data/canonical/full_transcriptome_ref_stats.npz"
+            )
+    if _P(full_ref_stats_path).exists():
+        data = np.load(full_ref_stats_path, allow_pickle=False)
+        all_genes = data["genes"]
+        all_means = data["means"]
+        all_stds = data["stds"]
+        for gene, mean, std in zip(all_genes, all_means, all_stds):
+            if gene in expr:  # already covered by curated path
+                continue
+            if gene in extras:
+                # extras get a big delta to become visible outliers
+                expr[gene] = (float(mean) + float(std) * extras[gene]
+                               + rng.normal(0, 0.25))
+            else:
+                # Background: population mean + small noise
+                expr[gene] = float(mean) + rng.normal(0, 0.25)
+    else:
+        # No full-transcriptome ref — just add the extras directly
+        for gene, delta in extras.items():
+            expr[gene] = 6.0 + delta * 1.0 + rng.normal(0, 0.25)
+
     return pd.Series(expr)
 
 

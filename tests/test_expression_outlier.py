@@ -302,6 +302,216 @@ def test_kit_output_populates_rna_outlier_when_provided(baseline_expr, ref_stats
     assert flt3["z_score"] >= 1.5
 
 
+# ---------------------------------------------------------------------------
+# Action 1 — Phenotype signature detection
+# ---------------------------------------------------------------------------
+
+
+def test_phenotype_signature_tp53_bi_allelic(ref_stats, baseline_expr):
+    """TP53 mutated + z≤-1.5 should surface the bi-allelic hint."""
+    from combo_val.clinical.expression_outlier import (
+        _detect_phenotype_signatures,
+    )
+    expr = baseline_expr.copy()
+    expr["TP53"] = (ref_stats["genes"]["TP53"]["mean"]
+                     - 2.0 * ref_stats["genes"]["TP53"]["std"])
+    rows, _ = compute_expression_outliers(expr, mutated_genes={"TP53"})
+    sigs = _detect_phenotype_signatures(rows)
+    assert any("TP53" in s and "bi-allelic" in s for s in sigs)
+
+
+def test_phenotype_signature_mecom_evi1_activation(ref_stats, baseline_expr):
+    """MECOM z≥+2.0 wildtype → EVI1 activation → FISH recommendation."""
+    from combo_val.clinical.expression_outlier import (
+        _detect_phenotype_signatures,
+    )
+    expr = baseline_expr.copy()
+    expr["MECOM"] = (ref_stats["genes"]["MECOM"]["mean"]
+                      + 2.5 * ref_stats["genes"]["MECOM"]["std"])
+    rows, _ = compute_expression_outliers(expr, mutated_genes=set())
+    sigs = _detect_phenotype_signatures(rows)
+    assert any("MECOM" in s or "EVI1" in s for s in sigs)
+    assert any("FISH" in s for s in sigs)
+
+
+def test_phenotype_signature_flt3_double_evidence(ref_stats, baseline_expr):
+    """FLT3 mutated + z≥+1.5 → double-evidence signature."""
+    from combo_val.clinical.expression_outlier import (
+        _detect_phenotype_signatures,
+    )
+    expr = baseline_expr.copy()
+    expr["FLT3"] = (ref_stats["genes"]["FLT3"]["mean"]
+                     + 2.0 * ref_stats["genes"]["FLT3"]["std"])
+    rows, _ = compute_expression_outliers(expr, mutated_genes={"FLT3"})
+    sigs = _detect_phenotype_signatures(rows)
+    assert any("FLT3" in s and "双证据" in s for s in sigs)
+
+
+def test_phenotype_signature_ven_mcl1_resistance(ref_stats, baseline_expr):
+    """BCL2 + MCL1 both high → flag Ven resistance risk."""
+    from combo_val.clinical.expression_outlier import (
+        _detect_phenotype_signatures,
+    )
+    expr = baseline_expr.copy()
+    expr["BCL2"] = (ref_stats["genes"]["BCL2"]["mean"]
+                     + 2.0 * ref_stats["genes"]["BCL2"]["std"])
+    expr["MCL1"] = (ref_stats["genes"]["MCL1"]["mean"]
+                     + 2.0 * ref_stats["genes"]["MCL1"]["std"])
+    rows, _ = compute_expression_outliers(expr, mutated_genes=set())
+    sigs = _detect_phenotype_signatures(rows)
+    assert any("MCL1" in s and "抵抗" in s for s in sigs)
+
+
+def test_phenotype_silent_when_all_flat(baseline_expr):
+    """No signatures fire when every z is near 0."""
+    from combo_val.clinical.expression_outlier import (
+        _detect_phenotype_signatures,
+    )
+    rows, _ = compute_expression_outliers(baseline_expr, mutated_genes=set())
+    sigs = _detect_phenotype_signatures(rows)
+    assert sigs == []
+
+
+# ---------------------------------------------------------------------------
+# Action 2 — Split table (v2 renderer)
+# ---------------------------------------------------------------------------
+
+
+def test_v2_markdown_has_three_subsections(ref_stats, baseline_expr):
+    """v2 renderer must produce A. outliers, B. normal, C. transcriptome scan."""
+    from combo_val.clinical.expression_outlier import (
+        build_rnaseq_outlier_markdown_v2,
+    )
+    expr = baseline_expr.copy()
+    expr["FLT3"] = (ref_stats["genes"]["FLT3"]["mean"]
+                     + 2.0 * ref_stats["genes"]["FLT3"]["std"])
+    md = build_rnaseq_outlier_markdown_v2(expr, mutated_genes={"FLT3"})
+    assert "#### A." in md
+    assert "#### B." in md
+    assert "#### C." in md
+
+
+def test_v2_markdown_collapses_normal_genes_to_one_line(ref_stats, baseline_expr):
+    """Normal-range genes should be listed in one paragraph, not a 30-row table."""
+    from combo_val.clinical.expression_outlier import (
+        build_rnaseq_outlier_markdown_v2,
+    )
+    md = build_rnaseq_outlier_markdown_v2(baseline_expr, mutated_genes=set())
+    # B section's gene list: comma-separated, no pipe-delimited rows
+    b_section = md.split("#### B.")[1].split("#### C.")[0]
+    # Count pipes in B (table rows have 5+ pipes; paragraph has zero or few)
+    pipe_rows = sum(1 for line in b_section.splitlines()
+                    if line.count("|") >= 4)
+    assert pipe_rows == 0, "Section B should not contain table rows"
+
+
+def test_v2_markdown_highlights_paragraph_appears(ref_stats, baseline_expr):
+    from combo_val.clinical.expression_outlier import (
+        build_rnaseq_outlier_markdown_v2,
+    )
+    expr = baseline_expr.copy()
+    expr["TP53"] = (ref_stats["genes"]["TP53"]["mean"]
+                     - 2.0 * ref_stats["genes"]["TP53"]["std"])
+    md = build_rnaseq_outlier_markdown_v2(expr, mutated_genes={"TP53"})
+    assert "**RNA-Seq 高亮**" in md
+    assert "TP53" in md
+
+
+# ---------------------------------------------------------------------------
+# Action 3 — Full-transcriptome scan
+# ---------------------------------------------------------------------------
+
+
+def test_transcriptome_scan_returns_empty_when_no_rna():
+    from combo_val.clinical.expression_outlier import (
+        find_transcriptome_outliers,
+    )
+    rows, meta = find_transcriptome_outliers(None, exclude_genes=set())
+    assert rows == []
+    assert not meta.get("available")
+
+
+def test_transcriptome_scan_finds_extreme_outlier():
+    """Planted extreme z=+5 gene should show up in scan."""
+    from combo_val.clinical.expression_outlier import (
+        _load_full_transcriptome_stats, find_transcriptome_outliers,
+    )
+    full_ref = _load_full_transcriptome_stats()
+    if full_ref is None:
+        pytest.skip("full-transcriptome stats file not available")
+
+    # Construct expression at population mean + plant ERG at z=+5
+    genes = list(full_ref["genes"])
+    means = full_ref["means"]
+    erg_idx = list(genes).index("ERG")
+    expr = pd.Series({g: float(m) for g, m in zip(genes, means)})
+    expr["ERG"] = float(means[erg_idx]) + 5.0 * float(full_ref["stds"][erg_idx])
+
+    rows, meta = find_transcriptome_outliers(
+        expr, exclude_genes=set(), top_n=5, min_abs_z=3.0,
+    )
+    assert meta["available"]
+    genes_found = [r["gene"] for r in rows]
+    assert "ERG" in genes_found
+
+
+def test_transcriptome_scan_excludes_sex_mitochondrial_hemoglobin():
+    """Sex-chromosome + mitochondrial + hemoglobin genes must NEVER surface."""
+    from combo_val.clinical.expression_outlier import (
+        _TRANSCRIPTOME_SCAN_EXCLUSIONS, _load_full_transcriptome_stats,
+        find_transcriptome_outliers,
+    )
+    full_ref = _load_full_transcriptome_stats()
+    if full_ref is None:
+        pytest.skip("full-transcriptome stats file not available")
+
+    genes = list(full_ref["genes"])
+    means = full_ref["means"]
+    stds = full_ref["stds"]
+    # Plant extreme outliers on excluded genes
+    expr = pd.Series({g: float(m) for g, m in zip(genes, means)})
+    for g in ("XIST", "RPS4Y1", "MT-CO1", "HBB"):
+        if g in expr.index:
+            idx = genes.index(g)
+            expr[g] = float(means[idx]) + 5.0 * float(stds[idx])
+
+    rows, _ = find_transcriptome_outliers(
+        expr, exclude_genes=set(), top_n=20, min_abs_z=3.0,
+    )
+    found = {r["gene"] for r in rows}
+    for g in ("XIST", "RPS4Y1", "MT-CO1", "HBB"):
+        assert g not in found, f"Excluded gene {g} should not appear in scan"
+
+
+def test_transcriptome_scan_respects_exclude_list(ref_stats):
+    """Genes passed via exclude_genes must not appear in scan output."""
+    from combo_val.clinical.expression_outlier import (
+        _load_full_transcriptome_stats, find_transcriptome_outliers,
+    )
+    full_ref = _load_full_transcriptome_stats()
+    if full_ref is None:
+        pytest.skip("full-transcriptome stats file not available")
+
+    genes = list(full_ref["genes"])
+    means = full_ref["means"]
+    stds = full_ref["stds"]
+    # Plant outlier on a random gene
+    expr = pd.Series({g: float(m) for g, m in zip(genes, means)})
+    target = "DNMT1"
+    idx = genes.index(target)
+    expr[target] = float(means[idx]) + 5.0 * float(stds[idx])
+
+    # First confirm it shows up without exclusion
+    rows, _ = find_transcriptome_outliers(expr, exclude_genes=set(), top_n=5)
+    assert target in {r["gene"] for r in rows}
+
+    # Now exclude it
+    rows, _ = find_transcriptome_outliers(
+        expr, exclude_genes={target}, top_n=5,
+    )
+    assert target not in {r["gene"] for r in rows}
+
+
 def test_kit_output_empty_rna_outlier_when_not_provided():
     from combo_val.clinical.kit_predict import predict_for_patient
     from combo_val.clinical.kit_schema import KitInput, MutationCall

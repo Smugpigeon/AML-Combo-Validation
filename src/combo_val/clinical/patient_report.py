@@ -26,7 +26,10 @@ from datetime import datetime
 from pathlib import Path
 
 from combo_val.clinical.dna_report import CORE_DRIVER_GENES
-from combo_val.clinical.expression_outlier import build_rnaseq_outlier_markdown
+from combo_val.clinical.expression_outlier import (
+    build_rnaseq_outlier_markdown,
+    build_rnaseq_outlier_markdown_v2,
+)
 from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
 
 
@@ -184,25 +187,31 @@ def _panel_coverage_table(driver_mutations: list[dict]) -> str:
 
 
 def _rnaseq_outlier_section(kit: KitInput, kit_out: KitOutput) -> str:
-    """Render Section 3.3 — RNA-Seq expression outlier analysis.
+    """Render Section 3.3 — RNA-Seq expression outlier analysis (v2 layout).
 
-    Uses the cached `kit_out.rna_outlier` data if present; otherwise
-    computes on-the-fly from `kit.rna_expression_full` (fallback path
-    for test fixtures that build KitOutput directly).
+    Preferred path: use precomputed rna_outlier dict from predict_for_patient,
+    which already includes phenotype signatures and transcriptome scan.
+    Fallback: compute live from kit.rna_expression_full for test fixtures.
+
+    The v2 layout has four subsections:
+      - Highlights paragraph (transcriptional phenotype summary)
+      - A. Outliers + DNA-mutated rows (full table, only the interesting rows)
+      - B. Normal-range genes (one line collapsed)
+      - C. Full-transcriptome top-N scan (optional, shows extra outliers
+            outside the curated 25+8 panel)
     """
-    import pandas as pd  # local import to avoid hard dep at import time
-
-    # Preferred: use the precomputed rna_outlier in kit_out (set by
-    # predict_for_patient). Rebuild a Markdown table from its rows so the
-    # report can regenerate without re-running the kit.
     rna_outlier = getattr(kit_out, "rna_outlier", None) or {}
     rows = rna_outlier.get("rows", []) if rna_outlier else []
     meta = rna_outlier.get("meta", {}) if rna_outlier else {}
+    phenotype_sigs = rna_outlier.get("phenotype_signatures", [])
+    scan_rows = rna_outlier.get("transcriptome_scan_rows", [])
+    scan_meta = rna_outlier.get("transcriptome_scan_meta", {})
 
     if rows:
-        return _render_rna_outlier_table_from_rows(rows, meta)
+        return _render_rna_outlier_table_v2(rows, meta, phenotype_sigs,
+                                              scan_rows, scan_meta)
 
-    # Fallback: compute live from kit.rna_expression_full (useful in unit tests)
+    # Fallback: compute live (used in tests that build KitOutput manually)
     rna_expr = getattr(kit, "rna_expression_full", None)
     if rna_expr is None:
         return ("> **RNA-Seq 表达谱数据未提供** —— 本节为空。"
@@ -210,54 +219,133 @@ def _rnaseq_outlier_section(kit: KitInput, kit_out: KitOutput) -> str:
                 "(log2-CPM 或 raw counts 均可, kit 会自动判断).\n")
     mutated_genes = {m.gene.upper() for m in (kit.mutations or [])}
     try:
-        return build_rnaseq_outlier_markdown(rna_expr, mutated_genes)
+        return build_rnaseq_outlier_markdown_v2(rna_expr, mutated_genes)
     except FileNotFoundError:
         return ("> 参考分布统计文件缺失 —— 请运行 "
                 "`python scripts/build_driver_gene_ref_stats.py` 生成。\n")
 
 
-def _render_rna_outlier_table_from_rows(rows: list[dict], meta: dict) -> str:
-    """Render the RNA outlier table from cached dict rows (no pd required)."""
-    if meta.get("n_genes_available", 0) == 0 and not any(r.get("available") for r in rows):
+def _render_rna_outlier_table_v2(
+    rows: list[dict], meta: dict,
+    phenotype_sigs: list[str],
+    scan_rows: list[dict], scan_meta: dict,
+    outlier_threshold: float = 0.75,
+) -> str:
+    """v2 renderer from cached dict rows: highlights + outliers + collapsed
+    + transcriptome scan. Uses the cached data from KitOutput.rna_outlier."""
+    if meta.get("n_genes_available", 0) == 0 and not any(
+        r.get("available") for r in rows
+    ):
         return (
             "> **RNA-Seq 表达谱数据未提供** —— 本节为空。"
             "如 lab 出的 RNA-Seq 表达矩阵可用, 请通过 "
             "`KitInput.rna_expression_full` 传入后重跑报告。\n"
         )
 
-    lines = [
-        f"*基于 {meta.get('ref_cohort', 'BeatAML 2.0')} "
-        f"(n = {meta.get('ref_n_samples', '?')}) 的参考分布, 本患者 "
-        f"{meta.get('n_genes_available', 0)} 个基因可计算 z-score, "
-        f"其中 **高表达离群 (z ≥ +1.5) {meta.get('n_outliers_high', 0)} 个**, "
-        f"**低表达离群 (z ≤ -1.5) {meta.get('n_outliers_low', 0)} 个**。 "
-        f"[scale: {meta.get('scale_note', '')}]*",
-        "",
-        "| Tier 组 | 基因 | DNA 状态 | 表达 z-score | 方向 | 备注 |",
-        "|---------|------|----------|-------------:|:----:|------|",
-    ]
-    prev_group = None
-    for r in rows:
-        group = r.get("tier_group", "")
-        group_cell = group if group != prev_group else ""
-        prev_group = group
-        z = r.get("z_score")
-        z_str = f"{z:+.2f}" if isinstance(z, (int, float)) else "n/a"
-        gene = r.get("gene", "")
-        gene_cell = (f"**{gene}**" if (isinstance(z, (int, float))
-                                         and abs(z) >= 1.5)
-                     else gene)
-        note = (r.get("note") or "").replace("|", "\\|")
-        lines.append(f"| {group_cell} | {gene_cell} | {r.get('dna_status', '')} | "
-                     f"{z_str} | {r.get('direction', 'n/a')} | {note} |")
-    lines.append("")
-    lines.append(
-        "*图例*: ↑↑↑ z≥+2.5 · ↑↑ z≥+1.5 · ↑ z≥+0.75 · · 正常 · "
-        "↓ z≤-0.75 · ↓↓ z≤-1.5 · ↓↓↓ z≤-2.5. "
-        "**「双证据支持」**=DNA 检出突变且表达升高; "
-        "**「⚠ 野生型但表达异常高」**=NGS 阴性但转录本上调, 建议复核 cytogenetics/FISH."
+    parts: list[str] = []
+
+    # --- Highlights paragraph ---
+    n_avail = meta.get("n_genes_available", 0)
+    n_high = meta.get("n_outliers_high", 0)
+    n_low = meta.get("n_outliers_low", 0)
+    if phenotype_sigs:
+        parts.append(f"**RNA-Seq 高亮**: {n_high} 个基因高表达离群 (z≥+1.5), "
+                      f"{n_low} 个低表达离群 (z≤-1.5), 归纳出以下转录表型签名:\n")
+        for s in phenotype_sigs:
+            parts.append(f"- {s}")
+        parts.append("")
+    else:
+        parts.append(f"**RNA-Seq 高亮**: 本患者 25+8 基因 panel "
+                      f"(n={n_avail} 可检) 中未发现显著转录离群 (所有 |z| < 1.5)。"
+                      f"提示转录组呈典型 AML 背景, 无需追加表达驱动靶点。\n")
+
+    # --- A. Outliers + mutated ---
+    outlier_rows = [r for r in rows if r.get("available") and (
+        (r.get("z_score") is not None and
+         abs(r.get("z_score", 0)) >= outlier_threshold) or
+        r.get("dna_status") == "✓ mutated"
+    )]
+    parts.append(f"#### A. 核心 panel 离群基因 + 全部 DNA 突变 "
+                 f"({len(outlier_rows)} 行)")
+    parts.append("")
+    if not outlier_rows:
+        parts.append("*（无）*\n")
+    else:
+        parts.append("| Tier 组 | 基因 | DNA 状态 | z-score | 方向 | 临床提示 |")
+        parts.append("|---------|------|----------|--------:|:----:|----------|")
+        prev_group = None
+        for r in outlier_rows:
+            group = r.get("tier_group", "")
+            group_cell = group if group != prev_group else ""
+            prev_group = group
+            z = r.get("z_score")
+            z_str = f"{z:+.2f}" if isinstance(z, (int, float)) else "n/a"
+            gene = r.get("gene", "")
+            gene_cell = (f"**{gene}**" if isinstance(z, (int, float))
+                         and abs(z) >= 1.5 else gene)
+            note = (r.get("note") or "").replace("|", "\\|")
+            parts.append(f"| {group_cell} | {gene_cell} | "
+                         f"{r.get('dna_status', '')} | {z_str} | "
+                         f"{r.get('direction', 'n/a')} | {note} |")
+        parts.append("")
+
+    # --- B. Normal-range collapsed ---
+    normal_rows = [r for r in rows if r.get("available") and
+                   r.get("z_score") is not None and
+                   abs(r.get("z_score", 0)) < outlier_threshold and
+                   r.get("dna_status") != "✓ mutated"]
+    unavailable_rows = [r for r in rows if not r.get("available")]
+
+    parts.append(f"#### B. 核心 panel 正常范围基因 ({len(normal_rows)} 个)")
+    parts.append("")
+    if normal_rows:
+        gene_list = ", ".join(r.get("gene", "") for r in normal_rows)
+        parts.append(f"以下基因表达在 BeatAML 正常范围内 "
+                     f"(|z| < {outlier_threshold}σ), DNA 状态: "
+                     f"野生型 / hint-only: **{gene_list}**\n")
+
+    if unavailable_rows:
+        missing_list = ", ".join(r.get("gene", "") for r in unavailable_rows)
+        parts.append(f"*未在输入 RNA-Seq 中覆盖的基因 "
+                     f"({len(unavailable_rows)}): {missing_list}*\n")
+
+    # --- C. Full-transcriptome scan ---
+    parts.append(f"#### C. 全转录组扩展扫描 (core panel 之外)")
+    parts.append("")
+    if not scan_meta.get("available"):
+        parts.append(f"*未启用 ({scan_meta.get('reason', '不可用')}).*\n")
+    elif not scan_rows:
+        parts.append(f"*未发现核心 panel 之外的极端离群 "
+                     f"(|z| ≥ {scan_meta.get('min_abs_z_threshold', 3.0)}σ). "
+                     f"已排除 sex / mitochondrial / hemoglobin 等非临床变异基因。*\n")
+    else:
+        parts.append(
+            f"*本扫描从 BeatAML 2.0 全转录组 (~{scan_meta.get('n_candidates_total', '?')} "
+            f"个候选基因)挑选出 |z| ≥ {scan_meta.get('min_abs_z_threshold', 3.0)}σ "
+            f"的 top-{scan_meta.get('n_returned', 0)} 离群基因。这些基因**不在临床"
+            f"策展的 25+8 panel 里**, 可能提示尚未被常规检测捕获的生物学信号, "
+            f"需要临床人员结合基因功能自行解读。*")
+        parts.append("")
+        parts.append("| # | 基因 | z-score | 方向 | 患者值 | BeatAML 均值 ± std |")
+        parts.append("|---|------|--------:|:----:|-------:|---------------------|")
+        for i, r in enumerate(scan_rows, 1):
+            parts.append(
+                f"| {i} | **{r.get('gene', '')}** | "
+                f"{r.get('z_score', 0):+.2f} | {r.get('direction', '')} | "
+                f"{r.get('patient_value', 0):.2f} | "
+                f"{r.get('ref_mean', 0):+.2f} ± {r.get('ref_std', 0):.2f} |"
+            )
+        parts.append("")
+
+    # --- Legend ---
+    parts.append(
+        f"*图例*: ↑↑↑ z≥+2.5 · ↑↑ z≥+1.5 · ↑ z≥+0.75 · · 正常 · "
+        f"↓ z≤-0.75 · ↓↓ z≤-1.5 · ↓↓↓ z≤-2.5. "
+        f"参考分布: {meta.get('ref_cohort', 'BeatAML 2.0')} "
+        f"(n={meta.get('ref_n_samples', '?')}). "
+        f"[scale: {meta.get('scale_note', '')}]"
     )
-    return "\n".join(lines)
+    return "\n".join(parts)
 
 
 def _mutation_narrative(mutations: list[MutationCall]) -> str:

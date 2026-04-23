@@ -498,7 +498,10 @@ def predict_for_patient(
 
     # ---- RNA expression-outlier analysis (if full transcriptome provided) ----
     from combo_val.clinical.expression_outlier import (
+        _build_highlights_paragraph,
+        _detect_phenotype_signatures,
         compute_expression_outliers,
+        find_transcriptome_outliers,
     )
     mutated_gene_symbols = {m.gene.upper() for m in (kit.mutations or [])}
     try:
@@ -506,6 +509,19 @@ def predict_for_patient(
             rna_expression=kit.rna_expression_full,
             mutated_genes=mutated_gene_symbols,
         )
+        # Phenotype signatures for the highlights paragraph
+        phenotype_signatures = _detect_phenotype_signatures(rna_rows)
+
+        # Top-N full-transcriptome outlier scan (Action 3)
+        excluded_genes = {r.gene for r in rna_rows}
+        transcriptome_scan_rows, transcriptome_scan_meta = (
+            find_transcriptome_outliers(
+                kit.rna_expression_full,
+                exclude_genes=excluded_genes,
+                top_n=10, min_abs_z=3.0,
+            )
+        )
+
         rna_outlier = {
             "rows": [
                 {
@@ -523,6 +539,9 @@ def predict_for_patient(
                 for r in rna_rows
             ],
             "meta": rna_meta,
+            "phenotype_signatures": phenotype_signatures,
+            "transcriptome_scan_rows": transcriptome_scan_rows,
+            "transcriptome_scan_meta": transcriptome_scan_meta,
         }
     except FileNotFoundError:
         # Ref stats file missing — degrade silently but leave a note
@@ -531,6 +550,9 @@ def predict_for_patient(
             "meta": {"scale_note":
                      "reference stats file not found; run "
                      "scripts/build_driver_gene_ref_stats.py"},
+            "phenotype_signatures": [],
+            "transcriptome_scan_rows": [],
+            "transcriptome_scan_meta": {"available": False},
         }
 
     return KitOutput(
