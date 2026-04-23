@@ -1,0 +1,11 @@
+{
+  "canonical_pair": "Gilteritinib + Venetoclax",
+  "n_flt3_patients": 50,
+  "v3_plain_median_rank": 27,
+  "v3_plain_frac_top5": 0.04,
+  "v3_hybrid_median_rank": 15,
+  "v3_hybrid_frac_top5": 0.04,
+  "v3_hybrid_frac_top3": 0.04,
+  "mean_jaccard_v3_vs_hybrid": 0.151,
+  "note": "Hybrid subtracts 30 * mech_score from v3 pair AUC before ranking."
+}
