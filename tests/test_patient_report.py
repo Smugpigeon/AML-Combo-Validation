@@ -284,6 +284,37 @@ def test_build_markdown_marks_disclaimer_and_kit_version():
     assert "免责声明" in md
 
 
+def test_build_markdown_embeds_dna_profile_figure_by_default():
+    """Section 3 must anchor on the DNA-level profile PNG with a caption."""
+    kit = _flt3_npm1_kit()
+    out = _mk_output(kit, eln="Intermediate")
+    md = build_clinical_report_markdown(kit, out)
+    assert "![" in md and "dna_profile.png" in md
+    assert "图 3.0" in md
+    # Caption must name the visual content so it's still useful if PNG missing
+    assert "Tier" in md or "核心驱动" in md
+
+
+def test_build_markdown_omits_figure_when_rel_path_is_none():
+    kit = _flt3_npm1_kit()
+    out = _mk_output(kit, eln="Intermediate")
+    md = build_clinical_report_markdown(kit, out, dna_figure_rel_path=None)
+    assert "dna_profile.png" not in md
+    assert "图 3.0" not in md
+    # Section 3 still renders without the figure
+    assert "三、分子特征" in md
+
+
+def test_build_markdown_custom_figure_path():
+    """Custom relative paths (e.g. ../figures/x.png) must pass through."""
+    kit = _flt3_npm1_kit()
+    out = _mk_output(kit, eln="Intermediate")
+    md = build_clinical_report_markdown(
+        kit, out, dna_figure_rel_path="../figures/custom.png",
+    )
+    assert "](../figures/custom.png)" in md
+
+
 def test_build_markdown_is_deterministic_up_to_timestamp():
     """Same kit + output → identical MD except for the timestamp line."""
     kit = _flt3_npm1_kit()

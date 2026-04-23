@@ -354,8 +354,21 @@ def _cautions_section(kit_out: KitOutput) -> str:
 # ---------------------------------------------------------------------------
 
 
-def build_clinical_report_markdown(kit: KitInput, kit_out: KitOutput) -> str:
-    """Build a complete clinical-grade Markdown report for one patient."""
+def build_clinical_report_markdown(
+    kit: KitInput,
+    kit_out: KitOutput,
+    dna_figure_rel_path: str | None = "dna_profile.png",
+) -> str:
+    """Build a complete clinical-grade Markdown report for one patient.
+
+    Args:
+      kit, kit_out: patient input + kit output.
+      dna_figure_rel_path: relative path (from the report file's directory)
+        to the DNA-level summary PNG. If the file doesn't exist at render
+        time, the image link simply renders as a broken image — we also
+        include a short paragraph explaining what the figure depicts.
+        Set to None to omit the figure entirely.
+    """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     dna = kit_out.dna_summary or {}
 
@@ -409,9 +422,21 @@ def build_clinical_report_markdown(kit: KitInput, kit_out: KitOutput) -> str:
     sections.extend(["", "---", ""])
 
     # ---- Section 3: Molecular Profile ----
+    figure_block: list[str] = []
+    if dna_figure_rel_path:
+        figure_block = [
+            f"![DNA-level profile: 核心基因 / 突变 / 融合 / 核型 / ELN 分层 / 可靶向性 总览]({dna_figure_rel_path})",
+            "",
+            "*图 3.0*: 上图为 DNA 级别分子综合图。左上显示检出的核心驱动突变（按 "
+            "Tier 1-3 着色，Tier 1=FDA 批准靶向药）；右上为融合基因与核型异常汇总；"
+            "左下为 25-gene 核心 panel 中未检出基因的背景参照；右下为 ELN 2017 "
+            "风险分层依据高亮。**报告正文的叙事均以此图数据为基础**。",
+            "",
+        ]
     sections.extend([
         "## 三、分子特征 (Molecular Profile)",
         "",
+        *figure_block,
         "### 3.1 核心驱动突变",
         "",
         _mutation_narrative(kit.mutations or []),
