@@ -18,6 +18,7 @@ printer. Exposed via KitOutput.dna_summary.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterable
 
 from combo_val.clinical.kit_schema import KitInput, MutationCall
@@ -335,6 +336,227 @@ def build_dna_summary(kit: KitInput, computed_eln: str) -> dict:
         "targetability": targetability,
         "sample_qc": sample_qc,
     }
+
+
+def export_dna_summary_csv(summary: dict, patient_id: str, out_dir: Path | str) -> dict:
+    """Write per-section CSV tables + a unified JSON file.
+
+    out_dir/patient_<id>/
+      ├── driver_mutations.csv       ← the core "table" clinicians care about
+      ├── fusion_analysis.csv
+      ├── cytogenetics.csv
+      ├── targetability.csv
+      ├── sample_qc.csv
+      └── dna_summary.json            ← full structured dict
+    """
+    import json
+    import pandas as pd
+    out = Path(out_dir) / f"patient_{patient_id}"
+    out.mkdir(parents=True, exist_ok=True)
+    paths: dict[str, str] = {}
+
+    # Driver mutations table — the main "DNA-level predictions 表"
+    if summary.get("driver_mutations"):
+        mdf = pd.DataFrame(summary["driver_mutations"])
+        # Order columns for human readability
+        priority = ["gene", "variant_type", "vaf", "tier", "allelic_ratio",
+                    "ar_interpretation", "biallelic", "allelic_interpretation",
+                    "targetable_by", "eln_implication", "is_adverse_driver", "notes"]
+        cols = [c for c in priority if c in mdf.columns] + \
+               [c for c in mdf.columns if c not in priority]
+        mdf = mdf[cols]
+        # Serialize list columns as semicolon-joined strings for Excel readability
+        for c in mdf.columns:
+            if mdf[c].apply(lambda v: isinstance(v, list)).any():
+                mdf[c] = mdf[c].apply(
+                    lambda v: "; ".join(map(str, v)) if isinstance(v, list) else v
+                )
+        p = out / "driver_mutations.csv"
+        mdf.to_csv(p, index=False)
+        paths["driver_mutations"] = str(p)
+
+    # Fusions
+    if summary.get("fusion_analysis"):
+        p = out / "fusion_analysis.csv"
+        pd.DataFrame(summary["fusion_analysis"]).to_csv(p, index=False)
+        paths["fusion_analysis"] = str(p)
+
+    # Cytogenetics
+    if summary.get("cytogenetics"):
+        p = out / "cytogenetics.csv"
+        pd.DataFrame(summary["cytogenetics"]).to_csv(p, index=False)
+        paths["cytogenetics"] = str(p)
+
+    # Targetability — pivot dict → long-form table
+    targ = summary.get("targetability", {})
+    if targ:
+        rows = []
+        for finding, drugs in targ.items():
+            for drug in drugs:
+                rows.append({"finding": finding, "indicated_drug_class": drug})
+        p = out / "targetability.csv"
+        pd.DataFrame(rows).to_csv(p, index=False)
+        paths["targetability"] = str(p)
+
+    # Sample QC
+    qc = summary.get("sample_qc", {})
+    if qc:
+        p = out / "sample_qc.csv"
+        pd.DataFrame([qc]).to_csv(p, index=False)
+        paths["sample_qc"] = str(p)
+
+    # Full JSON
+    p = out / "dna_summary.json"
+    # Sanitize non-serializable values
+    def _safe(x):
+        if isinstance(x, (str, int, float, bool)) or x is None:
+            return x
+        if isinstance(x, (list, tuple)):
+            return [_safe(v) for v in x]
+        if isinstance(x, dict):
+            return {k: _safe(v) for k, v in x.items()}
+        return str(x)
+    p.write_text(json.dumps(_safe(summary), indent=2, ensure_ascii=False),
+                 encoding="utf-8")
+    paths["dna_summary_json"] = str(p)
+    paths["_output_dir"] = str(out)
+    return paths
+
+
+def render_dna_summary_figure(
+    summary: dict,
+    patient_id: str,
+    out_path: Path | str,
+    dpi: int = 150,
+) -> str:
+    """Render a publication-quality figure of the DNA profile.
+
+    Creates a 2x2 grid: driver mutations table, fusion+cytogenetics,
+    targetability summary, ELN+QC summary. Saves PNG at out_path.
+    """
+    import matplotlib.pyplot as plt
+    from matplotlib.patches import Rectangle
+
+    fig = plt.figure(figsize=(14, 9))
+    fig.suptitle(
+        f"Patient {patient_id} — DNA-Level Profile\n"
+        f"ELN 2017 Risk: {summary.get('eln_risk', {}).get('category', '?')}",
+        fontsize=13, fontweight="bold", y=0.98,
+    )
+
+    gs = fig.add_gridspec(2, 2, hspace=0.35, wspace=0.15)
+
+    # ---------- Panel A: Driver mutations table (top-left, spans wide) ----------
+    ax_a = fig.add_subplot(gs[0, :])
+    ax_a.axis("off")
+    ax_a.set_title("A. Driver mutations (25-gene core panel)", loc="left",
+                    fontweight="bold", fontsize=11)
+    muts = summary.get("driver_mutations", [])
+    if muts:
+        rows = []
+        for m in muts:
+            gene = m["gene"]
+            variant = m.get("variant_type") or ""
+            if gene == "FLT3" and m.get("allelic_ratio") is not None:
+                variant = f"{m.get('variant_type', 'ITD')} AR={m['allelic_ratio']:.2f}"
+            elif gene == "CEBPA" and m.get("biallelic"):
+                variant = "biallelic"
+            vaf = f"{m['vaf']:.2f}" if m.get("vaf") is not None else "—"
+            tier = f"T{m['tier']}" if m.get("tier") else "—"
+            targetable = ", ".join(m.get("targetable_by", [])[:3]) or "—"
+            rows.append([gene, variant, vaf, tier, targetable])
+        table = ax_a.table(
+            cellText=rows,
+            colLabels=["Gene", "Variant", "VAF", "Tier", "Targetable (top 3)"],
+            cellLoc="left", colLoc="left",
+            loc="upper left",
+            colWidths=[0.10, 0.20, 0.08, 0.06, 0.56],
+        )
+        table.auto_set_font_size(False)
+        table.set_fontsize(10)
+        table.scale(1.0, 1.6)
+        # Color header
+        for j in range(5):
+            table[(0, j)].set_facecolor("#4A6FA5")
+            table[(0, j)].get_text().set_color("white")
+            table[(0, j)].get_text().set_fontweight("bold")
+        # Color tier-1 rows
+        for i, m in enumerate(muts, start=1):
+            if m.get("tier") == 1:
+                for j in range(5):
+                    table[(i, j)].set_facecolor("#E8F4EA")
+            elif m.get("is_adverse_driver"):
+                for j in range(5):
+                    table[(i, j)].set_facecolor("#FDECEA")
+    else:
+        ax_a.text(0.5, 0.5, "No driver mutations called",
+                  ha="center", va="center", fontsize=11, style="italic")
+
+    # ---------- Panel B: Fusion + Cytogenetics (bottom-left) ----------
+    ax_b = fig.add_subplot(gs[1, 0])
+    ax_b.axis("off")
+    ax_b.set_title("B. Fusions + cytogenetics", loc="left",
+                    fontweight="bold", fontsize=11)
+    y = 0.95
+    fusions = summary.get("fusion_analysis", [])
+    if fusions:
+        ax_b.text(0.0, y, "Fusions:", fontweight="bold", fontsize=10,
+                   transform=ax_b.transAxes)
+        y -= 0.08
+        for f in fusions:
+            ax_b.text(0.04, y, f"• {f['fusion']} → {f.get('eln_implication', '?')}",
+                       fontsize=9, transform=ax_b.transAxes)
+            y -= 0.06
+    else:
+        ax_b.text(0.0, y, "Fusions: none detected", fontsize=10,
+                   color="gray", transform=ax_b.transAxes)
+        y -= 0.08
+    y -= 0.04
+    ax_b.text(0.0, y, "Cytogenetics:", fontweight="bold", fontsize=10,
+               transform=ax_b.transAxes)
+    y -= 0.08
+    for c in summary.get("cytogenetics", []):
+        mark = "✓" if c["present"] else "✗"
+        color = "#B71C1C" if c["present"] and "Normal" not in c["finding"] else \
+                "#2E7D32" if c["present"] else "gray"
+        ax_b.text(0.04, y, f"[{mark}] {c['finding']}", fontsize=9,
+                   color=color, transform=ax_b.transAxes)
+        y -= 0.06
+
+    # ---------- Panel C: Targetability (bottom-right) ----------
+    ax_c = fig.add_subplot(gs[1, 1])
+    ax_c.axis("off")
+    ax_c.set_title("C. Targetable drug classes", loc="left",
+                    fontweight="bold", fontsize=11)
+    y = 0.95
+    for finding, drugs in summary.get("targetability", {}).items():
+        ax_c.text(0.0, y, f"{finding}:", fontweight="bold", fontsize=9,
+                   transform=ax_c.transAxes)
+        y -= 0.06
+        for d in drugs[:3]:
+            ax_c.text(0.05, y, f"→ {d}", fontsize=9, transform=ax_c.transAxes)
+            y -= 0.05
+        if len(drugs) > 3:
+            ax_c.text(0.05, y, f"  (+{len(drugs) - 3} more)",
+                       fontsize=8, style="italic", color="gray",
+                       transform=ax_c.transAxes)
+            y -= 0.05
+        y -= 0.03
+
+    # Sample QC footer
+    qc = summary.get("sample_qc", {})
+    fig.text(0.5, 0.02,
+              f"Sample QC: {qc.get('n_mutations_called', 0)} mutations called · "
+              f"{qc.get('n_above_vaf_0_20', 0)} above VAF 0.20 · "
+              f"karyotype parsed: {qc.get('karyotype_parsed', False)} · "
+              f"fusions: {qc.get('fusions_reported', 0)}",
+              ha="center", fontsize=8, color="gray")
+
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=dpi, bbox_inches="tight")
+    plt.close(fig)
+    return str(out_path)
 
 
 def pretty_print_dna_summary(summary: dict) -> str:

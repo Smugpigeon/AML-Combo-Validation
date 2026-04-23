@@ -1,0 +1,63 @@
+{
+  "driver_mutations": [
+    {
+      "gene": "ASXL1",
+      "variant_type": "nonsense",
+      "vaf": 0.42,
+      "tier": 2,
+      "targetable_by": [],
+      "eln_implication": null,
+      "is_adverse_driver": true,
+      "notes": "ADVERSE. Often co-mutates with SRSF2 in MDS-AML."
+    },
+    {
+      "gene": "TP53",
+      "variant_type": "missense",
+      "vaf": 0.55,
+      "tier": 2,
+      "targetable_by": [],
+      "eln_implication": null,
+      "is_adverse_driver": true,
+      "notes": "ADVERSE. Conventional induction poorly effective. Trial enrollment + SCT priority."
+    }
+  ],
+  "fusion_analysis": [],
+  "cytogenetics": [
+    {
+      "finding": "Complex karyotype",
+      "present": true,
+      "interpretation": "Complex karyotype (≥3 abnormalities). Poor prognosis regardless of other features."
+    },
+    {
+      "finding": "Monosomy 5/7 or del(5q)/del(7q)",
+      "present": true,
+      "interpretation": "Monosomy 5/7 or del(5q)/del(7q). MDS-related. Vyxeos (CPX-351) eligible."
+    },
+    {
+      "finding": "del(17p) / TP53 locus",
+      "present": true,
+      "interpretation": "17p deletion affects TP53 locus. Conventional induction poorly effective."
+    },
+    {
+      "finding": "Normal karyotype",
+      "present": false,
+      "interpretation": ""
+    }
+  ],
+  "eln_risk": {
+    "category": "Adverse",
+    "source": "computed via eln_computer.compute_eln2017 (ELN 2017 rules)"
+  },
+  "targetability": {
+    "universal": [
+      "Venetoclax (combination)"
+    ]
+  },
+  "sample_qc": {
+    "n_mutations_called": 2,
+    "n_with_vaf_annotation": 2,
+    "n_above_vaf_0_20": 2,
+    "karyotype_parsed": true,
+    "fusions_reported": 0
+  }
+}

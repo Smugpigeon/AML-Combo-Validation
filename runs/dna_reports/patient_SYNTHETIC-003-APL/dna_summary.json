@@ -1,0 +1,54 @@
+{
+  "driver_mutations": [],
+  "fusion_analysis": [
+    {
+      "fusion": "PML-RARA",
+      "eln_implication": "Favorable (special — APL category)",
+      "regimen_note": "ATRA + ATO mandatory (first-line APML4 / LPA regimen)",
+      "notes": "**7+3 is INAPPROPRIATE** for PML-RARA. ATRA + ATO is curative in >90%."
+    }
+  ],
+  "cytogenetics": [
+    {
+      "finding": "Complex karyotype",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "Monosomy 5/7 or del(5q)/del(7q)",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "del(17p) / TP53 locus",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "Normal karyotype",
+      "present": false,
+      "interpretation": ""
+    }
+  ],
+  "eln_risk": {
+    "category": "Favorable",
+    "source": "computed via eln_computer.compute_eln2017 (ELN 2017 rules)"
+  },
+  "targetability": {
+    "PML-RARA": [
+      "ATRA",
+      "ATO (arsenic trioxide)",
+      "GO (optional)"
+    ],
+    "universal": [
+      "Venetoclax (combination)"
+    ]
+  },
+  "sample_qc": {
+    "n_mutations_called": 0,
+    "n_with_vaf_annotation": 0,
+    "n_above_vaf_0_20": 0,
+    "karyotype_parsed": true,
+    "fusions_reported": 1
+  }
+}

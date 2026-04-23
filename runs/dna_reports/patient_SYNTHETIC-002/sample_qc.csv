@@ -1,0 +1,2 @@
+n_mutations_called,n_with_vaf_annotation,n_above_vaf_0_20,karyotype_parsed,fusions_reported
+2,2,2,True,0

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 import pytest
 
 from combo_val.clinical.dna_report import (
@@ -211,3 +213,52 @@ def test_pretty_print_handles_no_mutations():
     # Should still produce valid output, not crash
     assert "DNA-LEVEL PROFILE" in output
     assert "No driver mutations called" in output
+
+
+# ---------------------------------------------------------------------------
+# File export
+# ---------------------------------------------------------------------------
+
+
+def test_export_dna_summary_csv(tmp_path):
+    from combo_val.clinical.dna_report import export_dna_summary_csv
+    kit = KitInput(
+        patient_id="EXPORT-001",
+        mutations=[
+            MutationCall(gene="FLT3", is_ITD=True, allelic_ratio=0.62, vaf=0.45),
+            MutationCall(gene="NPM1", variant_type="missense", vaf=0.42),
+        ],
+        karyotype_text="46,XX[20]",
+    )
+    summary = build_dna_summary(kit, computed_eln="Intermediate")
+    paths = export_dna_summary_csv(summary, "EXPORT-001", tmp_path)
+
+    assert "driver_mutations" in paths
+    driver_csv = Path(paths["driver_mutations"])
+    assert driver_csv.exists()
+    # Spot-check the CSV actually has the expected data
+    content = driver_csv.read_text()
+    assert "FLT3" in content
+    assert "ITD" in content
+    assert "Midostaurin" in content   # targetable_by serialized
+    assert "NPM1" in content
+
+    # Other files
+    assert Path(paths["cytogenetics"]).exists()
+    assert Path(paths["targetability"]).exists()
+    assert Path(paths["sample_qc"]).exists()
+    assert Path(paths["dna_summary_json"]).exists()
+
+
+def test_render_dna_summary_figure(tmp_path):
+    from combo_val.clinical.dna_report import render_dna_summary_figure
+    kit = KitInput(
+        patient_id="FIG-001",
+        mutations=[MutationCall(gene="FLT3", is_ITD=True, allelic_ratio=0.62, vaf=0.45)],
+        karyotype_text="46,XY[20]",
+    )
+    summary = build_dna_summary(kit, computed_eln="Intermediate")
+    out_path = tmp_path / "test_figure.png"
+    result_path = render_dna_summary_figure(summary, "FIG-001", out_path)
+    assert Path(result_path).exists()
+    assert Path(result_path).stat().st_size > 1000   # non-empty PNG

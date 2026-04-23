@@ -1,0 +1,93 @@
+{
+  "driver_mutations": [
+    {
+      "gene": "FLT3",
+      "variant_type": "ITD",
+      "vaf": 0.45,
+      "allelic_ratio": 0.62,
+      "ar_interpretation": "HIGH (≥0.5) — adverse modifier unless NPM1-mut",
+      "tier": 1,
+      "targetable_by": [
+        "Midostaurin",
+        "Quizartinib",
+        "Gilteritinib",
+        "Sorafenib",
+        "Crenolanib"
+      ],
+      "eln_implication": "ITD positive with high allelic ratio (≥0.5) AND no NPM1 mutation",
+      "is_adverse_driver": false,
+      "notes": "ITD ≠ TKD — verify variant type. Allelic ratio ≥0.5 triggers RATIFY / QUANTUM-First intensive triplet eligibility."
+    },
+    {
+      "gene": "NPM1",
+      "variant_type": "missense",
+      "vaf": 0.42,
+      "tier": 2,
+      "targetable_by": [
+        "Revumenib (research)"
+      ],
+      "eln_implication": "Isolated or with FLT3-ITD low allelic ratio",
+      "is_adverse_driver": false,
+      "notes": "Most common mutation in AML. Favorable as monotherapy-response modifier."
+    },
+    {
+      "gene": "DNMT3A",
+      "variant_type": "frameshift",
+      "vaf": 0.48,
+      "tier": 3,
+      "targetable_by": [],
+      "eln_implication": null,
+      "is_adverse_driver": false,
+      "notes": "Common background in AML; moderate prognostic signal. HMA (aza/dec) synergy reported."
+    }
+  ],
+  "fusion_analysis": [],
+  "cytogenetics": [
+    {
+      "finding": "Complex karyotype",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "Monosomy 5/7 or del(5q)/del(7q)",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "del(17p) / TP53 locus",
+      "present": false,
+      "interpretation": "Not present"
+    },
+    {
+      "finding": "Normal karyotype",
+      "present": true,
+      "interpretation": "46,XX or 46,XY, no abnormalities"
+    }
+  ],
+  "eln_risk": {
+    "category": "Intermediate",
+    "source": "computed via eln_computer.compute_eln2017 (ELN 2017 rules)"
+  },
+  "targetability": {
+    "FLT3": [
+      "Midostaurin",
+      "Quizartinib",
+      "Gilteritinib",
+      "Sorafenib",
+      "Crenolanib"
+    ],
+    "NPM1": [
+      "Revumenib (research)"
+    ],
+    "universal": [
+      "Venetoclax (combination)"
+    ]
+  },
+  "sample_qc": {
+    "n_mutations_called": 3,
+    "n_with_vaf_annotation": 3,
+    "n_above_vaf_0_20": 3,
+    "karyotype_parsed": true,
+    "fusions_reported": 0
+  }
+}

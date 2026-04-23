@@ -1,0 +1,4 @@
+gene,variant_type,vaf,tier,allelic_ratio,ar_interpretation,targetable_by,eln_implication,is_adverse_driver,notes
+FLT3,ITD,0.45,1,0.62,HIGH (≥0.5) — adverse modifier unless NPM1-mut,Midostaurin; Quizartinib; Gilteritinib; Sorafenib; Crenolanib,ITD positive with high allelic ratio (≥0.5) AND no NPM1 mutation,False,ITD ≠ TKD — verify variant type. Allelic ratio ≥0.5 triggers RATIFY / QUANTUM-First intensive triplet eligibility.
+NPM1,missense,0.42,2,,,Revumenib (research),Isolated or with FLT3-ITD low allelic ratio,False,Most common mutation in AML. Favorable as monotherapy-response modifier.
+DNMT3A,frameshift,0.48,3,,,,,False,Common background in AML; moderate prognostic signal. HMA (aza/dec) synergy reported.
