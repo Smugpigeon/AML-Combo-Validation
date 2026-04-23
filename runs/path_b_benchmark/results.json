@@ -1,0 +1,74 @@
+{
+  "mlp_mech_prior": {
+    "name": "MLP + mech-prior",
+    "m1_single_drug_cv_rho": 0.7005359815456421,
+    "m1_single_drug_cv_mae": 35.097294616699216,
+    "m2_flt3_canonical_rank": {
+      "mean_best_canonical_rank": 7.78,
+      "median_best_canonical_rank": 1,
+      "n_flt3_mut": 179
+    },
+    "m3_jaccard_top5_vs_mlp": 1.0,
+    "m4_spearman_with_path_a": -0.148,
+    "m5_zero_shot_triplet": {
+      "mean_delta_random_minus_canonical": 38.964,
+      "win_rate": 0.86,
+      "n_flt3_mut": 179
+    },
+    "m6_bliss_consistency": 0.069
+  },
+  "path_a": {
+    "name": "Path A (clonal coverage)",
+    "m1_single_drug_cv_rho": null,
+    "m1_single_drug_cv_mae": null,
+    "m2_flt3_canonical_rank": {
+      "mean_best_canonical_rank": 70.26,
+      "median_best_canonical_rank": 73,
+      "n_flt3_mut": 179
+    },
+    "m3_jaccard_top5_vs_mlp": 0.009,
+    "m4_spearman_with_path_a": 1.0,
+    "m5_zero_shot_triplet": {
+      "mean_delta_random_minus_canonical": 0.384,
+      "win_rate": 1.0,
+      "n_flt3_mut": 179
+    },
+    "m6_bliss_consistency": null
+  },
+  "st_v2": {
+    "name": "ST v2 (single-drug only)",
+    "m1_single_drug_cv_rho": 0.6911,
+    "m1_single_drug_cv_mae": 35.931,
+    "m2_flt3_canonical_rank": {
+      "mean_best_canonical_rank": 9.68,
+      "median_best_canonical_rank": 10,
+      "n_flt3_mut": 179
+    },
+    "m3_jaccard_top5_vs_mlp": 0.069,
+    "m4_spearman_with_path_a": -0.195,
+    "m5_zero_shot_triplet": {
+      "mean_delta_random_minus_canonical": 28.247,
+      "win_rate": 1.0,
+      "n_flt3_mut": 179
+    },
+    "m6_bliss_consistency": 0.161
+  },
+  "st_v3_distilled": {
+    "name": "ST v3 (Path A distilled)",
+    "m1_single_drug_cv_rho": 0.6533,
+    "m1_single_drug_cv_mae": 32.11,
+    "m2_flt3_canonical_rank": {
+      "mean_best_canonical_rank": 12.11,
+      "median_best_canonical_rank": 13,
+      "n_flt3_mut": 179
+    },
+    "m3_jaccard_top5_vs_mlp": 0.079,
+    "m4_spearman_with_path_a": -0.185,
+    "m5_zero_shot_triplet": {
+      "mean_delta_random_minus_canonical": 31.76,
+      "win_rate": 1.0,
+      "n_flt3_mut": 179
+    },
+    "m6_bliss_consistency": 0.081
+  }
+}

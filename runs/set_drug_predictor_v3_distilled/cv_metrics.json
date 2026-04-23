@@ -1,0 +1,82 @@
+{
+  "cfg": {
+    "v2_checkpoint": "runs/set_drug_predictor_v2_stable/final_model.pt",
+    "out_dir": "runs/set_drug_predictor_v3_distilled",
+    "clinical_drug_filter": [
+      "Venetoclax",
+      "Azacytidine",
+      "Cytarabine",
+      "Midostaurin",
+      "Quizartinib (AC220)",
+      "Gilteritinib",
+      "Ivosidenib",
+      "Enasidenib",
+      "Sorafenib",
+      "Crenolanib",
+      "Dasatinib",
+      "Nilotinib",
+      "Imatinib",
+      "Ponatinib",
+      "Ruxolitinib (INCB018424)",
+      "Trametinib (GSK1120212)",
+      "Selumetinib (AZD6244)",
+      "Alisertib (MLN8237)",
+      "Pacritinib",
+      "Crizotinib (PF-2341066)"
+    ],
+    "single_mse_norm_scale": 2200.0,
+    "alpha_single": 1.0,
+    "beta_pair": 1.0,
+    "n_pairs_per_patient_per_batch": 20,
+    "lr": 0.0005,
+    "weight_decay": 1e-05,
+    "n_epochs": 8,
+    "batch_size": 256,
+    "pair_batch_size": 16,
+    "device": "auto",
+    "random_state": 42,
+    "n_folds": 5
+  },
+  "device": "mps",
+  "architecture": "SetTransformer_v3_distilled",
+  "overall_cv": {
+    "cv_folds": [
+      {
+        "fold": 1,
+        "val_mae": 30.913,
+        "mean_per_patient_spearman": 0.6481,
+        "elapsed_s": 110.6
+      },
+      {
+        "fold": 2,
+        "val_mae": 32.201,
+        "mean_per_patient_spearman": 0.6723,
+        "elapsed_s": 122.9
+      },
+      {
+        "fold": 3,
+        "val_mae": 33.546,
+        "mean_per_patient_spearman": 0.6273,
+        "elapsed_s": 156.5
+      },
+      {
+        "fold": 4,
+        "val_mae": 33.161,
+        "mean_per_patient_spearman": 0.6417,
+        "elapsed_s": 135.2
+      },
+      {
+        "fold": 5,
+        "val_mae": 30.731,
+        "mean_per_patient_spearman": 0.6769,
+        "elapsed_s": 132.3
+      }
+    ],
+    "cv_mean_per_patient_spearman": 0.6533,
+    "cv_std_per_patient_spearman": 0.0187,
+    "cv_mean_mae": 32.11
+  },
+  "output_files": {
+    "checkpoint": "runs/set_drug_predictor_v3_distilled/final_model.pt"
+  }
+}

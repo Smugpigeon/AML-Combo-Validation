@@ -1,0 +1,5 @@
+model,description,m1_single_drug_cv_rho,m1_single_drug_cv_mae,m3_jaccard_top5_vs_mlp,m4_spearman_with_path_a,m6_bliss_consistency,m2_mean_canonical_rank,m5_triplet_delta,m5_triplet_win_rate
+mlp_mech_prior,MLP + mech-prior,0.7005359815456421,35.097294616699216,1.0,-0.148,0.069,7.78,38.964,0.86
+path_a,Path A (clonal coverage),,,0.009,1.0,,70.26,0.384,1.0
+st_v2,ST v2 (single-drug only),0.6911,35.931,0.069,-0.195,0.161,9.68,28.247,1.0
+st_v3_distilled,ST v3 (Path A distilled),0.6533,32.11,0.079,-0.185,0.081,12.11,31.76,1.0
