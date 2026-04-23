@@ -36,6 +36,7 @@ import pandas as pd
 import torch
 
 from combo_val.baselines.single_drug_mlp import SingleDrugMLP, SingleDrugMLPConfig
+from combo_val.clinical.dna_report import build_dna_summary
 from combo_val.clinical.eln_computer import compute_eln2017
 from combo_val.clinical.feature_builder import build_patient_features_from_raw
 from combo_val.clinical.kit_schema import KitInput, KitOutput
@@ -492,6 +493,9 @@ def predict_for_patient(
         "top_triplets_by_coverage": _coverage_ranking_to_dicts(cov_k3),
     }
 
+    # ---- DNA-level profile (core genes, mutations, targetability) ----
+    dna_summary = build_dna_summary(kit, computed_eln=diag["eln_predicted"])
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
@@ -499,6 +503,7 @@ def predict_for_patient(
         top_single_drugs=top_single,
         top_regimens=top_regimens,
         clonal_coverage=clonal_coverage,
+        dna_summary=dna_summary,
         driver_flags=driver_flags,
         fitness_flag=fitness_flag,
         cautions=_check_kit_cautions(kit, driver_flags),
@@ -603,6 +608,11 @@ def pretty_print_kit_output(out: KitOutput) -> str:
         lines += ["║", "║ CAUTIONS"]
         for c in out.cautions:
             lines.append(f"║  ⚠ {c}")
+    # DNA-level profile — core genes, mutations, targetability (audit table)
+    if out.dna_summary:
+        from combo_val.clinical.dna_report import pretty_print_dna_summary
+        lines.append(pretty_print_dna_summary(out.dna_summary))
+
     if out.confidence_notes:
         lines += ["║", "║ CONFIDENCE NOTES"]
         for c in out.confidence_notes:

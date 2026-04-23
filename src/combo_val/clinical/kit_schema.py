@@ -71,6 +71,9 @@ class KitOutput:
       Layer 1 (evidence)    → top_regimens       — Route C: trial-matched regimens
       Layer 2 (biology)     → clonal_coverage    — Path A: clonal-coverage × IDA
       Layer 3 (prediction)  → top_combinations   — MLP: continuous AUC prediction
+
+    Plus a DNA-level profile (core genes + mutations + targetability) for
+    clinician audit against the NGS lab report.
     """
     patient_id: str
     predicted_eln2017: str                  # computed or passed through
@@ -78,6 +81,7 @@ class KitOutput:
     top_single_drugs: list[dict]            # [{rank, drug, predicted_auc}]
     top_regimens: list[dict]                # Layer 1: Route C trial-evidence regimens w/ published CR/OS
     clonal_coverage: dict                   # Layer 2: Path A biology — patient clones + top doublets/triplets by coverage
+    dna_summary: dict                       # Per-patient DNA profile: driver mutations, fusions, cytogenetics, targetability, sample QC
     driver_flags: dict                      # {FLT3_ITD: bool, NPM1: bool, IDH2: bool, ...}
     fitness_flag: str                       # "fit_for_intensive" | "unfit"
     cautions: list[str]                     # e.g. "TLS risk with Venetoclax; baseline LDH elevated"
