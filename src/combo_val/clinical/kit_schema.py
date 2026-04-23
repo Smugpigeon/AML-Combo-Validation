@@ -69,6 +69,7 @@ class KitOutput:
     predicted_eln2017: str                  # computed or passed through
     top_combinations: list[dict]            # [{rank, drug1, drug2, predicted_auc, mech_score, …}]
     top_single_drugs: list[dict]            # [{rank, drug, predicted_auc}]
+    top_regimens: list[dict]                # Route C: trial-evidence-based regimens w/ published CR/OS
     driver_flags: dict                      # {FLT3_ITD: bool, NPM1: bool, IDH2: bool, ...}
     fitness_flag: str                       # "fit_for_intensive" | "unfit"
     cautions: list[str]                     # e.g. "TLS risk with Venetoclax; baseline LDH elevated"

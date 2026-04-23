@@ -214,11 +214,29 @@ def predict_for_patient(
             + ("..." if diag["n_imputed_fields"] > 6 else "")
         )
 
+    # ---- Route C: regimen retrieval from curated trial DB ----
+    # Runs independently of the MLP so it can ALWAYS produce a recommendation
+    # even for drugs the MLP has no vocab for (ATRA/ATO, Decitabine, etc.).
+    from combo_val.clinical.regimen_matcher import match_patient as _match_regimen
+
+    # Build a feature dict keyed by the saved feature_cols (patient_features
+    # order) so the matcher sees the same schema as training.
+    patient_feat_dict = {
+        col: float(features[i]) for i, col in enumerate(feature_cols_ckpt)
+    }
+    regimen_matches = _match_regimen(patient_feat_dict, top_k=top_k)
+    top_regimens = []
+    for rank, m in enumerate(regimen_matches, start=1):
+        s = m.as_summary()
+        s["rank"] = rank
+        top_regimens.append(s)
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
         top_combinations=top_combos,
         top_single_drugs=top_single,
+        top_regimens=top_regimens,
         driver_flags=driver_flags,
         fitness_flag=fitness_flag,
         cautions=_check_kit_cautions(kit, driver_flags),
@@ -250,6 +268,29 @@ def pretty_print_kit_output(out: KitOutput) -> str:
         lines.append(
             f"║  {s['rank']}. {s['drug']:<30s}  predicted AUC = {s['predicted_auc']:6.1f}"
         )
+    # Route C: trial-evidence-based regimens (covers ATRA+ATO, triplets,
+    # regimens with drugs outside the MLP vocab)
+    if out.top_regimens:
+        lines += [
+            "║",
+            "║ RECOMMENDED REGIMENS (from curated AML trial evidence)",
+        ]
+        for r in out.top_regimens:
+            drugs_str = " + ".join(r["drugs"])
+            cr_str = f"CR/CRi {100 * r['published_cr_cri_rate']:.0f}%"
+            os_str = (f" · median OS {r['published_median_os_months']:.1f}mo"
+                      if r.get("published_median_os_months") is not None else "")
+            evidence = f"[{r['trial_phase']} {r['trial_name']}]"
+            pmid = f" PMID {r['pmid']}" if r.get("pmid") else ""
+            lines.append(
+                f"║  {r['rank']}. {drugs_str}"
+            )
+            lines.append(
+                f"║     {cr_str}{os_str}  {evidence}{pmid}"
+            )
+            if r.get("cautions"):
+                for c in r["cautions"]:
+                    lines.append(f"║       ⚠ {c}")
     if out.cautions:
         lines += ["║", "║ CAUTIONS"]
         for c in out.cautions:
