@@ -22,6 +22,7 @@ import joblib
 from combo_val.clinical.demo_kit_run import _synthetic_rna_counts
 from combo_val.clinical.dna_report import (
     export_dna_summary_csv,
+    generate_patient_readme,
     render_dna_summary_figure,
 )
 from combo_val.clinical.kit_predict import predict_for_patient
@@ -34,6 +35,13 @@ def _run_patient(patient_id: str, rna, kit, out_root: Path):
     fig_path = out_root / f"patient_{patient_id}" / "dna_profile.png"
     render_dna_summary_figure(out.dna_summary, patient_id, fig_path)
     paths["figure"] = str(fig_path)
+
+    # Per-patient README with key findings + file manifest + reading guide link
+    readme_path = out_root / f"patient_{patient_id}" / "README.md"
+    generate_patient_readme(
+        out.dna_summary, patient_id, kit_output=out, out_path=readme_path,
+    )
+    paths["readme"] = str(readme_path)
 
     print(f"\n=== {patient_id} — ELN: {out.predicted_eln2017} ===")
     for name, p in paths.items():

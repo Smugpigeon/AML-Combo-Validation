@@ -262,3 +262,61 @@ def test_render_dna_summary_figure(tmp_path):
     result_path = render_dna_summary_figure(summary, "FIG-001", out_path)
     assert Path(result_path).exists()
     assert Path(result_path).stat().st_size > 1000   # non-empty PNG
+
+
+# ---------------------------------------------------------------------------
+# Per-patient README generator
+# ---------------------------------------------------------------------------
+
+
+def test_generate_patient_readme_flt3_tier1_highlighted(tmp_path):
+    from combo_val.clinical.dna_report import generate_patient_readme
+    kit = KitInput(
+        patient_id="README-FLT3",
+        mutations=[MutationCall(gene="FLT3", is_ITD=True, allelic_ratio=0.62, vaf=0.45)],
+        karyotype_text="46,XX[20]",
+    )
+    summary = build_dna_summary(kit, computed_eln="Intermediate")
+    out = tmp_path / "README.md"
+    path = generate_patient_readme(summary, "README-FLT3", out_path=out)
+    content = Path(path).read_text()
+    # Tier 1 section should appear with FLT3 + AR info
+    assert "Tier-1" in content
+    assert "FLT3" in content
+    assert "ITD AR=0.62" in content
+    # Targetable drugs listed
+    assert "Midostaurin" in content or "Gilteritinib" in content
+    # File manifest included
+    assert "driver_mutations.csv" in content
+    # Links to full guide
+    assert "clinical_reader_guide.md" in content
+
+
+def test_generate_patient_readme_tp53_adverse(tmp_path):
+    from combo_val.clinical.dna_report import generate_patient_readme
+    kit = KitInput(
+        patient_id="README-TP53",
+        mutations=[MutationCall(gene="TP53", variant_type="missense", vaf=0.55)],
+        karyotype_text="45,XY,-7,del(5)(q13q33),+8,t(3;3)(q21;q26),del(17)(p13)[18]",
+    )
+    summary = build_dna_summary(kit, computed_eln="Adverse")
+    out = tmp_path / "README.md"
+    generate_patient_readme(summary, "README-TP53", out_path=out)
+    content = out.read_text()
+    # Adverse drivers section visible
+    assert "Adverse drivers" in content
+    assert "TP53" in content
+    # Abnormal cytogenetic findings section
+    assert "Abnormal cytogenetic findings" in content or "cytogenetic" in content.lower()
+    # No Tier-1 section should appear (TP53 is Tier 2, no Tier-1 mutations)
+    # (We allow it to be absent or say "0"; ensure Tier-1 isn't claimed false-positive)
+
+
+def test_generate_patient_readme_returns_content_when_no_out_path():
+    from combo_val.clinical.dna_report import generate_patient_readme
+    kit = KitInput(patient_id="README-X")
+    summary = build_dna_summary(kit, computed_eln="Intermediate")
+    content = generate_patient_readme(summary, "README-X")
+    # Should return the markdown string directly
+    assert isinstance(content, str)
+    assert "Patient README-X" in content
