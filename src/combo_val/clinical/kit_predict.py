@@ -43,6 +43,7 @@ from combo_val.combo.mechanism_prior import (
     BEATAML_TO_MECH_ID,
     compute_combo_mech_scores,
 )
+from combo_val.combo.set_drug_inference import load_set_drug_predictor
 
 
 # Clinical filter matches Week 4 — drops pan-cytotoxic pipeline drugs
@@ -109,35 +110,61 @@ def predict_for_patient(
     kit: KitInput,
     checkpoint_path: Path = Path("runs/baseline_single_drug_mlp/final_model.pt"),
     preprocessor_path: Path = Path("data/canonical/beataml_rna_preprocessor.joblib"),
+    set_transformer_checkpoint: Path = Path("runs/set_drug_predictor_v2_stable/final_model.pt"),
     top_k: int = 5,
     drug_filter: tuple[str, ...] | None = CLINICALLY_RELEVANT_AML_DRUGS,
     mech_prior_scale: float = 30.0,
+    prefer_set_transformer: bool = False,
 ) -> KitOutput:
-    """Run the full kit prediction pipeline for one new patient."""
+    """Run the full kit prediction pipeline for one new patient.
+
+    Layer 3 backbone selection:
+      - Default (prefer_set_transformer=False): Baseline A MLP + factorized
+        combo AUC + mechanism-prior bonus. This matches clinical literature
+        for canonical pairs (FLT3i+BCL2i at rank 1 for FLT3-mut patients).
+      - Opt-in (prefer_set_transformer=True AND checkpoint exists): Set
+        Transformer. Gives arity-generalizable predictions (2-6 drugs from
+        same model), but trained on single-drug data only — pair rankings
+        do NOT reproduce canonical clinical combos without additional
+        pair-level supervision. Use for exploration / 3+ drug triplets, not
+        as sole recommender.
+    """
     # --- 1. Features ---
     features, diag = build_patient_features_from_raw(
         rna_counts, kit, preprocessor_path=preprocessor_path,
     )
 
-    # --- 2. MLP predictions ---
-    model, ckpt = _load_mlp(checkpoint_path)
-    drug_vocab: list[str] = ckpt["drug_vocab"]
-    feature_cols_ckpt = ckpt["feature_cols"]
-    scaler_mean = np.array(ckpt["scaler_mean"], dtype=np.float32)
-    scaler_scale = np.array(ckpt["scaler_scale"], dtype=np.float32)
+    # --- 2. Layer 3 predictions (Set Transformer preferred, MLP fallback) ---
+    st_predictor = (load_set_drug_predictor(set_transformer_checkpoint)
+                    if prefer_set_transformer else None)
 
-    if len(feature_cols_ckpt) != len(features):
-        raise ValueError(
-            f"Feature-schema mismatch: MLP checkpoint expects "
-            f"{len(feature_cols_ckpt)} features, builder produced {len(features)}. "
-            f"Rerun beataml_etl + retrain Baseline A so both match."
-        )
-
-    standardized = (features - scaler_mean) / np.where(scaler_scale > 0, scaler_scale, 1.0)
-    pf_tensor = torch.tensor(standardized, dtype=torch.float32)
-
-    with torch.no_grad():
-        pred_auc = model.predict_all_drugs_for_patient(pf_tensor, torch.device("cpu")).numpy()
+    if st_predictor is not None:
+        layer3_backbone = "SetTransformer"
+        drug_vocab: list[str] = st_predictor.drug_vocab
+        feature_cols_ckpt = st_predictor.feature_cols
+        if len(feature_cols_ckpt) != len(features):
+            raise ValueError(
+                f"Feature-schema mismatch (Set Transformer): checkpoint expects "
+                f"{len(feature_cols_ckpt)} features, builder produced {len(features)}."
+            )
+        pred_auc = st_predictor.predict_singles(features)  # (n_drugs,)
+    else:
+        layer3_backbone = "BaselineA-MLP"
+        model, ckpt = _load_mlp(checkpoint_path)
+        drug_vocab = ckpt["drug_vocab"]
+        feature_cols_ckpt = ckpt["feature_cols"]
+        scaler_mean = np.array(ckpt["scaler_mean"], dtype=np.float32)
+        scaler_scale = np.array(ckpt["scaler_scale"], dtype=np.float32)
+        if len(feature_cols_ckpt) != len(features):
+            raise ValueError(
+                f"Feature-schema mismatch: MLP checkpoint expects "
+                f"{len(feature_cols_ckpt)} features, builder produced {len(features)}. "
+                f"Rerun beataml_etl + retrain Baseline A so both match."
+            )
+        standardized = (features - scaler_mean) / np.where(scaler_scale > 0, scaler_scale, 1.0)
+        pf_tensor = torch.tensor(standardized, dtype=torch.float32)
+        with torch.no_grad():
+            pred_auc = model.predict_all_drugs_for_patient(pf_tensor, torch.device("cpu")).numpy()
 
     # --- 3. Drug filter ---
     if drug_filter:
@@ -160,16 +187,26 @@ def predict_for_patient(
     ]
 
     # --- 5. Combo scoring ---
-    # Build a 1-row patient features frame for mech-prior scoring.
-    # Use the COLUMNS from the checkpoint feature_cols so the mech builder
-    # can find mut_FLT3 etc.
+    # Mechanism prior (for audit, displayed on each combo regardless of backbone)
     pf_df = pd.DataFrame([features], columns=feature_cols_ckpt, index=[kit.patient_id])
     mech_scores = compute_combo_mech_scores(pf_df, drug_vocab_filt)  # (1, n_d, n_d)
     mech_scores = mech_scores[0]                                      # (n_d, n_d)
 
-    # Combo AUC = 0.5 * (auc_i + auc_j) - mech_scale * mech_score (lower = better)
     n_d = len(drug_vocab_filt)
-    combo_auc = 0.5 * (pred_auc_filt[:, None] + pred_auc_filt[None, :]) - mech_prior_scale * mech_scores
+    if layer3_backbone == "SetTransformer":
+        # Predicted pair AUC directly from the Set Transformer (learned combo).
+        filt_st_indices = [st_predictor.drug_to_int[d] for d in drug_vocab_filt]
+        combo_auc = st_predictor.predict_pairs(features, filt_st_indices)
+        # Force symmetry via (A + Aᵀ) / 2 — the architecture is already
+        # permutation-invariant but finite-precision can leave 1e-6 asymmetries.
+        combo_auc = 0.5 * (combo_auc + combo_auc.T)
+    else:
+        # Factorized: 0.5·(AUC_i + AUC_j) − mech_scale·mech_score
+        combo_auc = (
+            0.5 * (pred_auc_filt[:, None] + pred_auc_filt[None, :])
+            - mech_prior_scale * mech_scores
+        )
+
     # Upper triangle (no self-pairs, no duplicates)
     tri_i, tri_j = np.triu_indices(n_d, k=1)
     pair_auc = combo_auc[tri_i, tri_j]
@@ -190,6 +227,7 @@ def predict_for_patient(
             "both_mech_annotated": (
                 d1 in BEATAML_TO_MECH_ID and d2 in BEATAML_TO_MECH_ID
             ),
+            "layer3_backbone": layer3_backbone,
         })
 
     # --- 6. Assemble output ---
@@ -343,9 +381,15 @@ def pretty_print_kit_output(out: KitOutput) -> str:
             f"║ Clonal structure ({cc.get('n_clones_present', 0)} present): {clones_str}"
         )
 
+    # Detect which backbone produced the Layer 3 output (defaults to MLP for
+    # older saved KitOutputs that don't carry the annotation).
+    backbone = (
+        out.top_combinations[0].get("layer3_backbone", "BaselineA-MLP")
+        if out.top_combinations else "BaselineA-MLP"
+    )
     lines += [
         "║",
-        "║ LAYER 3 — TOP COMBINATIONS (MLP predicted AUC, ★ = both drugs mech-annotated)",
+        f"║ LAYER 3 — TOP COMBINATIONS ({backbone}, ★ = both drugs mech-annotated)",
     ]
     for c in out.top_combinations:
         mark = "★" if c["both_mech_annotated"] else " "

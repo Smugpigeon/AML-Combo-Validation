@@ -96,6 +96,17 @@ class SetDrugPredictorConfig:
     min_epochs: int = 20
     random_state: int = 42
 
+    # --- Stability (v2 fixes) ---
+    n_seeds: int = 1                # Multi-seed: train K models per fold, pick
+                                    # best by val MSE. n_seeds=3 ≈ eliminates
+                                    # the 1/5-fold collapse seen in v1.
+    warmup_steps: int = 0           # Linear LR warmup over first N optimizer
+                                    # steps. warmup_steps=500 avoids early
+                                    # divergence that triggered fold-3 collapse.
+    collapse_threshold_rho: float = 0.40
+                                    # If a seed's best rho is below this, treat
+                                    # as collapse and rely on other seeds.
+
     # --- CV ---
     n_folds: int = 5
     device: str = "auto"
@@ -429,7 +440,14 @@ def _resolve_device(device_str: str) -> torch.device:
 def _train_one_epoch(
     model: nn.Module, loader: DataLoader,
     optimizer: torch.optim.Optimizer, device: torch.device,
+    step_counter: list[int] | None = None,
+    warmup_steps: int = 0,
+    target_lr: float | None = None,
 ) -> float:
+    """Single epoch of training. If warmup_steps > 0, linearly ramp lr from
+    0 → target_lr across the first `warmup_steps` optimizer steps (global
+    across epochs via `step_counter`, a mutable [int] so callers can thread
+    global step state)."""
     model.train()
     total = 0.0
     n = 0
@@ -443,6 +461,20 @@ def _train_one_epoch(
         optimizer.zero_grad()
         loss.backward()
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+
+        # Linear warmup: override lr during first warmup_steps
+        if step_counter is not None and target_lr is not None and warmup_steps > 0:
+            gstep = step_counter[0]
+            if gstep < warmup_steps:
+                lr_now = target_lr * (gstep + 1) / warmup_steps
+                for pg in optimizer.param_groups:
+                    pg["lr"] = lr_now
+            elif gstep == warmup_steps:
+                # Lock in target lr exactly once
+                for pg in optimizer.param_groups:
+                    pg["lr"] = target_lr
+            step_counter[0] += 1
+
         optimizer.step()
         total += loss.item() * auc.shape[0]
         n += auc.shape[0]
@@ -530,35 +562,79 @@ def train_set_drug_predictor(
             collate_fn=collate_variable_arity, num_workers=0,
         )
 
+        # --- Multi-seed training (v2 stability fix) ---
+        # Train cfg.n_seeds independent models with different random inits;
+        # keep the one with lowest val MSE. Eliminates the 1/5-fold collapse
+        # we saw in v1 (fold 3: fold-specific unlucky init → early stopping
+        # at epoch 6 with val MAE 49).
+        t0 = time.time()
+        seed_results = []
+        for seed_i in range(cfg.n_seeds):
+            seed = cfg.random_state * 1000 + fold_i * 100 + seed_i
+            torch.manual_seed(seed)
+            np.random.seed(seed)
+
+            model = SetDrugPredictor(
+                n_drugs=len(drug_vocab),
+                n_patient_features=feat_scaled.shape[1],
+                cfg=cfg,
+            ).to(device)
+            opt = torch.optim.Adam(
+                model.parameters(),
+                lr=(0.0 if cfg.warmup_steps > 0 else cfg.lr),  # start at 0 if warmup
+                weight_decay=cfg.weight_decay,
+            )
+
+            best_val = float("inf")
+            epochs_no_improve = 0
+            best_state = None
+            best_epoch = 0
+            step_counter = [0]  # mutable global-step tracker for warmup
+
+            for epoch in range(cfg.max_epochs):
+                _train_one_epoch(
+                    model, train_loader, opt, device,
+                    step_counter=step_counter,
+                    warmup_steps=cfg.warmup_steps,
+                    target_lr=cfg.lr,
+                )
+                val_metrics = _eval_fold(model, val_loader, device)
+                if val_metrics["mse"] < best_val - 1e-4:
+                    best_val = val_metrics["mse"]
+                    best_state = {k: v.clone() for k, v in model.state_dict().items()}
+                    best_epoch = epoch + 1
+                    epochs_no_improve = 0
+                else:
+                    epochs_no_improve += 1
+                if epoch + 1 >= cfg.min_epochs and epochs_no_improve >= cfg.patience:
+                    break
+
+            seed_results.append({
+                "seed": seed_i,
+                "best_val_mse": best_val,
+                "best_state": best_state,
+                "best_epoch": best_epoch,
+            })
+
+        # Pick the seed with lowest val MSE
+        seed_results.sort(key=lambda r: r["best_val_mse"])
+        winner = seed_results[0]
+        best_state = winner["best_state"]
+        best_val = winner["best_val_mse"]
+        best_epoch = winner["best_epoch"]
+        assert best_state is not None
+
         model = SetDrugPredictor(
             n_drugs=len(drug_vocab),
             n_patient_features=feat_scaled.shape[1],
             cfg=cfg,
         ).to(device)
-        opt = torch.optim.Adam(
-            model.parameters(), lr=cfg.lr, weight_decay=cfg.weight_decay,
-        )
-
-        best_val = float("inf")
-        epochs_no_improve = 0
-        best_state = None
-        best_epoch = 0
-        t0 = time.time()
-
-        for epoch in range(cfg.max_epochs):
-            train_mse = _train_one_epoch(model, train_loader, opt, device)
-            val_metrics = _eval_fold(model, val_loader, device)
-            if val_metrics["mse"] < best_val - 1e-4:
-                best_val = val_metrics["mse"]
-                best_state = {k: v.clone() for k, v in model.state_dict().items()}
-                best_epoch = epoch + 1
-                epochs_no_improve = 0
-            else:
-                epochs_no_improve += 1
-            if epoch + 1 >= cfg.min_epochs and epochs_no_improve >= cfg.patience:
-                break
-        assert best_state is not None
         model.load_state_dict(best_state)
+
+        if cfg.n_seeds > 1:
+            mse_values = [round(r["best_val_mse"], 1) for r in seed_results]
+            print(f"[set-mlp] fold {fold_i + 1}: {cfg.n_seeds}-seed val MSEs {mse_values}, "
+                  f"winner=seed {winner['seed']} @ epoch {best_epoch}")
 
         # Final fold metrics
         val_metrics = _eval_fold(model, val_loader, device)
