@@ -222,3 +222,113 @@ def test_feature_builder_handles_missing_labs(preprocessor_path):
     # Most clinical lab fields should have been imputed
     assert "clin_wbc_log" in diag["imputed_fields"]
     assert "clin_ldh_log" in diag["imputed_fields"]
+
+
+# ---------------------------------------------------------------------------
+# RNA QC — OOD detection (Layer A: quantile norm + Layer B: Mahalanobis +
+# input-variance + AML marker-rank biology checks)
+# ---------------------------------------------------------------------------
+
+
+def test_qc_real_beataml_sample_is_ok(preprocessor_path):
+    """A genuine BeatAML sample should pass QC with severity 'ok'."""
+    from combo_val.clinical.rna_qc import project_and_qc
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    # Load a real BeatAML sample
+    expr = pd.read_excel(
+        "data/raw/BeatAML2.0/beatAML.xlsx", sheet_name=0
+    ).set_index("symbol")
+    expr = expr[~expr.index.duplicated(keep="first")]
+    real_sample = expr.iloc[:, 0]
+    pc, qc = project_and_qc(real_sample, bundle)
+    assert qc.ood_severity == "ok"
+    assert qc.mahalanobis_qn < qc.ood_threshold_99pct
+
+
+def test_qc_all_zero_input_flagged_far_ood(preprocessor_path):
+    """All-zero input → far_ood via input-variance check."""
+    from combo_val.clinical.rna_qc import project_and_qc
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    zeros = pd.Series(0.0, index=bundle["kept_genes"])
+    pc, qc = project_and_qc(zeros, bundle)
+    assert qc.ood_severity == "far_ood"
+    assert any("near-zero variance" in m for m in qc.warning_messages)
+
+
+def test_qc_broken_marker_genes_flagged_ood(preprocessor_path):
+    """Real sample with AML marker genes forced to zero → ood via biology check.
+    This is a deterministic version of the scrambled-genes test. In practice,
+    mix-ups (wrong gene ID, failed capture of certain transcripts) can drop
+    specific genes even if the rest of the sample looks like AML."""
+    from combo_val.clinical.rna_qc import project_and_qc
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    expr = pd.read_excel(
+        "data/raw/BeatAML2.0/beatAML.xlsx", sheet_name=0
+    ).set_index("symbol")
+    expr = expr[~expr.index.duplicated(keep="first")]
+    real = expr.iloc[:, 0].copy()
+    # Zero out the AML marker genes we track
+    for marker in bundle["aml_marker_genes"]:
+        if marker in real.index:
+            real[marker] = real.min()   # push to lowest possible rank
+    pc, qc = project_and_qc(real, bundle)
+    assert qc.ood_severity in {"ood", "far_ood"}
+    assert any("AML marker-gene" in m or "variance" in m for m in qc.warning_messages)
+
+
+def test_qc_pipeline_mismatch_rescued_by_qn(preprocessor_path):
+    """Lognormal synthetic counts (wrong pipeline scale) → pipeline_mismatch.
+    QN brings them back into distribution, but we still flag for awareness."""
+    from combo_val.clinical.rna_qc import project_and_qc
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    rng = np.random.default_rng(17)
+    fake = pd.Series(rng.lognormal(4.0, 1.2, len(bundle["kept_genes"])),
+                     index=bundle["kept_genes"])
+    pc, qc = project_and_qc(fake, bundle)
+    # Pre-QN M should be high; post-QN should be low
+    assert qc.mahalanobis_raw > qc.ood_threshold_99pct
+    assert qc.mahalanobis_qn < qc.mahalanobis_raw
+
+
+def test_qc_quantile_normalization_idempotent_on_real_sample(preprocessor_path):
+    """QN of a real sample should produce ~same PC projection as raw since
+    the sample already matches training distribution."""
+    from combo_val.clinical.rna_qc import project_and_qc
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    expr = pd.read_excel(
+        "data/raw/BeatAML2.0/beatAML.xlsx", sheet_name=0
+    ).set_index("symbol")
+    expr = expr[~expr.index.duplicated(keep="first")]
+    real = expr.iloc[:, 0]
+    pc_with_qn, qc_with = project_and_qc(real, bundle, apply_quantile_normalization=True)
+    pc_without_qn, qc_without = project_and_qc(
+        real, bundle, apply_quantile_normalization=False
+    )
+    # Both should be "ok" severity
+    assert qc_with.ood_severity == "ok"
+    assert qc_without.ood_severity == "ok"
+    # Mahalanobis values should be close for a real AML sample
+    assert abs(qc_with.mahalanobis_qn - qc_without.mahalanobis_raw) < 2.0
+
+
+def test_qc_strict_ood_raises(preprocessor_path):
+    """strict_ood=True should raise on a known OOD input."""
+    from combo_val.clinical.feature_builder import build_patient_features_from_raw
+    import joblib
+    bundle = joblib.load(preprocessor_path)
+    kit = KitInput(
+        patient_id="test_strict_ood",
+        mutations=[MutationCall(gene="FLT3", is_ITD=True)],
+        karyotype_text="46,XY[20]",
+        age=60,
+    )
+    zeros = pd.Series(0.0, index=bundle["kept_genes"])
+    with pytest.raises(RuntimeError, match="OOD"):
+        build_patient_features_from_raw(
+            zeros, kit, preprocessor_path=preprocessor_path, strict_ood=True
+        )

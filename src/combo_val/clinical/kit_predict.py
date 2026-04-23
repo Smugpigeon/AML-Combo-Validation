@@ -192,11 +192,21 @@ def predict_for_patient(
     }
     fitness_flag = "fit_for_intensive" if (kit.age is not None and kit.age <= 65) else "unfit"
     confidence_notes = []
-    if diag["rna_gene_coverage_pct"] < 70:
-        confidence_notes.append(
-            f"RNA-Seq gene coverage only {diag['rna_gene_coverage_pct']:.0f}% of the "
-            f"5000-gene training panel; predictions may be less reliable"
-        )
+
+    # OOD / pipeline-mismatch warnings — pass through QC's own messages
+    # (which are already severity-aware and contain accurate numerics).
+    qc = diag.get("qc", {})
+    severity = qc.get("ood_severity", "ok")
+    severity_badge = {
+        "far_ood": "✗",
+        "ood": "⚠",
+        "pipeline_mismatch": "⚠",
+        "borderline": "~",
+        "ok": "ⓘ",
+    }.get(severity, "ⓘ")
+    for msg in qc.get("warning_messages", []):
+        confidence_notes.append(f"{severity_badge} {msg}")
+
     if diag["n_imputed_fields"] > 0:
         confidence_notes.append(
             f"{diag['n_imputed_fields']} clinical field(s) imputed with BeatAML medians: "

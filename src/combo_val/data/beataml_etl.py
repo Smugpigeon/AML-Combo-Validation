@@ -200,24 +200,91 @@ def extract_rna_pca_features(
     if preprocessor_out is not None:
         import joblib  # optional dep
         preprocessor_out.parent.mkdir(parents=True, exist_ok=True)
+
+        # ---- OOD-detection statistics ----
+        # (1) Quantile-normalization reference: for each rank position k
+        # across the 5000 genes, the average log2(count+1) across training
+        # samples. Used to remap a new sample's distribution to match BeatAML's.
+        X_t_sorted = np.sort(X_t, axis=1)            # (n_samples, 5000), ascending per sample
+        quantile_reference = X_t_sorted.mean(axis=0).astype(np.float32)  # (5000,)
+
+        # (2) Training PC distribution — for Mahalanobis OOD detection.
+        pc_mean = X_pca.mean(axis=0)                                     # (n_pca,)
+        # Regularized covariance inversion (add tiny diagonal for numerical stability)
+        pc_cov = np.cov(X_pca.T)
+        pc_cov_inv = np.linalg.inv(pc_cov + 1e-6 * np.eye(n_pca))
+        # Compute training-sample Mahalanobis distances to set the OOD threshold
+        diff = X_pca - pc_mean
+        maha = np.sqrt(np.clip(np.einsum("ij,jk,ik->i", diff, pc_cov_inv, diff), 0, None))
+        ood_threshold_95 = float(np.quantile(maha, 0.95))
+        ood_threshold_99 = float(np.quantile(maha, 0.99))
+        ood_threshold_99_9 = float(np.quantile(maha, 0.999))
+
+        # ---- Gene-identity sanity check panel ----
+        # AML-expressed myeloid-lineage markers. In any real AML sample these
+        # genes should rank in the top portion of the 5000-gene variable panel.
+        # Random-shuffled or non-myeloid samples would have them at random ranks.
+        AML_MARKER_GENES = [
+            "MPO", "ELANE", "LYZ", "CD33", "ITGAM",   # myeloid
+            "PTPRC", "CD34", "KIT",                   # hematopoietic stem/progenitor
+            "RUNX1", "SPI1", "CEBPA", "CEBPB",       # myeloid TFs
+            "HOXA9", "MEIS1",                         # AML-characteristic
+            "FLT3", "NPM1",                           # frequent AML drivers
+        ]
+        # Compute per-sample rank of each marker in the 5000-gene panel,
+        # then average across samples to get the training-reference rank.
+        marker_idx = [kept_genes.index(g) for g in AML_MARKER_GENES if g in kept_genes]
+        print(f"[etl] AML marker panel: {len(marker_idx)}/{len(AML_MARKER_GENES)} "
+              f"genes found in top-variable panel")
+
+        if marker_idx:
+            # sample × gene matrix for marker genes only
+            marker_expr = X_t[:, marker_idx]          # (n_samples, n_markers)
+            # For each sample, rank genes (0=lowest, 5000=highest)
+            # Argsort twice to get ranks
+            full_ranks = X_t.argsort(axis=1).argsort(axis=1)  # (n_samples, 5000)
+            marker_ranks = full_ranks[:, marker_idx]           # (n_samples, n_markers)
+            # Training reference: mean rank of each marker across training samples
+            marker_ref_mean_rank = marker_ranks.mean(axis=0).astype(np.float32)
+            marker_ref_std_rank = marker_ranks.std(axis=0).astype(np.float32)
+        else:
+            marker_ref_mean_rank = np.array([], dtype=np.float32)
+            marker_ref_std_rank = np.array([], dtype=np.float32)
+
         bundle = {
-            "schema_version": "beataml_rna_pca_v1",
+            "schema_version": "beataml_rna_pca_v3_qc_markers",
             "kept_genes": kept_genes,                 # 5000 gene symbols
             "pc_columns": [f"rna_pc{i+1:02d}" for i in range(n_pca)],
             "pca_components_": pca.components_.astype(np.float32),  # (n_pca, n_genes)
             "pca_mean_": pca.mean_.astype(np.float32),              # (n_genes,)
             "n_pca": int(n_pca),
+            # ---- OOD / quantile stats ----
+            "quantile_reference": quantile_reference,               # (5000,)
+            "train_pc_mean": pc_mean.astype(np.float32),            # (n_pca,)
+            "train_pc_cov_inv": pc_cov_inv.astype(np.float32),      # (n_pca, n_pca)
+            "train_maha_median": float(np.median(maha)),
+            "train_maha_threshold_95pct": ood_threshold_95,
+            "train_maha_threshold_99pct": ood_threshold_99,
+            "train_maha_threshold_99_9pct": ood_threshold_99_9,
+            # ---- AML-marker gene-identity sanity panel ----
+            "aml_marker_genes": [kept_genes[i] for i in marker_idx],
+            "aml_marker_ref_mean_rank": marker_ref_mean_rank,
+            "aml_marker_ref_std_rank": marker_ref_std_rank,
             "preprocessing_steps": [
+                "reindex input to 5000 trained genes (missing → 0)",
                 "nan_to_num(nan=0, posinf=0, neginf=0)",
                 "clip(min=0)",
                 "log2(x + 1)",
-                "select top_n_variable_genes (by training-set variance)",
+                "quantile-normalize to quantile_reference (per-sample rank → ref value)",
                 "(x - pca.mean_) @ pca.components_.T → PC scores",
+                "Mahalanobis distance in PC space → OOD flag",
             ],
         }
         joblib.dump(bundle, preprocessor_out)
         print(f"[etl] RNA preprocessor bundle saved: {preprocessor_out}  "
               f"({len(kept_genes)} genes, {n_pca} PCs)")
+        print(f"[etl] Training Mahalanobis distance: median={np.median(maha):.2f}  "
+              f"95%={ood_threshold_95:.2f}  99%={ood_threshold_99:.2f}")
 
     return patient_pca, meta
 

@@ -28,23 +28,7 @@ import pandas as pd
 from combo_val.clinical.eln_computer import ELN_ordinal_from_string, compute_eln2017
 from combo_val.clinical.karyotype_parser import parse_karyotype
 from combo_val.clinical.kit_schema import KitInput, MutationCall
-
-
-def _project_rna(rna_counts: pd.Series, bundle: dict) -> np.ndarray:
-    """Project a single sample's gene counts into the persisted PC space."""
-    kept_genes = bundle["kept_genes"]
-    counts = rna_counts.reindex(kept_genes).fillna(0.0).to_numpy(dtype=np.float64)
-    # Apply same preprocessing as training: clip → log2(x+1)
-    counts = np.clip(counts, a_min=0.0, a_max=None)
-    counts = np.log2(counts + 1.0)
-    counts = np.nan_to_num(counts, nan=0.0, posinf=0.0, neginf=0.0)
-    # PCA: (x - mean) @ components.T. Cast both to float64 to avoid the
-    # Apple-Silicon BLAS mixed-dtype warnings on float32 inputs.
-    centered = (counts - bundle["pca_mean_"].astype(np.float64))
-    components = bundle["pca_components_"].astype(np.float64)
-    with np.errstate(invalid="ignore", over="ignore", divide="ignore"):
-        pc_scores = centered @ components.T
-    return pc_scores.astype(np.float32)
+from combo_val.clinical.rna_qc import project_and_qc, RNAQCReport
 
 
 def _mut_flags(mutations: list[MutationCall], gene_list: list[str]) -> dict[str, int]:
@@ -151,23 +135,49 @@ def build_patient_features_from_raw(
     rna_counts: pd.Series,
     kit: KitInput,
     preprocessor_path: Path = Path("data/canonical/beataml_rna_preprocessor.joblib"),
+    apply_quantile_normalization: bool = True,
+    strict_ood: bool = False,
 ) -> tuple[np.ndarray, dict]:
     """Build a feature vector matching the trained BeatAML schema.
+
+    Parameters
+    ----------
+    rna_counts : gene_symbol → raw count (or log-space expression). Values must
+        be non-negative. Gene symbols should match BeatAML's HUGO names.
+    kit : structured clinical intake.
+    preprocessor_path : path to the bundle produced by beataml_etl.
+    apply_quantile_normalization : default True. Recommended ON for any input
+        whose RNA-Seq pipeline may differ from BeatAML's (STAR + featureCounts
+        on GENCODE v37). Turn OFF only if you've confirmed the input pipeline
+        matches BeatAML's byte-for-byte.
+    strict_ood : default False. When True, raises RuntimeError if the sample
+        is flagged as OOD (Mahalanobis > 99%ile of training). When False,
+        emits the warning in diag["qc"] but still returns a feature vector.
 
     Returns
     -------
     features : np.ndarray of shape (n_features_trained,), typically (104,).
-    diag     : dict with coverage stats + which fields were imputed.
+    diag     : dict with QC report, coverage stats, imputation record.
     """
     bundle = joblib.load(preprocessor_path)
     feature_cols: list[str] = bundle["feature_columns"]
     medians: dict[str, float] = bundle["clinical_medians"]
     mutation_genes: list[str] = bundle["mutation_genes"]
 
-    # --- RNA PCA ---
-    n_genes_present = int(rna_counts.index.isin(bundle["kept_genes"]).sum())
-    rna_pcs = _project_rna(rna_counts, bundle)
+    # --- RNA PCA + QC (quantile norm + Mahalanobis) ---
+    rna_pcs, qc_report = project_and_qc(
+        rna_counts, bundle,
+        apply_quantile_normalization=apply_quantile_normalization,
+    )
     rna_dict = {f"rna_pc{i+1:02d}": float(pc) for i, pc in enumerate(rna_pcs)}
+
+    if strict_ood and qc_report.ood_severity in {"ood", "far_ood"}:
+        raise RuntimeError(
+            f"OOD input rejected (severity={qc_report.ood_severity}, "
+            f"Mahalanobis={qc_report.mahalanobis_distance} > "
+            f"threshold {qc_report.ood_threshold_99pct}). "
+            f"Warnings: {qc_report.warning_messages}"
+        )
 
     # --- Mutation binaries ---
     mut_dict = _mut_flags(kit.mutations, mutation_genes)
@@ -190,10 +200,8 @@ def build_patient_features_from_raw(
     diag = {
         "n_features": len(feature_cols),
         "rna_genes_in_panel": int(len(bundle["kept_genes"])),
-        "rna_genes_present_in_input": n_genes_present,
-        "rna_gene_coverage_pct": round(
-            100 * n_genes_present / len(bundle["kept_genes"]), 1
-        ),
+        "rna_genes_present_in_input": qc_report.n_genes_matched_to_panel,
+        "rna_gene_coverage_pct": qc_report.gene_coverage_pct,
         "n_imputed_fields": len(imputed_fields),
         "imputed_fields": imputed_fields,
         "eln_predicted": (
@@ -201,5 +209,14 @@ def build_patient_features_from_raw(
                 kit.karyotype_text, kit.mutations, kit.fusions
             ).category
         ),
+        "qc": {
+            "ood_severity": qc_report.ood_severity,
+            "mahalanobis_distance": qc_report.mahalanobis_distance,
+            "ood_threshold_99pct": qc_report.ood_threshold_99pct,
+            "pre_qn_mean_log2": qc_report.pre_qn_mean_log2,
+            "post_qn_mean_log2": qc_report.post_qn_mean_log2,
+            "warning_messages": qc_report.warning_messages,
+            "quantile_normalization_applied": apply_quantile_normalization,
+        },
     }
     return out, diag
