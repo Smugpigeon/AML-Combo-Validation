@@ -35,6 +35,23 @@ build-backend = "setuptools.build_meta"
 [tool.setuptools.packages.find]
 where = ["src"]
 
+# Include non-Python data files bundled inside combo_val/ (e.g. the hand-
+# curated drug_mechanism_v1.csv knowledge base, mechanism_vocab.yaml,
+# regimen DB JSONs). Without this block, `pip install` strips all
+# non-*.py files and the kit crashes at runtime with FileNotFoundError.
+[tool.setuptools.package-data]
+"combo_val" = [
+    "knowledge/*.csv",
+    "knowledge/*.yaml",
+    "knowledge/*.yml",
+    "knowledge/*.json",
+    "clinical/*.json",
+    "clinical/*.yaml",
+    "clinical/*.csv",
+    "combo/*.json",
+    "combo/*.yaml",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
