@@ -1,41 +1,73 @@
 {% extends "base.html" %}
-{% block title %}Sign up{% endblock %}
+{% block title %}{{ t("nav.signup") }}{% endblock %}
+
 {% block content %}
-<div class="max-w-md mx-auto bg-white p-8 rounded-lg border border-slate-200">
-  <h1 class="text-2xl font-semibold brand mb-6">Create researcher account</h1>
-  {% if error %}
-    <div class="mb-4 bg-red-50 border border-red-300 text-red-800 px-4 py-2 rounded text-sm">
-      {{ error }}
+<div class="hero-gradient min-h-[80vh] flex items-center py-12">
+  <div class="max-w-md mx-auto w-full px-4 sm:px-6">
+
+    <div class="bg-white rounded-2xl shadow-xl border border-slate-200 p-8 sm:p-10">
+      <div class="text-center mb-6">
+        <div class="w-12 h-12 mx-auto mb-4 rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-white flex items-center justify-center text-xl shadow-sm">
+          🧬
+        </div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{{ t("signup.title") }}</h1>
+        <p class="text-sm text-slate-600">{{ t("signup.subtitle") }}</p>
+      </div>
+
+      {% if error %}
+        <div class="mb-5 bg-red-50 border border-red-300 text-red-800 px-4 py-3 rounded-lg text-sm">
+          {{ error }}
+        </div>
+      {% endif %}
+
+      <form method="post" action="/auth/signup-form" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ t("signup.email") }}</label>
+          <input type="email" name="email" required
+                 class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
+                 placeholder="you@university.edu">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ t("signup.password") }}</label>
+          <input type="password" name="password" required minlength="8"
+                 class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
+                 placeholder="••••••••">
+          <p class="text-xs text-slate-500 mt-1">{{ t("signup.password_hint") }}</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            {{ t("signup.full_name") }} <span class="text-slate-400 font-normal">{{ t("signup.full_name_optional") }}</span>
+          </label>
+          <input type="text" name="full_name"
+                 class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition">
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5">
+            {{ t("signup.institution") }} <span class="text-slate-400 font-normal">{{ t("signup.institution_optional") }}</span>
+          </label>
+          <input type="text" name="institution"
+                 class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
+                 placeholder="{% if lang == 'zh' %}复旦大学{% else %}University / lab{% endif %}">
+        </div>
+
+        <button type="submit"
+                class="w-full mt-2 px-5 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg font-semibold shadow-md hover:shadow-lg hover:brightness-105 transition text-base">
+          {{ t("signup.submit") }}
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-slate-600">
+        {{ t("signup.have_account") }}
+        <a href="/login" class="font-medium text-brand-700 hover:underline">{{ t("signup.login_link") }}</a>
+      </p>
     </div>
-  {% endif %}
-  <form method="post" action="/auth/signup-form" class="space-y-4">
-    <div>
-      <label class="block text-sm font-medium mb-1">Email</label>
-      <input type="email" name="email" required class="w-full border border-slate-300 rounded px-3 py-2">
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Password (≥ 8 chars)</label>
-      <input type="password" name="password" required minlength="8"
-             class="w-full border border-slate-300 rounded px-3 py-2">
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Full name (optional)</label>
-      <input type="text" name="full_name" class="w-full border border-slate-300 rounded px-3 py-2">
-    </div>
-    <div>
-      <label class="block text-sm font-medium mb-1">Institution / lab (optional)</label>
-      <input type="text" name="institution" class="w-full border border-slate-300 rounded px-3 py-2">
-    </div>
-    <button class="w-full bg-brand text-white py-2 rounded font-medium hover:opacity-90">
-      Create account
-    </button>
-  </form>
-  <p class="mt-4 text-sm text-slate-600">
-    Already have an account? <a href="/login" class="brand hover:underline">Log in</a>
-  </p>
-  <p class="mt-6 text-xs text-slate-500">
-    By signing up you acknowledge this is a research-grade tool and agree
-    not to upload identifiable patient data.
-  </p>
+
+    <p class="text-center mt-5 text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+      {{ t("signup.agreement") }}
+    </p>
+  </div>
 </div>
 {% endblock %}

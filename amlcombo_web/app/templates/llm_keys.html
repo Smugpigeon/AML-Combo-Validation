@@ -1,72 +1,74 @@
 {% extends "base.html" %}
-{% block title %}LLM keys (BYOK){% endblock %}
+{% block title %}{{ t("llm_keys.title") }}{% endblock %}
+
 {% block content %}
-<h1 class="text-2xl font-semibold mb-4">LLM keys (BYOK — Bring Your Own Key)</h1>
-<p class="text-slate-600 text-sm mb-6">
-  To use optional LLM features (plain-English report summaries), add your own OpenAI or Anthropic API key.
-  Keys are encrypted at rest with AES-128; we never log your prompts or responses.
-  All usage is billed to <strong>your</strong> provider account, not ours.
-</p>
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
 
-<div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
-  <h2 class="font-semibold mb-3">Add new LLM key</h2>
-  <div class="space-y-3">
-    <div class="flex gap-2">
-      <select id="new-provider" class="border border-slate-300 rounded px-3 py-2 text-sm">
-        <option value="openai">OpenAI (sk-...)</option>
-        <option value="anthropic">Anthropic (sk-ant-...)</option>
-      </select>
-      <input id="new-label" placeholder="Label (e.g. 'my openai')"
-             class="flex-1 border border-slate-300 rounded px-3 py-2 text-sm">
+  <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mb-2">{{ t("llm_keys.title") }}</h1>
+  <p class="text-slate-600 text-sm mb-8 max-w-2xl">{{ t("llm_keys.subtitle") }}</p>
+
+  <div class="bg-white border border-slate-200 rounded-2xl p-6 mb-6 shadow-sm">
+    <h2 class="font-semibold text-slate-900 mb-4">{{ t("llm_keys.create_title") }}</h2>
+    <div class="space-y-3">
+      <div class="flex flex-col sm:flex-row gap-2">
+        <select id="new-provider"
+                class="border border-slate-300 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition">
+          <option value="openai">OpenAI (sk-...)</option>
+          <option value="anthropic">Anthropic (sk-ant-...)</option>
+        </select>
+        <input id="new-label" placeholder="{{ t('llm_keys.label_placeholder') }}"
+               class="flex-1 border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition">
+      </div>
+      <input id="new-plaintext" type="password" placeholder="{{ t('llm_keys.key_placeholder') }}"
+             class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-mono focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition">
+      <button onclick="addKey()"
+              class="px-5 py-2.5 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg text-sm font-semibold shadow-sm hover:shadow-md hover:brightness-105 transition">
+        🔒 {{ t("llm_keys.add_button") }}
+      </button>
+      <div id="add-err" class="text-sm text-red-700 hidden"></div>
     </div>
-    <input id="new-plaintext" type="password" placeholder="Paste your API key"
-           class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono">
-    <button onclick="addKey()" class="bg-brand text-white px-4 py-2 rounded text-sm hover:opacity-90">
-      Add key (encrypted at rest)
-    </button>
-    <div id="add-err" class="text-sm text-red-700 hidden"></div>
   </div>
-</div>
 
-<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-slate-50 text-left">
-      <tr>
-        <th class="px-4 py-2">Provider</th>
-        <th class="px-4 py-2">Label</th>
-        <th class="px-4 py-2">Key preview</th>
-        <th class="px-4 py-2">Added</th>
-        <th class="px-4 py-2">Last used</th>
-        <th class="px-4 py-2">Status</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for k in keys %}
-      <tr class="border-t border-slate-100">
-        <td class="px-4 py-2 capitalize">{{ k.provider }}</td>
-        <td class="px-4 py-2">{{ k.label or "(unlabeled)" }}</td>
-        <td class="px-4 py-2 font-mono text-xs">{{ k.key_suffix }}</td>
-        <td class="px-4 py-2 text-slate-500 text-xs">{{ k.created_at.strftime("%Y-%m-%d") }}</td>
-        <td class="px-4 py-2 text-slate-500 text-xs">
-          {{ k.last_used_at.strftime("%Y-%m-%d %H:%M") if k.last_used_at else "never" }}
-        </td>
-        <td class="px-4 py-2">
-          {% if k.revoked_at %}
-            <span class="text-red-700 text-xs">revoked</span>
-          {% else %}
-            <span class="text-green-700 text-xs">active</span>
-          {% endif %}
-        </td>
-        <td class="px-4 py-2 text-right">
-          {% if not k.revoked_at %}
-            <button onclick="revokeKey('{{ k.id }}')" class="text-red-600 text-xs hover:underline">Revoke</button>
-          {% endif %}
-        </td>
-      </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+  <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-left border-b border-slate-200 text-slate-600">
+        <tr>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_provider") }}</th>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_label") }}</th>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_preview") }}</th>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_added") }}</th>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_last_used") }}</th>
+          <th class="px-5 py-3 font-medium">{{ t("llm_keys.col_status") }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for k in keys %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50/60 transition">
+          <td class="px-5 py-3 text-slate-900 capitalize">{{ k.provider }}</td>
+          <td class="px-5 py-3 text-slate-700">{{ k.label or "(unlabeled)" }}</td>
+          <td class="px-5 py-3 font-mono text-xs text-slate-600">{{ k.key_suffix }}</td>
+          <td class="px-5 py-3 text-slate-500 text-xs whitespace-nowrap">{{ k.created_at.strftime("%Y-%m-%d") }}</td>
+          <td class="px-5 py-3 text-slate-500 text-xs whitespace-nowrap">
+            {{ k.last_used_at.strftime("%Y-%m-%d %H:%M") if k.last_used_at else "—" }}
+          </td>
+          <td class="px-5 py-3">
+            {% if k.revoked_at %}
+              <span class="bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full text-xs font-medium">{{ t("llm_keys.status_revoked") }}</span>
+            {% else %}
+              <span class="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">{{ t("llm_keys.status_active") }}</span>
+            {% endif %}
+          </td>
+          <td class="px-5 py-3 text-right">
+            {% if not k.revoked_at %}
+              <button onclick="revokeKey('{{ k.id }}')" class="text-red-600 text-xs hover:underline font-medium">{{ t("llm_keys.revoke") }}</button>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <script>
@@ -93,7 +95,7 @@ function addKey() {
   });
 }
 function revokeKey(id) {
-  if (!confirm('Revoke this LLM key? (It will no longer be usable.)')) return;
+  if (!confirm('{% if lang == "zh" %}撤销此 LLM 密钥?(将无法再用){% else %}Revoke this LLM key? (It will no longer be usable.){% endif %}')) return;
   fetch('/api/v1/llm-keys/' + id, {method: 'DELETE', credentials: 'same-origin'})
     .then(() => window.location.reload());
 }

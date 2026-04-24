@@ -1,15 +1,8 @@
-"""Jinja2 HTML pages for the browser UI.
+"""Jinja2 HTML pages + language toggle endpoint.
 
-TemplateResponse API note
--------------------------
-Starlette 0.37+ requires the `Request` instance as the first positional
-argument (not the template name). Passing {"request": request, ...} as
-the context works on older versions but explodes with
-`TypeError: unhashable type: 'dict'` on recent Starlette because the
-cache lookup receives the context dict as the template name.
-
-Correct modern usage:
-    templates.TemplateResponse(request, "name.html", {"user": user, ...})
+All page handlers share a context dict that includes `lang` and `t(key)`
+(from `app.i18n`), so every template can use `{{ t("nav.home") }}` and
+conditionally render by `{{ lang }}`.
 """
 
 from __future__ import annotations
@@ -24,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.db import get_db, safe_get
 from app.deps import current_user_optional, current_user
+from app.i18n import SUPPORTED_LANGS, make_template_context
 from app.models import APIKey, LLMKey, Submission, User
 
 
@@ -34,10 +28,15 @@ templates = Jinja2Templates(directory=str(_TEMPLATE_DIR))
 router = APIRouter(tags=["pages"])
 
 
+def _ctx(request: Request, **extra):
+    """Shortcut for building a template context with i18n preloaded."""
+    return make_template_context(request, **extra)
+
+
 @router.get("/", response_class=HTMLResponse)
 def landing(request: Request, user: User | None = Depends(current_user_optional)):
     return templates.TemplateResponse(
-        request, "landing.html", {"user": user},
+        request, "landing.html", _ctx(request, user=user),
     )
 
 
@@ -48,7 +47,7 @@ def signup_page(request: Request,
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse(
         request, "signup.html",
-        {"error": request.query_params.get("error")},
+        _ctx(request, user=None, error=request.query_params.get("error")),
     )
 
 
@@ -59,7 +58,7 @@ def login_page(request: Request,
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse(
         request, "login.html",
-        {"error": request.query_params.get("error")},
+        _ctx(request, user=None, error=request.query_params.get("error")),
     )
 
 
@@ -72,14 +71,14 @@ def dashboard(request: Request, user: User = Depends(current_user),
     ).scalars().all()
     return templates.TemplateResponse(
         request, "dashboard.html",
-        {"user": user, "submissions": subs},
+        _ctx(request, user=user, submissions=subs),
     )
 
 
 @router.get("/new", response_class=HTMLResponse)
 def new_patient_page(request: Request, user: User = Depends(current_user)):
     return templates.TemplateResponse(
-        request, "new_patient.html", {"user": user},
+        request, "new_patient.html", _ctx(request, user=user),
     )
 
 
@@ -90,14 +89,13 @@ def patient_detail(request: Request, submission_id: str,
     sub = safe_get(db, Submission, submission_id)
     if sub is None or sub.user_id != user.id:
         raise HTTPException(status_code=404, detail="Not found")
-    # Also list the user's LLM keys (for the summary feature)
     llm_keys = db.execute(
         select(LLMKey).where(LLMKey.user_id == user.id,
                               LLMKey.revoked_at.is_(None))
     ).scalars().all()
     return templates.TemplateResponse(
         request, "patient_detail.html",
-        {"user": user, "sub": sub, "llm_keys": llm_keys},
+        _ctx(request, user=user, sub=sub, llm_keys=llm_keys),
     )
 
 
@@ -110,7 +108,7 @@ def api_keys_page(request: Request, user: User = Depends(current_user),
     ).scalars().all()
     return templates.TemplateResponse(
         request, "api_keys.html",
-        {"user": user, "keys": keys},
+        _ctx(request, user=user, keys=keys),
     )
 
 
@@ -123,7 +121,7 @@ def llm_keys_page(request: Request, user: User = Depends(current_user),
     ).scalars().all()
     return templates.TemplateResponse(
         request, "llm_keys.html",
-        {"user": user, "keys": keys},
+        _ctx(request, user=user, keys=keys),
     )
 
 
@@ -131,5 +129,27 @@ def llm_keys_page(request: Request, user: User = Depends(current_user),
 def api_docs(request: Request,
               user: User | None = Depends(current_user_optional)):
     return templates.TemplateResponse(
-        request, "docs_api.html", {"user": user},
+        request, "docs_api.html", _ctx(request, user=user),
     )
+
+
+# --- Language toggle endpoint ---
+
+@router.get("/set-lang/{lang}", include_in_schema=False)
+def set_language(request: Request, lang: str):
+    """Set the `lang` cookie and redirect back to where the user was."""
+    if lang not in SUPPORTED_LANGS:
+        raise HTTPException(status_code=400, detail="Unsupported language")
+    redirect_to = request.query_params.get("next", "/")
+    # Only accept site-internal paths to avoid open-redirect abuse
+    if not redirect_to.startswith("/") or redirect_to.startswith("//"):
+        redirect_to = "/"
+    response = RedirectResponse(redirect_to, status_code=303)
+    response.set_cookie(
+        key="lang", value=lang,
+        max_age=60 * 60 * 24 * 365,       # 1 year
+        httponly=False,                    # client-side JS may want to read it
+        samesite="lax",
+        path="/",
+    )
+    return response

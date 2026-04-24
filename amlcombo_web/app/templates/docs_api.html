@@ -1,29 +1,52 @@
 {% extends "base.html" %}
-{% block title %}API documentation{% endblock %}
+{% block title %}{{ t("nav.docs") }}{% endblock %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto prose prose-slate">
-<h1>API documentation</h1>
-<p class="text-slate-600">
-  All endpoints are under <code>https://amlcombo.org/api/v1/</code>.
-  Authenticate with <code>Authorization: Bearer ac_live_...</code>.
-</p>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-10">
 
-<h2>Authentication</h2>
-<p>Generate an API key at <a href="/api-keys">/api-keys</a> after signing in.</p>
-<pre class="bg-slate-100 p-3 rounded text-sm"><code>curl -H "Authorization: Bearer ac_live_xxxxxxxxxxxxxxxxxxxxxxxx" \
+  <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-3">{{ t("nav.docs") }}</h1>
+  <p class="text-slate-600 mb-8">
+    {% if lang == 'zh' %}
+      所有端点位于 <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">https://amlcombo.org/api/v1/</code>。使用 <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">Authorization: Bearer ac_live_...</code> 认证。
+    {% else %}
+      All endpoints under <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">https://amlcombo.org/api/v1/</code>. Authenticate with <code class="bg-slate-100 px-1.5 py-0.5 rounded text-sm">Authorization: Bearer ac_live_...</code>.
+    {% endif %}
+  </p>
+
+  <!-- Authentication -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold text-slate-900 mb-3">
+      {% if lang == 'zh' %}认证{% else %}Authentication{% endif %}
+    </h2>
+    <p class="text-sm text-slate-600 mb-3">
+      {% if lang == 'zh' %}
+        登录后去 <a href="/api-keys" class="text-brand-700 hover:underline">/api-keys</a> 生成 API 密钥。
+      {% else %}
+        Generate an API key at <a href="/api-keys" class="text-brand-700 hover:underline">/api-keys</a> after signing in.
+      {% endif %}
+    </p>
+    <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg text-xs overflow-x-auto"><code>curl -H "Authorization: Bearer ac_live_xxxxxxxxxxxxxxxxxxxxxxxx" \
      https://amlcombo.org/api/v1/patients</code></pre>
+  </section>
 
-<h2>Submit a patient</h2>
-<p><code>POST /api/v1/patients</code> — multipart/form-data</p>
-<p>Fields:</p>
-<ul>
-  <li><code>payload_json</code> — JSON string (see schema below)</li>
-  <li><code>rna_counts</code> — CSV file (symbol,count) for the 5000-gene panel</li>
-  <li><code>rna_full</code> — optional CSV file (full transcriptome)</li>
-</ul>
+  <!-- Submit a patient -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold text-slate-900 mb-3">
+      {% if lang == 'zh' %}提交患者{% else %}Submit a patient{% endif %}
+    </h2>
+    <p class="text-sm text-slate-600 mb-3">
+      <code class="bg-slate-100 px-1.5 py-0.5 rounded">POST /api/v1/patients</code> — multipart/form-data
+    </p>
+    <ul class="text-sm text-slate-600 mb-4 space-y-1 list-disc list-inside">
+      <li><code class="bg-slate-100 px-1 py-0.5 rounded text-xs">payload_json</code> — {% if lang == 'zh' %}JSON 字符串(见下 schema){% else %}JSON string (see schema below){% endif %}</li>
+      <li><code class="bg-slate-100 px-1 py-0.5 rounded text-xs">rna_counts</code> — {% if lang == 'zh' %}CSV 文件(symbol,count),5000-基因 panel{% else %}CSV file (symbol,count), 5000-gene panel{% endif %}</li>
+      <li><code class="bg-slate-100 px-1 py-0.5 rounded text-xs">rna_full</code> — {% if lang == 'zh' %}可选 CSV(全转录组){% else %}optional CSV (full transcriptome){% endif %}</li>
+    </ul>
 
-<h3>payload_json schema</h3>
-<pre class="bg-slate-100 p-3 rounded text-xs overflow-x-auto"><code>{
+    <h3 class="text-base font-semibold text-slate-900 mb-2 mt-5">
+      {% if lang == 'zh' %}payload_json schema{% else %}payload_json schema{% endif %}
+    </h3>
+    <pre class="bg-slate-900 text-slate-100 p-4 rounded-lg text-xs overflow-x-auto"><code>{
   "patient_label": "AML-2024-017",
   "age": 45,
   "sex": "female",
@@ -38,38 +61,74 @@
   "blast_pct_bm": 78, "blast_pct_pb": 65
 }</code></pre>
 
-<p>Returns <code>202 Accepted</code> with a submission ID. Poll <code>GET /api/v1/patients/{id}</code>
-until <code>status == "done"</code>, then fetch reports from <code>/api/v1/reports/{id}/{pdf,html,markdown,figure}</code>.</p>
+    <p class="text-sm text-slate-600 mt-4">
+      {% if lang == 'zh' %}
+        返回 <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">202 Accepted</code> 加一个 submission ID。轮询 <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">GET /api/v1/patients/{id}</code> 直到 status 为 <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">done</code>,然后从 <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">/api/v1/reports/{id}/{pdf,html,markdown,figure}</code> 下载报告。
+      {% else %}
+        Returns <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">202 Accepted</code> with a submission ID. Poll <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">GET /api/v1/patients/{id}</code> until <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">status == "done"</code>, then fetch from <code class="bg-slate-100 px-1 py-0.5 rounded text-xs">/api/v1/reports/{id}/{pdf,html,markdown,figure}</code>.
+      {% endif %}
+    </p>
+  </section>
 
-<h2>Endpoints</h2>
-<table class="text-sm">
-  <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
-  <tbody>
-    <tr><td>POST</td><td>/api/v1/patients</td><td>Submit a new patient</td></tr>
-    <tr><td>GET</td><td>/api/v1/patients</td><td>List your patients</td></tr>
-    <tr><td>GET</td><td>/api/v1/patients/{id}</td><td>Get submission status + results</td></tr>
-    <tr><td>DELETE</td><td>/api/v1/patients/{id}</td><td>Delete submission + artifacts</td></tr>
-    <tr><td>GET</td><td>/api/v1/reports/{id}/markdown</td><td>Report as Markdown</td></tr>
-    <tr><td>GET</td><td>/api/v1/reports/{id}/html</td><td>Report as styled HTML</td></tr>
-    <tr><td>GET</td><td>/api/v1/reports/{id}/pdf</td><td>Report as PDF</td></tr>
-    <tr><td>GET</td><td>/api/v1/reports/{id}/figure</td><td>DNA-profile PNG</td></tr>
-    <tr><td>POST</td><td>/api/v1/reports/{id}/llm-summary</td><td>Generate plain-English summary via your stored LLM key</td></tr>
-    <tr><td>POST/GET/DELETE</td><td>/api/v1/keys</td><td>Manage platform API keys</td></tr>
-    <tr><td>POST/GET/DELETE</td><td>/api/v1/llm-keys</td><td>Manage BYOK LLM keys</td></tr>
-  </tbody>
-</table>
+  <!-- Endpoints table -->
+  <section class="mb-10">
+    <h2 class="text-xl font-semibold text-slate-900 mb-3">
+      {% if lang == 'zh' %}全部端点{% else %}Endpoints{% endif %}
+    </h2>
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-left border-b border-slate-200 text-slate-600">
+          <tr>
+            <th class="px-4 py-2 font-medium">Method</th>
+            <th class="px-4 py-2 font-medium">Path</th>
+            <th class="px-4 py-2 font-medium">{% if lang == 'zh' %}说明{% else %}Description{% endif %}</th>
+          </tr>
+        </thead>
+        <tbody class="text-slate-700">
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">POST</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/patients</td><td class="px-4 py-2">{% if lang == 'zh' %}提交患者{% else %}Submit a new patient{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/patients</td><td class="px-4 py-2">{% if lang == 'zh' %}列出全部{% else %}List your patients{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/patients/{id}</td><td class="px-4 py-2">{% if lang == 'zh' %}获取状态 + 结果{% else %}Get status + summary{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">DELETE</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/patients/{id}</td><td class="px-4 py-2">{% if lang == 'zh' %}删除患者及其报告{% else %}Delete submission + artifacts{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/reports/{id}/markdown</td><td class="px-4 py-2">Markdown</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/reports/{id}/html</td><td class="px-4 py-2">{% if lang == 'zh' %}带样式 HTML{% else %}Styled HTML{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/reports/{id}/pdf</td><td class="px-4 py-2">PDF</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">GET</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/reports/{id}/figure</td><td class="px-4 py-2">{% if lang == 'zh' %}DNA 综合图 PNG{% else %}DNA-profile PNG{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">POST</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/reports/{id}/llm-summary</td><td class="px-4 py-2">{% if lang == 'zh' %}用你的 LLM key 生成摘要{% else %}LLM summary via your BYOK key{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">POST/GET/DELETE</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/keys</td><td class="px-4 py-2">{% if lang == 'zh' %}管理平台 API 密钥{% else %}Manage platform API keys{% endif %}</td></tr>
+          <tr class="border-t border-slate-100"><td class="px-4 py-2"><code class="text-xs font-mono">POST/GET/DELETE</code></td><td class="px-4 py-2 font-mono text-xs">/api/v1/llm-keys</td><td class="px-4 py-2">{% if lang == 'zh' %}管理 BYOK LLM 密钥{% else %}Manage BYOK LLM keys{% endif %}</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
 
-<h2>Rate limits</h2>
-<p>Free tier: 10 patient submissions per 24 hours. Reports are kept indefinitely.</p>
+  <!-- Rate limits -->
+  <section class="mb-8">
+    <h2 class="text-xl font-semibold text-slate-900 mb-3">
+      {% if lang == 'zh' %}速率限制{% else %}Rate limits{% endif %}
+    </h2>
+    <p class="text-sm text-slate-600">
+      {% if lang == 'zh' %}
+        免费版:每 24 小时最多 10 个患者提交。报告永久保存。
+      {% else %}
+        Free tier: 10 patient submissions per 24 hours. Reports are kept indefinitely.
+      {% endif %}
+    </p>
+  </section>
 
-<h2>Disclaimer</h2>
-<p class="bg-amber-50 border border-amber-300 p-4 rounded">
-  <strong>Research use only.</strong> This platform is not an FDA-cleared medical device.
-  All predictions must be reviewed by a qualified clinician. Do not upload PHI.
-</p>
+  <!-- Swagger link -->
+  <div class="text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl p-4">
+    {% if lang == 'zh' %}
+      交互式 OpenAPI 文档(Swagger UI):
+    {% else %}
+      Interactive OpenAPI docs (Swagger UI):
+    {% endif %}
+    <a href="/openapi" class="text-brand-700 hover:underline font-medium">/openapi</a>
+  </div>
 
-<p class="mt-8">
-  Interactive OpenAPI docs (Swagger UI): <a href="/openapi" class="brand">/openapi</a>
-</p>
+  <!-- Disclaimer -->
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-5 mt-8">
+    <strong class="text-amber-900">{{ t("common.research_only") }}.</strong>
+    <span class="text-sm text-amber-800 ml-1">{{ t("common.footer_disclaimer") }}</span>
+  </div>
 </div>
 {% endblock %}

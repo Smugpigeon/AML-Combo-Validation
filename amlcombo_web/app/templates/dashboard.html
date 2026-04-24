@@ -1,57 +1,92 @@
 {% extends "base.html" %}
-{% block title %}Dashboard{% endblock %}
-{% block content %}
-<div class="flex items-center justify-between mb-6">
-  <h1 class="text-2xl font-semibold">Your patients</h1>
-  <a href="/new" class="bg-brand text-white px-4 py-2 rounded font-medium hover:opacity-90">
-    + New patient
-  </a>
-</div>
+{% block title %}{{ t("nav.dashboard") }}{% endblock %}
 
-{% if not submissions %}
-  <div class="bg-white border border-slate-200 rounded-lg p-8 text-center">
-    <p class="text-slate-500">No patients yet. Click <strong>+ New patient</strong> to submit one.</p>
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900">{{ t("dashboard.title") }}</h1>
+      {% if user.institution %}
+        <p class="text-sm text-slate-500 mt-1">{{ user.full_name or user.email }} · {{ user.institution }}</p>
+      {% endif %}
+    </div>
+    <a href="/new"
+       class="inline-flex items-center gap-2 px-5 py-2.5
+              bg-gradient-to-r from-brand-600 to-brand-700 text-white
+              rounded-lg font-semibold shadow-md hover:shadow-lg hover:brightness-105 transition self-start sm:self-auto">
+      {{ t("dashboard.new_button") }}
+    </a>
   </div>
-{% else %}
-  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
-    <table class="w-full text-sm">
-      <thead class="bg-slate-50 text-left">
-        <tr>
-          <th class="px-4 py-2">Patient</th>
-          <th class="px-4 py-2">Status</th>
-          <th class="px-4 py-2">ELN 2017</th>
-          <th class="px-4 py-2">Top regimen</th>
-          <th class="px-4 py-2">Submitted</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in submissions %}
-        <tr class="border-t border-slate-100 hover:bg-slate-50">
-          <td class="px-4 py-2 font-medium">{{ s.patient_label }}</td>
-          <td class="px-4 py-2">
-            {% if s.status == "done" %}
-              <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">done</span>
-            {% elif s.status == "running" %}
-              <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">running</span>
-            {% elif s.status == "failed" %}
-              <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">failed</span>
-            {% else %}
-              <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">queued</span>
-            {% endif %}
-          </td>
-          <td class="px-4 py-2">{{ s.predicted_eln2017 or "—" }}</td>
-          <td class="px-4 py-2 text-slate-600">{{ (s.top_regimen_name or "—")|truncate(40) }}</td>
-          <td class="px-4 py-2 text-slate-500 text-xs">
-            {{ s.created_at.strftime("%Y-%m-%d %H:%M") }}
-          </td>
-          <td class="px-4 py-2 text-right">
-            <a href="/patient/{{ s.id }}" class="brand hover:underline">View →</a>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% endif %}
+
+  {% if not submissions %}
+    <div class="bg-white border border-slate-200 rounded-2xl p-12 text-center shadow-sm">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center text-2xl">
+        🧪
+      </div>
+      <h2 class="text-lg font-semibold text-slate-900 mb-2">{{ t("dashboard.empty_title") }}</h2>
+      <p class="text-slate-600 mb-6">{{ t("dashboard.empty_body") }}</p>
+      <a href="/new"
+         class="inline-flex items-center gap-2 px-6 py-3
+                bg-gradient-to-r from-brand-600 to-brand-700 text-white
+                rounded-lg font-semibold shadow-md hover:shadow-lg hover:brightness-105 transition">
+        {{ t("dashboard.new_button") }}
+      </a>
+    </div>
+  {% else %}
+    <div class="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-left border-b border-slate-200">
+          <tr class="text-slate-600">
+            <th class="px-5 py-3 font-medium">{{ t("dashboard.col_patient") }}</th>
+            <th class="px-5 py-3 font-medium">{{ t("dashboard.col_status") }}</th>
+            <th class="px-5 py-3 font-medium">{{ t("dashboard.col_eln") }}</th>
+            <th class="px-5 py-3 font-medium">{{ t("dashboard.col_regimen") }}</th>
+            <th class="px-5 py-3 font-medium">{{ t("dashboard.col_submitted") }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in submissions %}
+          <tr class="border-t border-slate-100 hover:bg-slate-50/60 transition">
+            <td class="px-5 py-3 font-medium text-slate-900">{{ s.patient_label }}</td>
+            <td class="px-5 py-3">
+              {% if s.status == "done" %}
+                <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  {{ t("dashboard.status_done") }}
+                </span>
+              {% elif s.status == "running" %}
+                <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                  {{ t("dashboard.status_running") }}
+                </span>
+              {% elif s.status == "failed" %}
+                <span class="inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                  {{ t("dashboard.status_failed") }}
+                </span>
+              {% else %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                  <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                  {{ t("dashboard.status_queued") }}
+                </span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3 text-slate-700">{{ s.predicted_eln2017 or "—" }}</td>
+            <td class="px-5 py-3 text-slate-600 max-w-xs truncate">{{ s.top_regimen_name or "—" }}</td>
+            <td class="px-5 py-3 text-slate-500 text-xs whitespace-nowrap">
+              {{ s.created_at.strftime("%Y-%m-%d %H:%M") }}
+            </td>
+            <td class="px-5 py-3 text-right">
+              <a href="/patient/{{ s.id }}" class="text-brand-700 hover:underline font-medium whitespace-nowrap">{{ t("dashboard.view_action") }}</a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+
+</div>
 {% endblock %}

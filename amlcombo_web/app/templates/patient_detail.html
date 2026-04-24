@@ -1,89 +1,120 @@
 {% extends "base.html" %}
 {% block title %}{{ sub.patient_label }}{% endblock %}
+
 {% block content %}
-<div class="mb-6 flex items-center justify-between">
-  <div>
-    <a href="/dashboard" class="text-sm text-slate-500 hover:text-brand">← Dashboard</a>
-    <h1 class="text-2xl font-semibold mt-1">{{ sub.patient_label }}</h1>
-    <p class="text-sm text-slate-500 mt-1">Submitted {{ sub.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</p>
-  </div>
-  <div>
-    {% if sub.status == "done" %}
-      <span class="bg-green-100 text-green-800 px-3 py-1 rounded text-sm">done</span>
-    {% elif sub.status == "running" %}
-      <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm">running...</span>
-    {% elif sub.status == "failed" %}
-      <span class="bg-red-100 text-red-800 px-3 py-1 rounded text-sm">failed</span>
-    {% else %}
-      <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded text-sm">queued</span>
-    {% endif %}
-  </div>
-</div>
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-10">
 
-{% if sub.status == "queued" or sub.status == "running" %}
-  <div class="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-900">
-    Prediction in progress. This page auto-refreshes every 5 seconds until the report is ready.
-  </div>
-  <meta http-equiv="refresh" content="5">
-{% elif sub.status == "failed" %}
-  <div class="bg-red-50 border border-red-300 rounded p-4 text-sm text-red-900">
-    <strong>Prediction failed.</strong>
-    <pre class="mt-2 text-xs whitespace-pre-wrap">{{ sub.error_message or "(no detail)" }}</pre>
-  </div>
-{% else %}
-  <!-- Done — show summary + download links -->
-  <div class="grid md:grid-cols-2 gap-6">
-    <div class="bg-white border border-slate-200 rounded-lg p-6">
-      <h2 class="font-semibold mb-3">Prediction summary</h2>
-      <dl class="text-sm space-y-1">
-        <div class="flex justify-between"><dt class="text-slate-500">ELN 2017 risk</dt><dd class="font-medium">{{ sub.predicted_eln2017 or "—" }}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate-500">Top regimen</dt><dd class="font-medium text-right">{{ sub.top_regimen_name or "—" }}</dd></div>
-        <div class="flex justify-between"><dt class="text-slate-500">Processing time</dt><dd>
-          {% if sub.started_at and sub.finished_at %}
-          {{ ((sub.finished_at - sub.started_at).total_seconds() | round(1)) }} s
-          {% else %} — {% endif %}
-        </dd></div>
-      </dl>
+  <div class="flex items-start justify-between mb-8 flex-wrap gap-3">
+    <div>
+      <a href="/dashboard" class="text-sm text-slate-500 hover:text-brand-700">{{ t("patient_detail.back") }}</a>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ sub.patient_label }}</h1>
+      <p class="text-sm text-slate-500 mt-1">{{ sub.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</p>
     </div>
-
-    <div class="bg-white border border-slate-200 rounded-lg p-6">
-      <h2 class="font-semibold mb-3">Report downloads</h2>
-      <ul class="space-y-2 text-sm">
-        <li><a href="/api/v1/reports/{{ sub.id }}/pdf" class="brand hover:underline">📄 clinical_report.pdf</a></li>
-        <li><a href="/api/v1/reports/{{ sub.id }}/html" class="brand hover:underline">🌐 clinical_report.html</a></li>
-        <li><a href="/api/v1/reports/{{ sub.id }}/markdown" class="brand hover:underline">📝 clinical_report.md</a></li>
-        <li><a href="/api/v1/reports/{{ sub.id }}/figure" class="brand hover:underline">🖼 dna_profile.png</a></li>
-      </ul>
+    <div>
+      {% if sub.status == "done" %}
+        <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-1 rounded-full text-sm font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+          {{ t("dashboard.status_done") }}
+        </span>
+      {% elif sub.status == "running" %}
+        <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-full text-sm font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+          {{ t("dashboard.status_running") }}
+        </span>
+      {% elif sub.status == "failed" %}
+        <span class="inline-flex items-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-3 py-1 rounded-full text-sm font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+          {{ t("dashboard.status_failed") }}
+        </span>
+      {% else %}
+        <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-600 border border-slate-200 px-3 py-1 rounded-full text-sm font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          {{ t("dashboard.status_queued") }}
+        </span>
+      {% endif %}
     </div>
   </div>
 
-  <!-- LLM summary feature -->
-  <div class="mt-6 bg-white border border-slate-200 rounded-lg p-6">
-    <h2 class="font-semibold mb-2">LLM plain-English summary (BYOK)</h2>
-    <p class="text-sm text-slate-600 mb-3">
-      Use your stored LLM API key to generate a short plain-English summary of this report.
-      Your key is never logged; calls go directly to OpenAI / Anthropic billed against your own account.
-    </p>
-    {% if not llm_keys %}
-      <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3">
-        No LLM key stored. <a href="/llm-keys" class="underline">Add one</a> to enable this feature.
-      </p>
-    {% else %}
-      <div class="flex gap-2 items-center">
-        <select id="llm-key-select" class="border border-slate-300 rounded px-3 py-2 text-sm">
-          {% for k in llm_keys %}
-            <option value="{{ k.id }}">{{ k.provider }} · {{ k.label or "(unlabeled)" }} · {{ k.key_suffix }}</option>
-          {% endfor %}
-        </select>
-        <button onclick="generateSummary('{{ sub.id }}')"
-                class="bg-brand text-white px-4 py-2 rounded text-sm hover:opacity-90">
-          Generate summary
-        </button>
+  {% if sub.status == "queued" %}
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm text-blue-900">
+      {{ t("patient_detail.status_queued_body") }}
+    </div>
+    <meta http-equiv="refresh" content="5">
+  {% elif sub.status == "running" %}
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-5 text-sm text-blue-900">
+      {{ t("patient_detail.status_running_body") }}
+    </div>
+    <meta http-equiv="refresh" content="5">
+  {% elif sub.status == "failed" %}
+    <div class="bg-red-50 border border-red-300 rounded-2xl p-5 text-sm text-red-900">
+      <div class="font-semibold mb-2">{{ t("patient_detail.status_failed_title") }}</div>
+      <pre class="text-xs whitespace-pre-wrap">{{ sub.error_message or "(no detail)" }}</pre>
+    </div>
+  {% else %}
+    <!-- Done — show summary + download links -->
+    <div class="grid md:grid-cols-2 gap-5 mb-5">
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 class="font-semibold text-slate-900 mb-4">{{ t("patient_detail.summary_title") }}</h2>
+        <dl class="text-sm space-y-3">
+          <div class="flex justify-between">
+            <dt class="text-slate-500">{{ t("patient_detail.summary_eln") }}</dt>
+            <dd class="font-semibold text-slate-900">{{ sub.predicted_eln2017 or "—" }}</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-slate-500 flex-shrink-0">{{ t("patient_detail.summary_regimen") }}</dt>
+            <dd class="font-semibold text-slate-900 text-right">{{ sub.top_regimen_name or "—" }}</dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-slate-500">{{ t("patient_detail.summary_time") }}</dt>
+            <dd class="text-slate-700">
+              {% if sub.started_at and sub.finished_at %}
+                {{ ((sub.finished_at - sub.started_at).total_seconds() | round(1)) }} s
+              {% else %} — {% endif %}
+            </dd>
+          </div>
+        </dl>
       </div>
-      <div id="summary-output" class="mt-4 hidden whitespace-pre-wrap text-sm bg-slate-50 border border-slate-200 rounded p-4"></div>
-    {% endif %}
-  </div>
-{% endif %}
+
+      <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+        <h2 class="font-semibold text-slate-900 mb-4">{{ t("patient_detail.downloads_title") }}</h2>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/api/v1/reports/{{ sub.id }}/pdf" class="text-brand-700 hover:underline flex items-center gap-2"><span>📄</span>clinical_report.pdf</a></li>
+          <li><a href="/api/v1/reports/{{ sub.id }}/html" class="text-brand-700 hover:underline flex items-center gap-2"><span>🌐</span>clinical_report.html</a></li>
+          <li><a href="/api/v1/reports/{{ sub.id }}/markdown" class="text-brand-700 hover:underline flex items-center gap-2"><span>📝</span>clinical_report.md</a></li>
+          <li><a href="/api/v1/reports/{{ sub.id }}/figure" class="text-brand-700 hover:underline flex items-center gap-2"><span>🖼</span>dna_profile.png</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- LLM summary feature -->
+    <div class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm">
+      <h2 class="font-semibold text-slate-900 mb-2">{{ t("patient_detail.llm_summary_title") }}</h2>
+      <p class="text-sm text-slate-600 mb-4">{{ t("patient_detail.llm_summary_body") }}</p>
+
+      {% if not llm_keys %}
+        <div class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 flex items-center gap-3">
+          <span>⚠</span>
+          <span>{{ t("patient_detail.llm_no_keys") }}
+            <a href="/llm-keys" class="underline font-medium ml-1">{{ t("patient_detail.llm_add_one") }}</a>
+          </span>
+        </div>
+      {% else %}
+        <div class="flex gap-2 items-center flex-wrap">
+          <select id="llm-key-select" class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none">
+            {% for k in llm_keys %}
+              <option value="{{ k.id }}">{{ k.provider }} · {{ k.label or "(unlabeled)" }} · {{ k.key_suffix }}</option>
+            {% endfor %}
+          </select>
+          <button onclick="generateSummary('{{ sub.id }}')"
+                  class="px-4 py-2 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg text-sm font-medium shadow-sm hover:shadow-md hover:brightness-105 transition">
+            {{ t("patient_detail.llm_generate") }}
+          </button>
+        </div>
+        <div id="summary-output" class="mt-4 hidden whitespace-pre-wrap text-sm bg-slate-50 border border-slate-200 rounded-lg p-4"></div>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
 
 <script>
 function generateSummary(subId) {
