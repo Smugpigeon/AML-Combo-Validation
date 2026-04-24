@@ -1,4 +1,16 @@
-"""Jinja2 HTML pages for the browser UI."""
+"""Jinja2 HTML pages for the browser UI.
+
+TemplateResponse API note
+-------------------------
+Starlette 0.37+ requires the `Request` instance as the first positional
+argument (not the template name). Passing {"request": request, ...} as
+the context works on older versions but explodes with
+`TypeError: unhashable type: 'dict'` on recent Starlette because the
+cache lookup receives the context dict as the template name.
+
+Correct modern usage:
+    templates.TemplateResponse(request, "name.html", {"user": user, ...})
+"""
 
 from __future__ import annotations
 
@@ -25,7 +37,7 @@ router = APIRouter(tags=["pages"])
 @router.get("/", response_class=HTMLResponse)
 def landing(request: Request, user: User | None = Depends(current_user_optional)):
     return templates.TemplateResponse(
-        "landing.html", {"request": request, "user": user},
+        request, "landing.html", {"user": user},
     )
 
 
@@ -35,8 +47,8 @@ def signup_page(request: Request,
     if user is not None:
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse(
-        "signup.html", {"request": request,
-                         "error": request.query_params.get("error")},
+        request, "signup.html",
+        {"error": request.query_params.get("error")},
     )
 
 
@@ -46,8 +58,8 @@ def login_page(request: Request,
     if user is not None:
         return RedirectResponse("/dashboard", status_code=303)
     return templates.TemplateResponse(
-        "login.html", {"request": request,
-                        "error": request.query_params.get("error")},
+        request, "login.html",
+        {"error": request.query_params.get("error")},
     )
 
 
@@ -59,15 +71,15 @@ def dashboard(request: Request, user: User = Depends(current_user),
         .order_by(Submission.created_at.desc()).limit(20)
     ).scalars().all()
     return templates.TemplateResponse(
-        "dashboard.html",
-        {"request": request, "user": user, "submissions": subs},
+        request, "dashboard.html",
+        {"user": user, "submissions": subs},
     )
 
 
 @router.get("/new", response_class=HTMLResponse)
 def new_patient_page(request: Request, user: User = Depends(current_user)):
     return templates.TemplateResponse(
-        "new_patient.html", {"request": request, "user": user},
+        request, "new_patient.html", {"user": user},
     )
 
 
@@ -84,8 +96,8 @@ def patient_detail(request: Request, submission_id: str,
                               LLMKey.revoked_at.is_(None))
     ).scalars().all()
     return templates.TemplateResponse(
-        "patient_detail.html",
-        {"request": request, "user": user, "sub": sub, "llm_keys": llm_keys},
+        request, "patient_detail.html",
+        {"user": user, "sub": sub, "llm_keys": llm_keys},
     )
 
 
@@ -97,8 +109,8 @@ def api_keys_page(request: Request, user: User = Depends(current_user),
         .order_by(APIKey.created_at.desc())
     ).scalars().all()
     return templates.TemplateResponse(
-        "api_keys.html",
-        {"request": request, "user": user, "keys": keys},
+        request, "api_keys.html",
+        {"user": user, "keys": keys},
     )
 
 
@@ -110,8 +122,8 @@ def llm_keys_page(request: Request, user: User = Depends(current_user),
         .order_by(LLMKey.created_at.desc())
     ).scalars().all()
     return templates.TemplateResponse(
-        "llm_keys.html",
-        {"request": request, "user": user, "keys": keys},
+        request, "llm_keys.html",
+        {"user": user, "keys": keys},
     )
 
 
@@ -119,5 +131,5 @@ def llm_keys_page(request: Request, user: User = Depends(current_user),
 def api_docs(request: Request,
               user: User | None = Depends(current_user_optional)):
     return templates.TemplateResponse(
-        "docs_api.html", {"request": request, "user": user},
+        request, "docs_api.html", {"user": user},
     )
