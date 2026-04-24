@@ -198,8 +198,20 @@ def parse_patient_text(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f"Parse failed: {e}")
     except Exception as e:  # httpx / provider errors
-        raise HTTPException(status_code=502,
-                             detail=f"LLM provider error: {e!s}")
+        # NOTE: Use 400 not 502. Cloudflare intercepts origin 5xx codes
+        # with its own HTML error page, which breaks the frontend's
+        # JSON parsing. 400 passes through unchanged.
+        msg = str(e)
+        hint = ""
+        if "401" in msg or "Unauthorized" in msg or "invalid_api_key" in msg:
+            hint = (f" Your {llm_key.provider} API key appears to be "
+                     f"invalid or expired — re-add it in /llm-keys.")
+        elif "429" in msg:
+            hint = " Provider rate limit hit — wait a minute and retry."
+        elif "timed out" in msg.lower() or "timeout" in msg.lower():
+            hint = " The LLM call timed out — try a shorter paste."
+        raise HTTPException(status_code=400,
+                             detail=f"LLM provider error: {msg}.{hint}")
 
     # Audit (metadata only — no raw_text, no LLM output)
     llm_key.last_used_at = datetime.now(tz=timezone.utc)

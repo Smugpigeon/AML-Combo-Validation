@@ -134,8 +134,17 @@ def generate_summary(
     try:
         resp = summarize_report(md_text, plaintext_key, llm_key.provider)
     except Exception as e:
-        raise HTTPException(status_code=502,
-                             detail=f"LLM provider error: {e}")
+        # 400 not 502 — Cloudflare intercepts origin 5xx with its own
+        # HTML error page (breaks the JS JSON parser).
+        msg = str(e)
+        hint = ""
+        if "401" in msg or "Unauthorized" in msg or "invalid_api_key" in msg:
+            hint = (f" Your {llm_key.provider} API key appears to be "
+                     f"invalid or expired — re-add it in /llm-keys.")
+        elif "429" in msg:
+            hint = " Provider rate limit hit — wait a minute and retry."
+        raise HTTPException(status_code=400,
+                             detail=f"LLM provider error: {msg}.{hint}")
 
     # Update audit + last-used timestamp
     llm_key.last_used_at = datetime.now(tz=timezone.utc)
