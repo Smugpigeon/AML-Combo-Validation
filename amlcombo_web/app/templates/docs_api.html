@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}API documentation{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto prose prose-slate">
+<h1>API documentation</h1>
+<p class="text-slate-600">
+  All endpoints are under <code>https://amlcombo.org/api/v1/</code>.
+  Authenticate with <code>Authorization: Bearer ac_live_...</code>.
+</p>
+
+<h2>Authentication</h2>
+<p>Generate an API key at <a href="/api-keys">/api-keys</a> after signing in.</p>
+<pre class="bg-slate-100 p-3 rounded text-sm"><code>curl -H "Authorization: Bearer ac_live_xxxxxxxxxxxxxxxxxxxxxxxx" \
+     https://amlcombo.org/api/v1/patients</code></pre>
+
+<h2>Submit a patient</h2>
+<p><code>POST /api/v1/patients</code> — multipart/form-data</p>
+<p>Fields:</p>
+<ul>
+  <li><code>payload_json</code> — JSON string (see schema below)</li>
+  <li><code>rna_counts</code> — CSV file (symbol,count) for the 5000-gene panel</li>
+  <li><code>rna_full</code> — optional CSV file (full transcriptome)</li>
+</ul>
+
+<h3>payload_json schema</h3>
+<pre class="bg-slate-100 p-3 rounded text-xs overflow-x-auto"><code>{
+  "patient_label": "AML-2024-017",
+  "age": 45,
+  "sex": "female",
+  "is_initial_diagnosis": true,
+  "karyotype_text": "46,XX[20]",
+  "fusions": [],
+  "mutations": [
+    {"gene": "FLT3", "is_ITD": true, "allelic_ratio": 0.62, "vaf": 0.45},
+    {"gene": "NPM1", "variant_type": "missense", "vaf": 0.42}
+  ],
+  "wbc": 95.0, "platelet": 32.0, "hemoglobin": 8.5, "ldh": 1240.0,
+  "blast_pct_bm": 78, "blast_pct_pb": 65
+}</code></pre>
+
+<p>Returns <code>202 Accepted</code> with a submission ID. Poll <code>GET /api/v1/patients/{id}</code>
+until <code>status == "done"</code>, then fetch reports from <code>/api/v1/reports/{id}/{pdf,html,markdown,figure}</code>.</p>
+
+<h2>Endpoints</h2>
+<table class="text-sm">
+  <thead><tr><th>Method</th><th>Path</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td>/api/v1/patients</td><td>Submit a new patient</td></tr>
+    <tr><td>GET</td><td>/api/v1/patients</td><td>List your patients</td></tr>
+    <tr><td>GET</td><td>/api/v1/patients/{id}</td><td>Get submission status + results</td></tr>
+    <tr><td>DELETE</td><td>/api/v1/patients/{id}</td><td>Delete submission + artifacts</td></tr>
+    <tr><td>GET</td><td>/api/v1/reports/{id}/markdown</td><td>Report as Markdown</td></tr>
+    <tr><td>GET</td><td>/api/v1/reports/{id}/html</td><td>Report as styled HTML</td></tr>
+    <tr><td>GET</td><td>/api/v1/reports/{id}/pdf</td><td>Report as PDF</td></tr>
+    <tr><td>GET</td><td>/api/v1/reports/{id}/figure</td><td>DNA-profile PNG</td></tr>
+    <tr><td>POST</td><td>/api/v1/reports/{id}/llm-summary</td><td>Generate plain-English summary via your stored LLM key</td></tr>
+    <tr><td>POST/GET/DELETE</td><td>/api/v1/keys</td><td>Manage platform API keys</td></tr>
+    <tr><td>POST/GET/DELETE</td><td>/api/v1/llm-keys</td><td>Manage BYOK LLM keys</td></tr>
+  </tbody>
+</table>
+
+<h2>Rate limits</h2>
+<p>Free tier: 10 patient submissions per 24 hours. Reports are kept indefinitely.</p>
+
+<h2>Disclaimer</h2>
+<p class="bg-amber-50 border border-amber-300 p-4 rounded">
+  <strong>Research use only.</strong> This platform is not an FDA-cleared medical device.
+  All predictions must be reviewed by a qualified clinician. Do not upload PHI.
+</p>
+
+<p class="mt-8">
+  Interactive OpenAPI docs (Swagger UI): <a href="/openapi" class="brand">/openapi</a>
+</p>
+</div>
+{% endblock %}

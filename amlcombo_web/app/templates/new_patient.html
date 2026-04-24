@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}New patient{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto">
+<h1 class="text-2xl font-semibold mb-2">Submit a new patient</h1>
+<p class="text-slate-600 mb-6 text-sm">
+  Fill in the NGS mutation panel, karyotype, labs, and upload RNA-Seq counts.
+  Processing typically takes 30-120 seconds. Use a <strong>de-identified
+  patient label</strong> — do not include real name, MRN, or DOB.
+</p>
+
+<form id="submit-form" class="space-y-6 bg-white border border-slate-200 rounded-lg p-6">
+  <!-- Patient identification -->
+  <div class="grid grid-cols-2 gap-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Patient label <span class="text-red-500">*</span></label>
+      <input type="text" id="patient_label" required placeholder="e.g. AML-2024-017"
+             class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Age</label>
+      <input type="number" id="age" min="0" max="120" class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+  </div>
+
+  <div class="grid grid-cols-3 gap-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Sex</label>
+      <select id="sex" class="w-full border border-slate-300 rounded px-3 py-2">
+        <option value="">(unspecified)</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
+      </select>
+    </div>
+    <div class="flex items-end gap-2">
+      <input type="checkbox" id="is_initial_diagnosis" checked>
+      <label class="text-sm">Initial diagnosis</label>
+    </div>
+    <div class="flex items-end gap-2">
+      <input type="checkbox" id="prior_mds">
+      <label class="text-sm">Prior MDS</label>
+    </div>
+  </div>
+
+  <!-- Mutations -->
+  <div>
+    <label class="block text-sm font-medium mb-1">Driver mutations (JSON array)</label>
+    <textarea id="mutations" rows="4" class="w-full font-mono text-xs border border-slate-300 rounded px-3 py-2"
+      placeholder='[{"gene":"FLT3","is_ITD":true,"allelic_ratio":0.62,"vaf":0.45},{"gene":"NPM1","variant_type":"missense","vaf":0.42}]'></textarea>
+    <p class="text-xs text-slate-500 mt-1">
+      Fields: gene (required), variant_type, vaf, is_ITD, is_TKD, allelic_ratio, is_biallelic.
+    </p>
+  </div>
+
+  <!-- Karyotype + fusions -->
+  <div>
+    <label class="block text-sm font-medium mb-1">Karyotype (ISCN)</label>
+    <input type="text" id="karyotype_text" class="w-full border border-slate-300 rounded px-3 py-2"
+           placeholder="e.g. 46,XX,t(15;17)(q22;q21)[20]">
+  </div>
+  <div>
+    <label class="block text-sm font-medium mb-1">Fusions (comma-separated)</label>
+    <input type="text" id="fusions" class="w-full border border-slate-300 rounded px-3 py-2"
+           placeholder="e.g. PML-RARA">
+  </div>
+
+  <!-- Labs -->
+  <div>
+    <label class="block text-sm font-medium mb-2">Labs</label>
+    <div class="grid grid-cols-4 gap-3">
+      <input type="number" step="0.1" id="wbc" placeholder="WBC (×10⁹/L)" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="1" id="platelet" placeholder="Platelets" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="0.1" id="hemoglobin" placeholder="Hgb (g/dL)" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="1" id="ldh" placeholder="LDH (U/L)" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="1" id="blast_pct_bm" placeholder="Blast % BM" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="1" id="blast_pct_pb" placeholder="Blast % PB" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="0.1" id="alt" placeholder="ALT" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+      <input type="number" step="0.1" id="ast" placeholder="AST" class="border border-slate-300 rounded px-2 py-1.5 text-sm">
+    </div>
+  </div>
+
+  <!-- Uploads -->
+  <div>
+    <label class="block text-sm font-medium mb-1">RNA-Seq counts (5000-gene panel) <span class="text-red-500">*</span></label>
+    <input type="file" id="rna_counts" accept=".csv,.tsv,.txt" required
+           class="block w-full text-sm border border-slate-300 rounded px-3 py-2">
+    <p class="text-xs text-slate-500 mt-1">2-column CSV: symbol, count.</p>
+  </div>
+
+  <div>
+    <label class="block text-sm font-medium mb-1">RNA-Seq full transcriptome (optional — for outlier analysis)</label>
+    <input type="file" id="rna_full" accept=".csv,.tsv,.txt"
+           class="block w-full text-sm border border-slate-300 rounded px-3 py-2">
+    <p class="text-xs text-slate-500 mt-1">
+      2-column CSV: symbol, expression (log-CPM or raw counts; auto-detected).
+      Enables the 25+8 gene expression-outlier table + full-transcriptome top-N scan.
+    </p>
+  </div>
+
+  <div class="flex gap-3">
+    <button type="button" onclick="submitPatient()"
+            class="flex-1 bg-brand text-white py-3 rounded font-medium hover:opacity-90">
+      Submit for prediction
+    </button>
+    <a href="/dashboard" class="px-4 py-3 text-slate-600 hover:text-brand">Cancel</a>
+  </div>
+</form>
+
+<div id="status" class="mt-4 hidden"></div>
+</div>
+
+<script>
+function submitPatient() {
+  const payload = {
+    patient_label: document.getElementById('patient_label').value.trim(),
+    age: Number(document.getElementById('age').value) || null,
+    sex: document.getElementById('sex').value || null,
+    is_initial_diagnosis: document.getElementById('is_initial_diagnosis').checked,
+    prior_mds: document.getElementById('prior_mds').checked,
+    karyotype_text: document.getElementById('karyotype_text').value.trim() || null,
+    fusions: (document.getElementById('fusions').value.trim()
+              ? document.getElementById('fusions').value.split(',').map(s => s.trim())
+              : []),
+    mutations: (() => {
+      const v = document.getElementById('mutations').value.trim();
+      if (!v) return [];
+      try { return JSON.parse(v); }
+      catch (e) { alert('Mutations JSON is invalid: ' + e.message); throw e; }
+    })(),
+    wbc: Number(document.getElementById('wbc').value) || null,
+    platelet: Number(document.getElementById('platelet').value) || null,
+    hemoglobin: Number(document.getElementById('hemoglobin').value) || null,
+    ldh: Number(document.getElementById('ldh').value) || null,
+    alt: Number(document.getElementById('alt').value) || null,
+    ast: Number(document.getElementById('ast').value) || null,
+    blast_pct_bm: Number(document.getElementById('blast_pct_bm').value) || null,
+    blast_pct_pb: Number(document.getElementById('blast_pct_pb').value) || null,
+  };
+
+  if (!payload.patient_label) { alert('Patient label is required'); return; }
+  const rnaFile = document.getElementById('rna_counts').files[0];
+  if (!rnaFile) { alert('RNA-Seq counts file is required'); return; }
+
+  const fd = new FormData();
+  fd.append('payload_json', JSON.stringify(payload));
+  fd.append('rna_counts', rnaFile);
+  const rnaFull = document.getElementById('rna_full').files[0];
+  if (rnaFull) fd.append('rna_full', rnaFull);
+
+  const statusEl = document.getElementById('status');
+  statusEl.className = 'mt-4 p-4 bg-blue-50 border border-blue-200 rounded text-sm';
+  statusEl.textContent = 'Uploading + queuing...';
+  statusEl.classList.remove('hidden');
+
+  fetch('/api/v1/patients', {method: 'POST', body: fd, credentials: 'same-origin'})
+    .then(r => r.json().then(j => ({ok: r.ok, body: j, status: r.status})))
+    .then(r => {
+      if (!r.ok) {
+        statusEl.className = 'mt-4 p-4 bg-red-50 border border-red-200 rounded text-sm text-red-800';
+        statusEl.textContent = 'Error ' + r.status + ': ' + (r.body.detail || JSON.stringify(r.body));
+        return;
+      }
+      window.location.href = '/patient/' + r.body.id;
+    })
+    .catch(e => {
+      statusEl.className = 'mt-4 p-4 bg-red-50 border border-red-200 rounded text-sm text-red-800';
+      statusEl.textContent = 'Network error: ' + e.message;
+    });
+}
+</script>
+{% endblock %}

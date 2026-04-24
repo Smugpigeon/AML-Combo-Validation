@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}{{ sub.patient_label }}{% endblock %}
+{% block content %}
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <a href="/dashboard" class="text-sm text-slate-500 hover:text-brand">← Dashboard</a>
+    <h1 class="text-2xl font-semibold mt-1">{{ sub.patient_label }}</h1>
+    <p class="text-sm text-slate-500 mt-1">Submitted {{ sub.created_at.strftime("%Y-%m-%d %H:%M UTC") }}</p>
+  </div>
+  <div>
+    {% if sub.status == "done" %}
+      <span class="bg-green-100 text-green-800 px-3 py-1 rounded text-sm">done</span>
+    {% elif sub.status == "running" %}
+      <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded text-sm">running...</span>
+    {% elif sub.status == "failed" %}
+      <span class="bg-red-100 text-red-800 px-3 py-1 rounded text-sm">failed</span>
+    {% else %}
+      <span class="bg-slate-100 text-slate-700 px-3 py-1 rounded text-sm">queued</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if sub.status == "queued" or sub.status == "running" %}
+  <div class="bg-blue-50 border border-blue-200 rounded p-4 text-sm text-blue-900">
+    Prediction in progress. This page auto-refreshes every 5 seconds until the report is ready.
+  </div>
+  <meta http-equiv="refresh" content="5">
+{% elif sub.status == "failed" %}
+  <div class="bg-red-50 border border-red-300 rounded p-4 text-sm text-red-900">
+    <strong>Prediction failed.</strong>
+    <pre class="mt-2 text-xs whitespace-pre-wrap">{{ sub.error_message or "(no detail)" }}</pre>
+  </div>
+{% else %}
+  <!-- Done — show summary + download links -->
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <h2 class="font-semibold mb-3">Prediction summary</h2>
+      <dl class="text-sm space-y-1">
+        <div class="flex justify-between"><dt class="text-slate-500">ELN 2017 risk</dt><dd class="font-medium">{{ sub.predicted_eln2017 or "—" }}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Top regimen</dt><dd class="font-medium text-right">{{ sub.top_regimen_name or "—" }}</dd></div>
+        <div class="flex justify-between"><dt class="text-slate-500">Processing time</dt><dd>
+          {% if sub.started_at and sub.finished_at %}
+          {{ ((sub.finished_at - sub.started_at).total_seconds() | round(1)) }} s
+          {% else %} — {% endif %}
+        </dd></div>
+      </dl>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-lg p-6">
+      <h2 class="font-semibold mb-3">Report downloads</h2>
+      <ul class="space-y-2 text-sm">
+        <li><a href="/api/v1/reports/{{ sub.id }}/pdf" class="brand hover:underline">📄 clinical_report.pdf</a></li>
+        <li><a href="/api/v1/reports/{{ sub.id }}/html" class="brand hover:underline">🌐 clinical_report.html</a></li>
+        <li><a href="/api/v1/reports/{{ sub.id }}/markdown" class="brand hover:underline">📝 clinical_report.md</a></li>
+        <li><a href="/api/v1/reports/{{ sub.id }}/figure" class="brand hover:underline">🖼 dna_profile.png</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- LLM summary feature -->
+  <div class="mt-6 bg-white border border-slate-200 rounded-lg p-6">
+    <h2 class="font-semibold mb-2">LLM plain-English summary (BYOK)</h2>
+    <p class="text-sm text-slate-600 mb-3">
+      Use your stored LLM API key to generate a short plain-English summary of this report.
+      Your key is never logged; calls go directly to OpenAI / Anthropic billed against your own account.
+    </p>
+    {% if not llm_keys %}
+      <p class="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded p-3">
+        No LLM key stored. <a href="/llm-keys" class="underline">Add one</a> to enable this feature.
+      </p>
+    {% else %}
+      <div class="flex gap-2 items-center">
+        <select id="llm-key-select" class="border border-slate-300 rounded px-3 py-2 text-sm">
+          {% for k in llm_keys %}
+            <option value="{{ k.id }}">{{ k.provider }} · {{ k.label or "(unlabeled)" }} · {{ k.key_suffix }}</option>
+          {% endfor %}
+        </select>
+        <button onclick="generateSummary('{{ sub.id }}')"
+                class="bg-brand text-white px-4 py-2 rounded text-sm hover:opacity-90">
+          Generate summary
+        </button>
+      </div>
+      <div id="summary-output" class="mt-4 hidden whitespace-pre-wrap text-sm bg-slate-50 border border-slate-200 rounded p-4"></div>
+    {% endif %}
+  </div>
+{% endif %}
+
+<script>
+function generateSummary(subId) {
+  const keyId = document.getElementById('llm-key-select').value;
+  const out = document.getElementById('summary-output');
+  out.classList.remove('hidden');
+  out.textContent = 'Calling your LLM…';
+  fetch('/api/v1/reports/' + subId + '/llm-summary', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({llm_key_id: keyId}),
+  })
+  .then(r => r.json().then(j => ({ok: r.ok, body: j})))
+  .then(r => {
+    if (r.ok) {
+      out.textContent = r.body.text + '\n\n— ' + r.body.model + ' · ' +
+        (r.body.tokens_in || '?') + ' in / ' + (r.body.tokens_out || '?') + ' out tokens';
+    } else {
+      out.textContent = 'Error: ' + (r.body.detail || JSON.stringify(r.body));
+    }
+  })
+  .catch(e => { out.textContent = 'Network error: ' + e.message; });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}LLM keys (BYOK){% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">LLM keys (BYOK — Bring Your Own Key)</h1>
+<p class="text-slate-600 text-sm mb-6">
+  To use optional LLM features (plain-English report summaries), add your own OpenAI or Anthropic API key.
+  Keys are encrypted at rest with AES-128; we never log your prompts or responses.
+  All usage is billed to <strong>your</strong> provider account, not ours.
+</p>
+
+<div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+  <h2 class="font-semibold mb-3">Add new LLM key</h2>
+  <div class="space-y-3">
+    <div class="flex gap-2">
+      <select id="new-provider" class="border border-slate-300 rounded px-3 py-2 text-sm">
+        <option value="openai">OpenAI (sk-...)</option>
+        <option value="anthropic">Anthropic (sk-ant-...)</option>
+      </select>
+      <input id="new-label" placeholder="Label (e.g. 'my openai')"
+             class="flex-1 border border-slate-300 rounded px-3 py-2 text-sm">
+    </div>
+    <input id="new-plaintext" type="password" placeholder="Paste your API key"
+           class="w-full border border-slate-300 rounded px-3 py-2 text-sm font-mono">
+    <button onclick="addKey()" class="bg-brand text-white px-4 py-2 rounded text-sm hover:opacity-90">
+      Add key (encrypted at rest)
+    </button>
+    <div id="add-err" class="text-sm text-red-700 hidden"></div>
+  </div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-left">
+      <tr>
+        <th class="px-4 py-2">Provider</th>
+        <th class="px-4 py-2">Label</th>
+        <th class="px-4 py-2">Key preview</th>
+        <th class="px-4 py-2">Added</th>
+        <th class="px-4 py-2">Last used</th>
+        <th class="px-4 py-2">Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for k in keys %}
+      <tr class="border-t border-slate-100">
+        <td class="px-4 py-2 capitalize">{{ k.provider }}</td>
+        <td class="px-4 py-2">{{ k.label or "(unlabeled)" }}</td>
+        <td class="px-4 py-2 font-mono text-xs">{{ k.key_suffix }}</td>
+        <td class="px-4 py-2 text-slate-500 text-xs">{{ k.created_at.strftime("%Y-%m-%d") }}</td>
+        <td class="px-4 py-2 text-slate-500 text-xs">
+          {{ k.last_used_at.strftime("%Y-%m-%d %H:%M") if k.last_used_at else "never" }}
+        </td>
+        <td class="px-4 py-2">
+          {% if k.revoked_at %}
+            <span class="text-red-700 text-xs">revoked</span>
+          {% else %}
+            <span class="text-green-700 text-xs">active</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right">
+          {% if not k.revoked_at %}
+            <button onclick="revokeKey('{{ k.id }}')" class="text-red-600 text-xs hover:underline">Revoke</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function addKey() {
+  const provider = document.getElementById('new-provider').value;
+  const label = document.getElementById('new-label').value.trim();
+  const plaintext = document.getElementById('new-plaintext').value.trim();
+  const errEl = document.getElementById('add-err');
+  errEl.classList.add('hidden');
+
+  fetch('/api/v1/llm-keys', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({provider, plaintext_key: plaintext, label: label || null}),
+  })
+  .then(r => r.json().then(j => ({ok: r.ok, body: j})))
+  .then(r => {
+    if (r.ok) { window.location.reload(); }
+    else {
+      errEl.textContent = r.body.detail || JSON.stringify(r.body);
+      errEl.classList.remove('hidden');
+    }
+  });
+}
+function revokeKey(id) {
+  if (!confirm('Revoke this LLM key? (It will no longer be usable.)')) return;
+  fetch('/api/v1/llm-keys/' + id, {method: 'DELETE', credentials: 'same-origin'})
+    .then(() => window.location.reload());
+}
+</script>
+{% endblock %}

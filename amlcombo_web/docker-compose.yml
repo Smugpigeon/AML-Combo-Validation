@@ -1,0 +1,118 @@
+# amlcombo.org production stack — single VPS, 5 services on one Docker host.
+#
+#   caddy    — reverse proxy + automatic Let's Encrypt SSL (exposed on 80/443)
+#   web      — FastAPI (internal only; Caddy forwards here)
+#   worker   — Celery consumer running the kit predictions
+#   db       — PostgreSQL (internal only)
+#   redis    — Redis for Celery broker + result backend (internal only)
+#
+# Build context is the REPO ROOT (one level up from this file), because
+# the web image needs to also copy combo_val's source tree.
+#
+# Usage:
+#   cd <repo-root>
+#   cp amlcombo_web/.env.example amlcombo_web/.env    # fill in secrets
+#   docker compose -f amlcombo_web/docker-compose.yml up -d
+
+name: amlcombo
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    environment:
+      DOMAIN: ${DOMAIN:-amlcombo.org}
+    depends_on:
+      - web
+    networks: [amlcombo]
+
+  web:
+    build:
+      context: ..                               # repo root, so combo_val source is accessible
+      dockerfile: amlcombo_web/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: prod
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-amlcombo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-amlcombo}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      STORAGE_ROOT: /data/storage
+      KIT_ASSETS_ROOT: /data/canonical
+    volumes:
+      - storage_data:/data/storage
+      - ../data/canonical:/data/canonical:ro    # kit assets readonly
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks: [amlcombo]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: amlcombo_web/Dockerfile
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      APP_ENV: prod
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-amlcombo}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-amlcombo}
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      STORAGE_ROOT: /data/storage
+      KIT_ASSETS_ROOT: /data/canonical
+    command: celery -A app.worker worker --loglevel=info --concurrency=2
+    volumes:
+      - storage_data:/data/storage
+      - ../data/canonical:/data/canonical:ro
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    networks: [amlcombo]
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-amlcombo}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-amlcombo}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-amlcombo}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [amlcombo]
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks: [amlcombo]
+
+volumes:
+  caddy_data:
+  caddy_config:
+  postgres_data:
+  redis_data:
+  storage_data:
+
+networks:
+  amlcombo:
+    driver: bridge

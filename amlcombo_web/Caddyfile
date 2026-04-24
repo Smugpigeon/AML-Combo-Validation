@@ -1,0 +1,49 @@
+# Caddy reverse proxy + automatic HTTPS via Let's Encrypt.
+#
+# Cloudflare is in front with its own SSL (Full strict mode). Caddy
+# terminates TLS on the origin with a Let's Encrypt cert and forwards
+# to the FastAPI service on the internal Docker network.
+
+{$DOMAIN} {
+    encode gzip zstd
+
+    # Security headers
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://unpkg.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' data:; frame-ancestors 'none';"
+        # Remove server identification
+        -Server
+    }
+
+    # File upload cap at proxy level (200 MB = kit's MAX_UPLOAD_BYTES)
+    request_body {
+        max_size 220MB
+    }
+
+    reverse_proxy web:8000 {
+        # Pass real client IP to FastAPI
+        header_up X-Real-IP {remote_host}
+        header_up X-Forwarded-For {remote_host}
+        header_up X-Forwarded-Proto {scheme}
+        # Longer timeouts for big file uploads
+        transport http {
+            read_timeout 5m
+            write_timeout 5m
+        }
+    }
+
+    # Log access (optional — comment out if Cloudflare analytics is enough)
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+}
+
+# www → naked redirect
+www.{$DOMAIN} {
+    redir https://{$DOMAIN}{uri} permanent
+}

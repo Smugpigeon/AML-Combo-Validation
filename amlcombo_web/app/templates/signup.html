@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Sign up{% endblock %}
+{% block content %}
+<div class="max-w-md mx-auto bg-white p-8 rounded-lg border border-slate-200">
+  <h1 class="text-2xl font-semibold brand mb-6">Create researcher account</h1>
+  {% if error %}
+    <div class="mb-4 bg-red-50 border border-red-300 text-red-800 px-4 py-2 rounded text-sm">
+      {{ error }}
+    </div>
+  {% endif %}
+  <form method="post" action="/auth/signup-form" class="space-y-4">
+    <div>
+      <label class="block text-sm font-medium mb-1">Email</label>
+      <input type="email" name="email" required class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Password (≥ 8 chars)</label>
+      <input type="password" name="password" required minlength="8"
+             class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Full name (optional)</label>
+      <input type="text" name="full_name" class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+    <div>
+      <label class="block text-sm font-medium mb-1">Institution / lab (optional)</label>
+      <input type="text" name="institution" class="w-full border border-slate-300 rounded px-3 py-2">
+    </div>
+    <button class="w-full bg-brand text-white py-2 rounded font-medium hover:opacity-90">
+      Create account
+    </button>
+  </form>
+  <p class="mt-4 text-sm text-slate-600">
+    Already have an account? <a href="/login" class="brand hover:underline">Log in</a>
+  </p>
+  <p class="mt-6 text-xs text-slate-500">
+    By signing up you acknowledge this is a research-grade tool and agree
+    not to upload identifiable patient data.
+  </p>
+</div>
+{% endblock %}

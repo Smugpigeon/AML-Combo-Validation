@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}AML Combo-Prediction Kit{% endblock %} · amlcombo.org</title>
+<meta name="description" content="Precision-medicine combination-therapy predictions for Acute Myeloid Leukemia — research use.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+<style>
+  :root { --brand: #1a5490; }
+  .brand { color: var(--brand); }
+  .bg-brand { background: var(--brand); }
+  .border-brand { border-color: var(--brand); }
+</style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+
+<header class="bg-white border-b border-slate-200">
+  <nav class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+    <a href="/" class="font-semibold text-lg brand">🧬 AML Combo-Prediction Kit</a>
+    <div class="flex items-center gap-4 text-sm">
+      <a href="/docs/api" class="text-slate-600 hover:text-brand">API docs</a>
+      {% if user %}
+        <a href="/dashboard" class="text-slate-600 hover:text-brand">Dashboard</a>
+        <a href="/new" class="text-slate-600 hover:text-brand">New patient</a>
+        <a href="/api-keys" class="text-slate-600 hover:text-brand">API keys</a>
+        <a href="/llm-keys" class="text-slate-600 hover:text-brand">LLM keys</a>
+        <span class="text-slate-500 text-xs">{{ user.email }}</span>
+        <form action="/auth/logout-form" method="post" class="inline">
+          <button class="text-slate-600 hover:text-red-600">Log out</button>
+        </form>
+      {% else %}
+        <a href="/login" class="text-slate-600 hover:text-brand">Log in</a>
+        <a href="/signup" class="bg-brand text-white px-3 py-1.5 rounded hover:opacity-90">Sign up</a>
+      {% endif %}
+    </div>
+  </nav>
+</header>
+
+<main class="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
+  {% block content %}{% endblock %}
+</main>
+
+<footer class="bg-white border-t border-slate-200 mt-12">
+  <div class="max-w-6xl mx-auto px-4 py-6 text-xs text-slate-500">
+    <div class="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <strong>Research use only.</strong> Not for clinical diagnosis or therapy selection.
+        All predictions must be reviewed by a qualified clinician.
+      </div>
+      <div class="flex gap-4">
+        <a href="/docs/api" class="hover:text-brand">API</a>
+        <a href="https://github.com/ericktom/AML-combo-validation" class="hover:text-brand">GitHub</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

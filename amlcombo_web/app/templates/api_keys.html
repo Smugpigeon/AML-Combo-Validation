@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}API keys{% endblock %}
+{% block content %}
+<h1 class="text-2xl font-semibold mb-4">API keys</h1>
+<p class="text-slate-600 text-sm mb-6">
+  Use these to authenticate programmatic requests to <code>/api/v1/*</code>.
+  Send as <code>Authorization: Bearer ac_live_...</code> or <code>X-API-Key: ac_live_...</code>.
+</p>
+
+<div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+  <h2 class="font-semibold mb-3">Create new key</h2>
+  <div class="flex gap-2">
+    <input id="new-label" placeholder="Label (e.g. 'workstation', 'notebook')"
+           class="flex-1 border border-slate-300 rounded px-3 py-2 text-sm">
+    <button onclick="createKey()" class="bg-brand text-white px-4 py-2 rounded text-sm hover:opacity-90">
+      Generate
+    </button>
+  </div>
+  <div id="new-key-output" class="mt-3 hidden"></div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-left">
+      <tr>
+        <th class="px-4 py-2">Label</th>
+        <th class="px-4 py-2">Prefix</th>
+        <th class="px-4 py-2">Created</th>
+        <th class="px-4 py-2">Last used</th>
+        <th class="px-4 py-2">Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for k in keys %}
+      <tr class="border-t border-slate-100">
+        <td class="px-4 py-2">{{ k.label or "(unlabeled)" }}</td>
+        <td class="px-4 py-2 font-mono text-xs">{{ k.prefix }}…</td>
+        <td class="px-4 py-2 text-slate-500 text-xs">{{ k.created_at.strftime("%Y-%m-%d") }}</td>
+        <td class="px-4 py-2 text-slate-500 text-xs">
+          {{ k.last_used_at.strftime("%Y-%m-%d %H:%M") if k.last_used_at else "never" }}
+        </td>
+        <td class="px-4 py-2">
+          {% if k.revoked_at %}
+            <span class="text-red-700 text-xs">revoked</span>
+          {% else %}
+            <span class="text-green-700 text-xs">active</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right">
+          {% if not k.revoked_at %}
+            <button onclick="revokeKey('{{ k.id }}')" class="text-red-600 text-xs hover:underline">Revoke</button>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+function createKey() {
+  const label = document.getElementById('new-label').value.trim();
+  fetch('/api/v1/keys', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({label: label || null}),
+  })
+  .then(r => r.json())
+  .then(j => {
+    const out = document.getElementById('new-key-output');
+    out.className = 'mt-3 p-4 bg-amber-50 border border-amber-300 rounded';
+    out.innerHTML =
+      '<p class="text-sm font-semibold text-amber-900 mb-2">Copy this now — it will NEVER be shown again.</p>' +
+      '<code class="block bg-white p-2 rounded break-all text-xs">' + j.plaintext_key + '</code>' +
+      '<button onclick="navigator.clipboard.writeText(\'' + j.plaintext_key + '\')" class="mt-2 text-xs brand hover:underline">Copy to clipboard</button>';
+    out.classList.remove('hidden');
+    setTimeout(() => window.location.reload(), 8000);
+  });
+}
+function revokeKey(id) {
+  if (!confirm('Revoke this key?')) return;
+  fetch('/api/v1/keys/' + id, {method: 'DELETE', credentials: 'same-origin'})
+    .then(() => window.location.reload());
+}
+</script>
+{% endblock %}

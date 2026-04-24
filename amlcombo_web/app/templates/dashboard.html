@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-semibold">Your patients</h1>
+  <a href="/new" class="bg-brand text-white px-4 py-2 rounded font-medium hover:opacity-90">
+    + New patient
+  </a>
+</div>
+
+{% if not submissions %}
+  <div class="bg-white border border-slate-200 rounded-lg p-8 text-center">
+    <p class="text-slate-500">No patients yet. Click <strong>+ New patient</strong> to submit one.</p>
+  </div>
+{% else %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-left">
+        <tr>
+          <th class="px-4 py-2">Patient</th>
+          <th class="px-4 py-2">Status</th>
+          <th class="px-4 py-2">ELN 2017</th>
+          <th class="px-4 py-2">Top regimen</th>
+          <th class="px-4 py-2">Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in submissions %}
+        <tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-4 py-2 font-medium">{{ s.patient_label }}</td>
+          <td class="px-4 py-2">
+            {% if s.status == "done" %}
+              <span class="bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs">done</span>
+            {% elif s.status == "running" %}
+              <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-xs">running</span>
+            {% elif s.status == "failed" %}
+              <span class="bg-red-100 text-red-800 px-2 py-0.5 rounded text-xs">failed</span>
+            {% else %}
+              <span class="bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">queued</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2">{{ s.predicted_eln2017 or "—" }}</td>
+          <td class="px-4 py-2 text-slate-600">{{ (s.top_regimen_name or "—")|truncate(40) }}</td>
+          <td class="px-4 py-2 text-slate-500 text-xs">
+            {{ s.created_at.strftime("%Y-%m-%d %H:%M") }}
+          </td>
+          <td class="px-4 py-2 text-right">
+            <a href="/patient/{{ s.id }}" class="brand hover:underline">View →</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}
