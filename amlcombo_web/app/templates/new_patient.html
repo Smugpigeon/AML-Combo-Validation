@@ -217,7 +217,12 @@
       </label>
       <input type="file" id="rna_counts" accept=".csv,.tsv,.txt" required
              class="block w-full text-sm text-slate-600 border border-slate-300 rounded-lg px-3.5 py-2 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-medium file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
-      <p class="text-xs text-slate-500 mt-1">{{ t("new_patient.rna_counts_hint") }}</p>
+      <p class="text-xs text-slate-500 mt-1">
+        {{ t("new_patient.rna_counts_hint") }}
+        <a href="/api/v1/patients/demo-rna-counts.csv" class="text-brand-700 hover:underline ml-2 font-medium">
+          {{ t("new_patient.rna_counts_demo_link") }}
+        </a>
+      </p>
     </div>
 
     <div>

@@ -160,6 +160,37 @@ def _check_parse_rate_limit(db: Session, user_id: uuid.UUID) -> None:
         )
 
 
+@router.get("/demo-rna-counts.csv", include_in_schema=False)
+def download_demo_rna_counts():
+    """Serve a tiny demo RNA-Seq counts CSV so users can test the full
+    pipeline without hunting for a real expression file. Generated
+    deterministically from the kit's kept_genes (same 5000 panel the MLP
+    uses), log-normal distributed counts — clinically meaningless but
+    formally valid."""
+    from fastapi.responses import StreamingResponse
+    import joblib
+    import numpy as np
+    import io
+
+    bundle = joblib.load(Path(get_settings().KIT_ASSETS_ROOT)
+                          / "beataml_rna_preprocessor.joblib")
+    kept = bundle["kept_genes"]
+    rng = np.random.default_rng(17)
+    counts = rng.lognormal(mean=4.0, sigma=1.2, size=len(kept))
+
+    buf = io.StringIO()
+    buf.write("symbol,count\n")
+    for g, c in zip(kept, counts):
+        buf.write(f"{g},{c:.1f}\n")
+    buf.seek(0)
+    return StreamingResponse(
+        iter([buf.getvalue()]),
+        media_type="text/csv",
+        headers={"Content-Disposition":
+                 'attachment; filename="demo_rna_counts.csv"'},
+    )
+
+
 class ParseFileResponse(ParseResponse):
     """Extends ParseResponse with file-type detection metadata."""
     is_rna_seq: bool = False

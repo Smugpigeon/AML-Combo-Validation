@@ -116,6 +116,7 @@
     "smart_paste_focus_patient_placeholder": "e.g. MRN-12345, A-001, row 3, or 张三",
     "smart_paste_focus_patient_hint": "Leave blank if the file contains only one patient. Required if the file has multiple patients.",
     "smart_paste_auto_rna_detected": "✅ RNA-Seq counts auto-detected ({n} genes, mean={mean}). Will be used as the RNA-Seq input below — no AI call consumed.",
+    "rna_counts_demo_link": "No RNA-Seq file handy? Download a demo CSV →",
     "patient_label": "Patient label",
     "patient_label_placeholder": "e.g. AML-2024-017",
     "age": "Age",

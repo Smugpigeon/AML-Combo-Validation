@@ -116,6 +116,7 @@
     "smart_paste_focus_patient_placeholder": "例:MRN-12345、A-001、第 3 行、张三",
     "smart_paste_focus_patient_hint": "单患者文件留空即可;多患者文件必填,用来告诉 AI 提取哪一个。",
     "smart_paste_auto_rna_detected": "✅ 自动识别为 RNA-Seq counts({n} 个基因,均值={mean}),已直接填到下方 RNA-Seq 输入 —— 不会消耗你的 LLM tokens。",
+    "rna_counts_demo_link": "没有 RNA-Seq 文件? 下载示例 CSV →",
     "patient_label": "患者标签",
     "patient_label_placeholder": "例:AML-2024-017",
     "age": "年龄",
