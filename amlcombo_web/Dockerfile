@@ -44,6 +44,15 @@ RUN pip install fastapi uvicorn[standard] jinja2 python-multipart \
 COPY amlcombo_web/app /app/amlcombo_web/app
 COPY amlcombo_web/scripts /app/amlcombo_web/scripts
 
+# The combo_val kit opens a lot of files via RELATIVE paths like
+# Path("data/canonical/beataml_rna_preprocessor.joblib"). Since the
+# container's WORKDIR is /app/amlcombo_web, those resolve to
+# /app/amlcombo_web/data/canonical/... — which doesn't exist.
+# docker-compose mounts real assets at /data/canonical; we symlink
+# /app/amlcombo_web/data → /data so the kit's relative paths work.
+RUN mkdir -p /data/canonical /app/amlcombo_web && \
+    ln -sf /data /app/amlcombo_web/data
+
 WORKDIR /app/amlcombo_web
 
 EXPOSE 8000
