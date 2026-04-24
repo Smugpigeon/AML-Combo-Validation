@@ -17,9 +17,11 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.crypto import decrypt_llm_key
 from app.db import get_db, safe_get
 from app.deps import current_user
-from app.models import Submission, UsageEvent, User
+from app.llm import parse_clinical_text
+from app.models import LLMKey, Submission, UsageEvent, User
 from app.tasks import run_patient_kit
 
 
@@ -109,6 +111,116 @@ def _persist_upload(upload: UploadFile, dest_dir: Path, label: str) -> str:
                 )
             f.write(chunk)
     return str(dest)
+
+
+# ---------------------------------------------------------------------------
+# Smart paste — LLM-powered structured extraction from free text
+# ---------------------------------------------------------------------------
+
+
+class ParseRequest(BaseModel):
+    """Client sends raw clinical text + picks which stored LLM key to use."""
+    raw_text: str = Field(
+        min_length=10, max_length=20000,
+        description="Free-form clinical text to parse.",
+    )
+    llm_key_id: str = Field(description="UUID of a stored LLMKey row.")
+
+
+class ParseResponse(BaseModel):
+    parsed: dict
+    confidence: dict
+    warnings: list[str]
+    model: str
+    provider: str
+    tokens_in: Optional[int] = None
+    tokens_out: Optional[int] = None
+
+
+def _check_parse_rate_limit(db: Session, user_id: uuid.UUID) -> None:
+    """Don't let a runaway loop rack up LLM costs on the user's card.
+
+    Limit: DAILY_PATIENT_SUBMIT_LIMIT × 3 parses per 24h (parsing is cheap
+    and often retried, so give some headroom).
+    """
+    s = get_settings()
+    cutoff = datetime.now(tz=timezone.utc) - timedelta(hours=24)
+    limit = s.DAILY_PATIENT_SUBMIT_LIMIT * 3
+    n_today = db.execute(
+        select(func.count(UsageEvent.id))
+        .where(UsageEvent.user_id == user_id)
+        .where(UsageEvent.event_type == "llm_parse_used")
+        .where(UsageEvent.ts >= cutoff)
+    ).scalar_one()
+    if n_today >= limit:
+        raise HTTPException(
+            status_code=429,
+            detail=(f"Parse rate limit reached ({limit}/day). "
+                    f"Your LLM charges still stand; contact us to raise this cap."),
+        )
+
+
+@router.post("/parse", response_model=ParseResponse)
+def parse_patient_text(
+    req: ParseRequest,
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Parse free-text clinical paste into structured patient fields.
+
+    Uses the user's stored LLM key (BYOK). We never log the `raw_text`;
+    only metadata (provider, model, token counts) lands in UsageEvent.
+    """
+    _check_parse_rate_limit(db, user.id)
+
+    llm_key = safe_get(db, LLMKey, req.llm_key_id)
+    if llm_key is None or llm_key.user_id != user.id:
+        raise HTTPException(status_code=404, detail="LLM key not found")
+    if llm_key.revoked_at is not None:
+        raise HTTPException(status_code=400,
+                             detail="That LLM key has been revoked")
+
+    try:
+        plaintext_key = decrypt_llm_key(llm_key.encrypted_key)
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=("Could not decrypt the stored LLM key. "
+                     "Please revoke it and re-add."),
+        )
+
+    try:
+        result = parse_clinical_text(
+            raw_text=req.raw_text,
+            api_key=plaintext_key,
+            provider=llm_key.provider,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Parse failed: {e}")
+    except Exception as e:  # httpx / provider errors
+        raise HTTPException(status_code=502,
+                             detail=f"LLM provider error: {e!s}")
+
+    # Audit (metadata only — no raw_text, no LLM output)
+    llm_key.last_used_at = datetime.now(tz=timezone.utc)
+    db.add(UsageEvent(
+        user_id=user.id, event_type="llm_parse_used",
+        meta={
+            "provider": llm_key.provider, "model": result.model,
+            "tokens_in": result.tokens_in, "tokens_out": result.tokens_out,
+            "text_length": len(req.raw_text),
+            "warnings_count": len(result.warnings),
+        },
+    ))
+    db.commit()
+
+    return ParseResponse(
+        parsed=result.parsed,
+        confidence=result.confidence,
+        warnings=result.warnings,
+        model=result.model, provider=result.provider,
+        tokens_in=result.tokens_in, tokens_out=result.tokens_out,
+    )
 
 
 # ---------------------------------------------------------------------------

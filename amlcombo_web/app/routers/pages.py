@@ -76,9 +76,19 @@ def dashboard(request: Request, user: User = Depends(current_user),
 
 
 @router.get("/new", response_class=HTMLResponse)
-def new_patient_page(request: Request, user: User = Depends(current_user)):
+def new_patient_page(request: Request, user: User = Depends(current_user),
+                      db: Session = Depends(get_db)):
+    # Also pass the user's active LLM keys so the "smart paste" block can
+    # show a key selector. If they have none, the block shows a link to
+    # /llm-keys to add one.
+    llm_keys = db.execute(
+        select(LLMKey).where(LLMKey.user_id == user.id,
+                              LLMKey.revoked_at.is_(None))
+        .order_by(LLMKey.created_at.desc())
+    ).scalars().all()
     return templates.TemplateResponse(
-        request, "new_patient.html", _ctx(request, user=user),
+        request, "new_patient.html",
+        _ctx(request, user=user, llm_keys=llm_keys),
     )
 
 

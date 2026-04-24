@@ -2,11 +2,91 @@
 {% block title %}{{ t("new_patient.title") }}{% endblock %}
 
 {% block content %}
+
+<style>
+  /* AI-filled field highlight */
+  .ai-filled {
+    background-color: #eef5ff !important;       /* brand-50 */
+    border-color: #8cb9f6 !important;           /* brand-300ish */
+    box-shadow: 0 0 0 1px #8cb9f6;
+    transition: background-color 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  .ai-low-confidence {
+    background-color: #fff7ed !important;       /* amber-50 */
+    border-color: #fbbf24 !important;           /* amber-400 */
+    box-shadow: 0 0 0 1px #fbbf24;
+  }
+  .ai-filled-badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #2563eb;
+    background: #eef5ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 9999px;
+    vertical-align: middle;
+  }
+  .ai-low-conf-badge {
+    color: #d97706;
+    background: #fef3c7;
+    border-color: #fcd34d;
+  }
+</style>
+
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
   <div class="mb-8">
     <a href="/dashboard" class="text-sm text-slate-500 hover:text-brand-700">← {{ t("nav.dashboard") }}</a>
     <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">{{ t("new_patient.title") }}</h1>
     <p class="text-sm text-slate-600 mt-2">{{ t("new_patient.subtitle") }}</p>
+  </div>
+
+  <!-- ═══════ Smart paste (AI) ═══════ -->
+  <div class="mb-6 rounded-2xl overflow-hidden shadow-sm border border-brand-200/60 bg-gradient-to-br from-brand-50/50 to-indigo-50/30">
+    <div class="px-6 py-5 border-b border-brand-100/60 bg-white/60">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="text-lg">✨</span>
+        <h2 class="font-semibold text-brand-900">{{ t("new_patient.smart_paste_title") }}</h2>
+      </div>
+      <p class="text-sm text-slate-600">{{ t("new_patient.smart_paste_body") }}</p>
+    </div>
+
+    <div class="p-6 space-y-4">
+      {% if not llm_keys %}
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-900 flex items-center justify-between gap-3 flex-wrap">
+          <span>⚠ {{ t("new_patient.smart_paste_no_keys") }}</span>
+          <a href="/llm-keys" class="text-brand-700 hover:underline font-medium whitespace-nowrap">{{ t("new_patient.smart_paste_add_key") }}</a>
+        </div>
+      {% else %}
+        <textarea id="smart-paste-text" rows="8"
+          class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-mono bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
+          placeholder="{{ t('new_patient.smart_paste_placeholder') }}"></textarea>
+
+        <p class="text-xs text-amber-700">{{ t("new_patient.smart_paste_no_phi") }}</p>
+
+        <div class="flex flex-wrap items-center gap-3">
+          <label class="text-sm text-slate-600">{{ t("new_patient.smart_paste_key_label") }}</label>
+          <select id="smart-paste-key"
+                  class="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none">
+            {% for k in llm_keys %}
+              <option value="{{ k.id }}">{{ k.provider }} · {{ k.label or "(unlabeled)" }} · {{ k.key_suffix }}</option>
+            {% endfor %}
+          </select>
+          <button type="button" onclick="smartParse()"
+                  class="ml-auto px-5 py-2 bg-gradient-to-r from-brand-600 to-brand-700 text-white rounded-lg text-sm font-semibold shadow-sm hover:shadow-md hover:brightness-105 transition">
+            {{ t("new_patient.smart_paste_button") }}
+          </button>
+        </div>
+
+        <div id="smart-paste-status" class="hidden text-sm rounded-lg px-3.5 py-2.5"></div>
+        <div id="smart-paste-warnings" class="hidden space-y-1"></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="mt-6 mb-6 text-center text-xs text-slate-400 uppercase tracking-wider">
+    {{ t("new_patient.smart_paste_section_divider") }}
   </div>
 
   <form id="submit-form" class="space-y-6 bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
@@ -117,6 +197,153 @@
 </div>
 
 <script>
+// ────────── Smart paste: call /api/v1/patients/parse then fill form ──────────
+
+// Maps JSON keys → DOM ids and fill strategy. Each mapping:
+//   - id:    the DOM element to fill
+//   - type:  "text" | "number" | "checkbox" | "select" | "json"
+//   - confKey: dot-notation key the LLM uses in its confidence map
+const PARSE_FIELD_MAP = [
+  { jsonKey: "patient_label",       id: "patient_label",       type: "text",     confKey: "patient_label" },
+  { jsonKey: "age",                 id: "age",                 type: "number",   confKey: "age" },
+  { jsonKey: "sex",                 id: "sex",                 type: "select",   confKey: "sex" },
+  { jsonKey: "is_initial_diagnosis", id: "is_initial_diagnosis", type: "checkbox", confKey: "is_initial_diagnosis" },
+  { jsonKey: "prior_mds",           id: "prior_mds",           type: "checkbox", confKey: "prior_mds" },
+  { jsonKey: "karyotype_text",      id: "karyotype_text",      type: "text",     confKey: "karyotype_text" },
+  { jsonKey: "wbc",                 id: "wbc",                 type: "number",   confKey: "wbc" },
+  { jsonKey: "platelet",            id: "platelet",            type: "number",   confKey: "platelet" },
+  { jsonKey: "hemoglobin",          id: "hemoglobin",          type: "number",   confKey: "hemoglobin" },
+  { jsonKey: "ldh",                 id: "ldh",                 type: "number",   confKey: "ldh" },
+  { jsonKey: "alt",                 id: "alt",                 type: "number",   confKey: "alt" },
+  { jsonKey: "ast",                 id: "ast",                 type: "number",   confKey: "ast" },
+  { jsonKey: "blast_pct_bm",        id: "blast_pct_bm",        type: "number",   confKey: "blast_pct_bm" },
+  { jsonKey: "blast_pct_pb",        id: "blast_pct_pb",        type: "number",   confKey: "blast_pct_pb" },
+];
+
+const LOW_CONF_THRESHOLD = 0.7;
+
+function _markAI(el, isLowConf) {
+  if (!el) return;
+  el.classList.add("ai-filled");
+  if (isLowConf) el.classList.add("ai-low-confidence");
+}
+
+function smartParse() {
+  const text = document.getElementById("smart-paste-text").value.trim();
+  const keyId = document.getElementById("smart-paste-key").value;
+  const statusEl = document.getElementById("smart-paste-status");
+  const warnEl = document.getElementById("smart-paste-warnings");
+
+  if (!text || text.length < 10) {
+    statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
+    statusEl.textContent = "Paste at least 10 characters.";
+    statusEl.classList.remove("hidden");
+    return;
+  }
+
+  statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-blue-50 text-blue-800 border border-blue-200";
+  statusEl.textContent = "{{ t('new_patient.smart_paste_loading') }}";
+  statusEl.classList.remove("hidden");
+  warnEl.classList.add("hidden");
+  warnEl.innerHTML = "";
+
+  fetch("/api/v1/patients/parse", {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({raw_text: text, llm_key_id: keyId}),
+  })
+  .then(r => r.json().then(j => ({ok: r.ok, status: r.status, body: j})))
+  .then(r => {
+    if (!r.ok) {
+      statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
+      statusEl.textContent = "Error " + r.status + ": " + (r.body.detail || JSON.stringify(r.body));
+      return;
+    }
+
+    const parsed = r.body.parsed || {};
+    const confidence = r.body.confidence || {};
+    const warnings = r.body.warnings || [];
+    let filledCount = 0;
+
+    // Fill scalar fields
+    for (const m of PARSE_FIELD_MAP) {
+      const val = parsed[m.jsonKey];
+      if (val === null || val === undefined) continue;
+      const el = document.getElementById(m.id);
+      if (!el) continue;
+
+      const conf = confidence[m.confKey];
+      const isLow = (typeof conf === "number" && conf < LOW_CONF_THRESHOLD);
+
+      if (m.type === "checkbox") {
+        el.checked = !!val;
+      } else if (m.type === "select") {
+        const optionValues = Array.from(el.options).map(o => o.value);
+        if (optionValues.includes(String(val))) {
+          el.value = String(val);
+        }
+      } else if (m.type === "number") {
+        el.value = (typeof val === "number") ? val : parseFloat(val);
+        if (isNaN(el.value)) { el.value = ""; continue; }
+      } else {
+        el.value = val;
+      }
+      _markAI(el, isLow);
+      filledCount++;
+    }
+
+    // Fusions: array → comma-joined string
+    if (Array.isArray(parsed.fusions) && parsed.fusions.length > 0) {
+      const fusionsEl = document.getElementById("fusions");
+      fusionsEl.value = parsed.fusions.join(", ");
+      const conf = confidence["fusions"] ?? 1.0;
+      _markAI(fusionsEl, conf < LOW_CONF_THRESHOLD);
+      filledCount++;
+    }
+
+    // Mutations: array of dicts → JSON string
+    if (Array.isArray(parsed.mutations) && parsed.mutations.length > 0) {
+      const mutEl = document.getElementById("mutations");
+      mutEl.value = JSON.stringify(parsed.mutations, null, 2);
+      // Consider the whole mutations block low-conf if any gene is <threshold
+      let anyLow = false;
+      parsed.mutations.forEach((_, i) => {
+        const c = confidence["mutations." + i + ".gene"];
+        if (typeof c === "number" && c < LOW_CONF_THRESHOLD) anyLow = true;
+      });
+      _markAI(mutEl, anyLow);
+      filledCount++;
+    }
+
+    // Success banner
+    const successTpl = "{{ t('new_patient.smart_paste_success') }}";
+    statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200";
+    statusEl.innerHTML = successTpl.replace("{n}", filledCount) +
+      "<br><span class='text-xs text-slate-500'>" +
+      "{{ t('new_patient.smart_paste_tokens') }}".replace("{tokens_in}", r.body.tokens_in || "?")
+                                                 .replace("{tokens_out}", r.body.tokens_out || "?")
+                                                 .replace("{model}", r.body.model || "?") +
+      "<br>{{ t('new_patient.smart_paste_low_conf_note') }}</span>";
+
+    // Warnings
+    if (warnings.length > 0) {
+      warnEl.classList.remove("hidden");
+      warnEl.innerHTML = warnings.map(w =>
+        '<div class="text-xs text-amber-900 bg-amber-50 border border-amber-200 rounded px-3 py-1.5">⚠ ' +
+        w.replace(/</g, "&lt;").replace(/>/g, "&gt;") +
+        '</div>').join("");
+    }
+
+    // Scroll to the top of the form so user can review
+    document.getElementById("submit-form").scrollIntoView({behavior: "smooth", block: "start"});
+  })
+  .catch(e => {
+    statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
+    statusEl.textContent = "Network error: " + e.message;
+  });
+}
+
 function submitPatient() {
   const payload = {
     patient_label: document.getElementById('patient_label').value.trim(),
