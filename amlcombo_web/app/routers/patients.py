@@ -160,6 +160,212 @@ def _check_parse_rate_limit(db: Session, user_id: uuid.UUID) -> None:
         )
 
 
+class ParseFileResponse(ParseResponse):
+    """Extends ParseResponse with file-type detection metadata."""
+    is_rna_seq: bool = False
+    rna_seq_gene_count: int = 0
+    rna_seq_mean_value: float = 0.0
+    file_name: str = ""
+    file_bytes: int = 0
+
+
+def _read_upload_as_text(file: UploadFile) -> str:
+    """Read an uploaded CSV/TSV/TXT file as UTF-8 text.
+
+    Tries several common encodings (UTF-8, UTF-8-BOM, GBK/GB18030 for
+    Chinese hospital exports, Latin-1 as last resort). Caps at 2 MB; we
+    read up to that, slice larger, and let the LLM-truncation kick in.
+    """
+    data = file.file.read(2 * 1024 * 1024 + 1)
+    size = len(data)
+    if size > 2 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="File exceeds 2 MB smart-parse limit. "
+                   "For RNA-Seq counts (which can be larger), upload via the "
+                   "RNA-Seq file input below instead.",
+        )
+    for enc in ("utf-8-sig", "utf-8", "gb18030", "gbk", "latin-1"):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    raise HTTPException(status_code=400,
+                         detail="Could not decode file as text.")
+
+
+def _looks_like_rna_seq(text: str) -> tuple[bool, int, float]:
+    """Detect if a pasted/uploaded CSV/TSV is an RNA-Seq counts file.
+
+    Returns (is_rna_seq, gene_count, mean_value).
+
+    Heuristic:
+      - First non-empty line looks like a 2-col header matching
+        `(symbol|gene|gene_id|gene_symbol) , (count|value|expression|tpm|...)`
+      - Subsequent lines have exactly 2 cols with a non-empty string + numeric
+      - At least 100 rows (a 5000-gene panel is the smallest typical format)
+    """
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    if len(lines) < 100:
+        return False, 0, 0.0
+
+    # Detect delimiter from the first line (comma or tab)
+    first = lines[0]
+    delim = "," if "," in first else ("\t" if "\t" in first else None)
+    if delim is None:
+        return False, 0, 0.0
+
+    header_cells = [c.strip().lower() for c in first.split(delim)]
+    if len(header_cells) != 2:
+        return False, 0, 0.0
+    gene_col_names = {"symbol", "gene", "gene_id", "gene_symbol",
+                       "genesymbol", "id", "hugo_symbol"}
+    value_col_names = {"count", "counts", "value", "expression",
+                        "tpm", "fpkm", "rpkm", "cpm", "reads", "raw_count",
+                        "rawcount"}
+    has_gene_col = header_cells[0] in gene_col_names
+    has_value_col = header_cells[1] in value_col_names
+    if not (has_gene_col and has_value_col):
+        return False, 0, 0.0
+
+    # Sample up to 1000 rows to confirm 2-col numeric format
+    sample = lines[1:1001]
+    n_valid = 0
+    numeric_values: list[float] = []
+    for row in sample:
+        parts = row.split(delim)
+        if len(parts) != 2:
+            continue
+        symbol, val = parts[0].strip(), parts[1].strip()
+        if not symbol:
+            continue
+        try:
+            numeric_values.append(float(val))
+            n_valid += 1
+        except ValueError:
+            continue
+    if n_valid < len(sample) * 0.8:
+        return False, 0, 0.0
+
+    mean_val = (sum(numeric_values) / len(numeric_values)
+                if numeric_values else 0.0)
+    # Total gene count including rows beyond the 1000-row sample
+    total_genes = len(lines) - 1   # minus header
+    return True, total_genes, mean_val
+
+
+@router.post("/parse-file", response_model=ParseFileResponse)
+async def parse_patient_file(
+    file: UploadFile = File(...),
+    llm_key_id: str = Form(...),
+    patient_identifier: Optional[str] = Form(
+        None,
+        description="Identify which patient to extract if the file has many.",
+    ),
+    user: User = Depends(current_user),
+    db: Session = Depends(get_db),
+):
+    """Smart upload: accepts a CSV / TSV / TXT file.
+
+    Three routing cases:
+      1. Looks like RNA-Seq counts (`symbol,count` with 100+ rows) →
+         skip LLM, return is_rna_seq=true. The client then auto-populates
+         the RNA-Seq file input below.
+      2. Otherwise → pass the text to the BYOK LLM to extract clinical
+         fields. `patient_identifier` (if provided) tells the LLM which
+         row to focus on in a multi-patient table.
+    """
+    _check_parse_rate_limit(db, user.id)
+
+    llm_key = safe_get(db, LLMKey, llm_key_id)
+    if llm_key is None or llm_key.user_id != user.id:
+        raise HTTPException(status_code=404, detail="LLM key not found")
+    if llm_key.revoked_at is not None:
+        raise HTTPException(status_code=400,
+                             detail="That LLM key has been revoked")
+
+    text = _read_upload_as_text(file)
+    file_bytes = len(text.encode("utf-8"))
+
+    # Case 1: RNA-Seq detection
+    is_rna, n_genes, mean_v = _looks_like_rna_seq(text)
+    if is_rna:
+        db.add(UsageEvent(
+            user_id=user.id, event_type="llm_parse_file_rna_detected",
+            meta={"file_name": file.filename or "", "n_genes": n_genes,
+                  "file_bytes": file_bytes},
+        ))
+        db.commit()
+        return ParseFileResponse(
+            parsed={}, confidence={}, warnings=[
+                f"File detected as RNA-Seq counts ({n_genes} genes). "
+                f"Use it directly as the RNA-Seq file below — no AI call "
+                f"needed (saves your LLM tokens)."
+            ],
+            model="(no LLM used)", provider="(file-type-detection)",
+            tokens_in=None, tokens_out=None,
+            is_rna_seq=True, rna_seq_gene_count=n_genes,
+            rna_seq_mean_value=round(float(mean_v), 3),
+            file_name=file.filename or "",
+            file_bytes=file_bytes,
+        )
+
+    # Case 2: looks like clinical — hand to LLM
+    try:
+        plaintext_key = decrypt_llm_key(llm_key.encrypted_key)
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=("Could not decrypt the stored LLM key. "
+                     "Please revoke it and re-add."),
+        )
+
+    try:
+        result = parse_clinical_text(
+            raw_text=text, api_key=plaintext_key,
+            provider=llm_key.provider,
+            focus_patient=patient_identifier,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Parse failed: {e}")
+    except Exception as e:
+        msg = str(e)
+        hint = ""
+        if "401" in msg or "Unauthorized" in msg or "invalid_api_key" in msg:
+            hint = (f" Your {llm_key.provider} API key appears to be "
+                     f"invalid or expired — re-add it in /llm-keys.")
+        elif "429" in msg:
+            hint = " Provider rate limit hit — wait a minute."
+        raise HTTPException(status_code=400,
+                             detail=f"LLM provider error: {msg}.{hint}")
+
+    llm_key.last_used_at = datetime.now(tz=timezone.utc)
+    db.add(UsageEvent(
+        user_id=user.id, event_type="llm_parse_file_used",
+        meta={
+            "provider": llm_key.provider, "model": result.model,
+            "tokens_in": result.tokens_in, "tokens_out": result.tokens_out,
+            "file_bytes": file_bytes,
+            "file_name": file.filename or "",
+            "focus_patient_given": bool(patient_identifier),
+            "warnings_count": len(result.warnings),
+        },
+    ))
+    db.commit()
+
+    return ParseFileResponse(
+        parsed=result.parsed,
+        confidence=result.confidence,
+        warnings=result.warnings,
+        model=result.model, provider=result.provider,
+        tokens_in=result.tokens_in, tokens_out=result.tokens_out,
+        is_rna_seq=False, rna_seq_gene_count=0,
+        rna_seq_mean_value=0.0,
+        file_name=file.filename or "",
+        file_bytes=file_bytes,
+    )
+
+
 @router.post("/parse", response_model=ParseResponse)
 def parse_patient_text(
     req: ParseRequest,

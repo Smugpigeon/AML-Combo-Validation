@@ -222,6 +222,144 @@ def test_parse_endpoint_rejects_unknown_key(auth_client_with_llm_key):
     assert r.status_code == 404
 
 
+# ---------------------------------------------------------------------------
+# File upload path: /api/v1/patients/parse-file
+# ---------------------------------------------------------------------------
+
+
+def _make_rna_seq_csv(n_genes: int = 500) -> bytes:
+    """Generate a CSV that should trigger _looks_like_rna_seq."""
+    lines = ["symbol,count"]
+    for i in range(n_genes):
+        lines.append(f"GENE{i:05d},{42.5 + (i % 100)}")
+    return ("\n".join(lines)).encode("utf-8")
+
+
+def _make_clinical_csv() -> bytes:
+    """A CSV that looks like a multi-patient clinical table."""
+    text = (
+        "mrn,age,sex,karyotype,flt3_itd,npm1,wbc,platelet\n"
+        "A-001,45,F,46;XX[20],yes AR=0.62 VAF 45%,missense VAF 42%,95,32\n"
+        "A-002,72,M,complex del(5q) del(17p),no,no,12,25\n"
+        "A-003,58,F,46;XX[20],no,missense VAF 38%,45,88\n"
+    )
+    return text.encode("utf-8")
+
+
+def test_looks_like_rna_seq_positive():
+    from app.routers.patients import _looks_like_rna_seq
+    text = _make_rna_seq_csv(500).decode("utf-8")
+    is_rna, n, mean = _looks_like_rna_seq(text)
+    assert is_rna is True
+    assert n == 500
+    assert 40 < mean < 150
+
+
+def test_looks_like_rna_seq_rejects_clinical_table():
+    from app.routers.patients import _looks_like_rna_seq
+    text = _make_clinical_csv().decode("utf-8")
+    is_rna, _, _ = _looks_like_rna_seq(text)
+    assert is_rna is False
+
+
+def test_looks_like_rna_seq_rejects_too_few_rows():
+    from app.routers.patients import _looks_like_rna_seq
+    # Only 50 rows — below 100-row threshold
+    lines = ["symbol,count"] + [f"G{i},5.0" for i in range(50)]
+    is_rna, _, _ = _looks_like_rna_seq("\n".join(lines))
+    assert is_rna is False
+
+
+def test_parse_file_endpoint_auto_routes_rna_seq(auth_client_with_llm_key):
+    """Uploading an RNA-Seq CSV should skip the LLM and return is_rna_seq=True."""
+    client, key_id = auth_client_with_llm_key
+    csv_bytes = _make_rna_seq_csv(500)
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id},
+        files={"file": ("rna_counts.csv", csv_bytes, "text/csv")},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["is_rna_seq"] is True
+    assert body["rna_seq_gene_count"] == 500
+    assert body["model"] == "(no LLM used)"   # confirm no LLM call
+    assert body["parsed"] == {}
+
+
+@patch("app.llm._call_openai")
+def test_parse_file_endpoint_clinical_csv_uses_llm(
+    mock_openai, auth_client_with_llm_key,
+):
+    """Uploading a clinical CSV should go to the LLM and extract one patient."""
+    mock_openai.return_value = _fake_response()
+    client, key_id = auth_client_with_llm_key
+    csv_bytes = _make_clinical_csv()
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id, "patient_identifier": "A-001"},
+        files={"file": ("patients.csv", csv_bytes, "text/csv")},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["is_rna_seq"] is False
+    assert body["parsed"]["age"] == 45
+    # Focus patient hint was in the LLM prompt
+    _, _, _, user_prompt, _ = mock_openai.call_args.args
+    assert "A-001" in user_prompt
+    assert "FOCUS PATIENT" in user_prompt
+
+
+def test_parse_file_endpoint_rejects_huge_file(auth_client_with_llm_key):
+    """Files over 2 MB should be rejected with a helpful 413."""
+    client, key_id = auth_client_with_llm_key
+    huge = b"a,b\n" + (b"x,1\n" * 1_000_000)  # ~4 MB
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id},
+        files={"file": ("huge.csv", huge, "text/csv")},
+    )
+    assert r.status_code == 413
+    assert "2 MB" in r.json()["detail"]
+
+
+def test_parse_file_endpoint_requires_auth(client):
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": "00000000-0000-0000-0000-000000000000"},
+        files={"file": ("x.csv", b"a,b\n1,2", "text/csv")},
+    )
+    assert r.status_code == 401
+
+
+def test_parse_file_endpoint_reads_gbk_encoded_file(auth_client_with_llm_key):
+    """Chinese hospital exports often use GBK — we must decode them."""
+    client, key_id = auth_client_with_llm_key
+    text_zh = "symbol,count\n" + "\n".join(f"基因{i},5.5" for i in range(200))
+    gbk_bytes = text_zh.encode("gbk")
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id},
+        files={"file": ("counts_gbk.csv", gbk_bytes, "text/csv")},
+    )
+    # RNA-Seq detection should still work via gene_col_names/value_col_names
+    assert r.status_code == 200, r.text
+    assert r.json()["is_rna_seq"] is True
+
+
+@patch("app.llm._call_openai")
+def test_focus_patient_gets_into_prompt(mock_openai):
+    mock_openai.return_value = _fake_response()
+    from app.llm import parse_clinical_text
+    parse_clinical_text(
+        "MRN, Age, Sex\nPT-001, 45, F\nPT-002, 72, M",
+        "sk-x", "openai", focus_patient="PT-002",
+    )
+    _, _, _, user_prompt, _ = mock_openai.call_args.args
+    assert "PT-002" in user_prompt
+    assert "FOCUS PATIENT" in user_prompt
+
+
 @patch("app.llm._call_openai")
 def test_parse_endpoint_updates_last_used_and_logs_audit(
     mock_openai, auth_client_with_llm_key,

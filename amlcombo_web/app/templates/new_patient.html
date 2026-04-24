@@ -59,12 +59,50 @@
           <a href="/llm-keys" class="text-brand-700 hover:underline font-medium whitespace-nowrap">{{ t("new_patient.smart_paste_add_key") }}</a>
         </div>
       {% else %}
-        <textarea id="smart-paste-text" rows="8"
-          class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-mono bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
-          placeholder="{{ t('new_patient.smart_paste_placeholder') }}"></textarea>
+        <!-- Tabs -->
+        <div class="flex gap-1 bg-white/70 rounded-lg p-1 border border-slate-200 w-fit">
+          <button type="button" id="sp-tab-text-btn"
+                  onclick="spSwitchTab('text')"
+                  class="sp-tab-btn px-3.5 py-1.5 text-sm font-medium rounded-md">
+            {{ t("new_patient.smart_paste_tab_text") }}
+          </button>
+          <button type="button" id="sp-tab-file-btn"
+                  onclick="spSwitchTab('file')"
+                  class="sp-tab-btn px-3.5 py-1.5 text-sm font-medium rounded-md">
+            {{ t("new_patient.smart_paste_tab_file") }}
+          </button>
+        </div>
 
-        <p class="text-xs text-amber-700">{{ t("new_patient.smart_paste_no_phi") }}</p>
+        <!-- TAB: text paste -->
+        <div id="sp-tab-text" class="sp-tab-panel space-y-3">
+          <textarea id="smart-paste-text" rows="8"
+            class="w-full border border-slate-300 rounded-lg px-3.5 py-2.5 text-sm font-mono bg-white focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition"
+            placeholder="{{ t('new_patient.smart_paste_placeholder') }}"></textarea>
+          <p class="text-xs text-amber-700">{{ t("new_patient.smart_paste_no_phi") }}</p>
+        </div>
 
+        <!-- TAB: file upload -->
+        <div id="sp-tab-file" class="sp-tab-panel hidden space-y-3">
+          <label for="sp-file-input"
+                 id="sp-file-drop"
+                 class="block border-2 border-dashed border-slate-300 hover:border-brand-500 rounded-xl p-6 text-center cursor-pointer bg-white/50 hover:bg-white transition">
+            <div class="text-3xl mb-2 opacity-70">📎</div>
+            <div id="sp-file-drop-label" class="text-sm text-slate-700">{{ t("new_patient.smart_paste_file_drop") }}</div>
+            <div class="text-xs text-slate-500 mt-1">{{ t("new_patient.smart_paste_file_hint") }}</div>
+          </label>
+          <input type="file" id="sp-file-input" accept=".csv,.tsv,.txt,.xlsx" class="hidden">
+
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">{{ t("new_patient.smart_paste_focus_patient") }}</label>
+            <input type="text" id="sp-focus-patient"
+                   placeholder="{{ t('new_patient.smart_paste_focus_patient_placeholder') }}"
+                   class="w-full border border-slate-300 rounded-lg px-3.5 py-2 text-sm focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 outline-none transition">
+            <p class="text-xs text-slate-500 mt-1">{{ t("new_patient.smart_paste_focus_patient_hint") }}</p>
+          </div>
+          <p class="text-xs text-amber-700">{{ t("new_patient.smart_paste_no_phi") }}</p>
+        </div>
+
+        <!-- Shared LLM key + button -->
         <div class="flex flex-wrap items-center gap-3">
           <label class="text-sm text-slate-600">{{ t("new_patient.smart_paste_key_label") }}</label>
           <select id="smart-paste-key"
@@ -84,6 +122,11 @@
       {% endif %}
     </div>
   </div>
+
+  <style>
+    .sp-tab-btn { color: #64748b; }
+    .sp-tab-btn.active { background: white; color: #1a5490; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+  </style>
 
   <div class="mt-6 mb-6 text-center text-xs text-slate-400 uppercase tracking-wider">
     {{ t("new_patient.smart_paste_section_divider") }}
@@ -197,7 +240,51 @@
 </div>
 
 <script>
-// ────────── Smart paste: call /api/v1/patients/parse then fill form ──────────
+// ────────── Tab switching ──────────
+let spCurrentTab = "text";
+function spSwitchTab(which) {
+  spCurrentTab = which;
+  for (const name of ["text", "file"]) {
+    const btn = document.getElementById("sp-tab-" + name + "-btn");
+    const panel = document.getElementById("sp-tab-" + name);
+    if (btn) btn.classList.toggle("active", name === which);
+    if (panel) panel.classList.toggle("hidden", name !== which);
+  }
+}
+if (document.getElementById("sp-tab-text-btn")) {
+  spSwitchTab("text");  // init on page load
+}
+
+// ────────── File drop handling (visual feedback) ──────────
+const _spFileInput = document.getElementById("sp-file-input");
+const _spDrop = document.getElementById("sp-file-drop");
+const _spDropLabel = document.getElementById("sp-file-drop-label");
+if (_spFileInput) {
+  _spFileInput.addEventListener("change", () => {
+    const f = _spFileInput.files[0];
+    if (f) _spDropLabel.textContent = `📄 ${f.name} (${Math.round(f.size / 1024)} KB)`;
+  });
+  // Drag & drop
+  ["dragover", "dragenter"].forEach(ev =>
+    _spDrop.addEventListener(ev, e => {
+      e.preventDefault();
+      _spDrop.classList.add("border-brand-500", "bg-brand-50");
+    }));
+  ["dragleave", "drop"].forEach(ev =>
+    _spDrop.addEventListener(ev, e => {
+      e.preventDefault();
+      _spDrop.classList.remove("border-brand-500", "bg-brand-50");
+    }));
+  _spDrop.addEventListener("drop", e => {
+    const dt = e.dataTransfer;
+    if (dt && dt.files.length > 0) {
+      _spFileInput.files = dt.files;
+      _spDropLabel.textContent = `📄 ${dt.files[0].name} (${Math.round(dt.files[0].size / 1024)} KB)`;
+    }
+  });
+}
+
+// ────────── Smart paste: call /api/v1/patients/parse or /parse-file ──────────
 
 // Maps JSON keys → DOM ids and fill strategy. Each mapping:
 //   - id:    the DOM element to fill
@@ -229,17 +316,9 @@ function _markAI(el, isLowConf) {
 }
 
 function smartParse() {
-  const text = document.getElementById("smart-paste-text").value.trim();
   const keyId = document.getElementById("smart-paste-key").value;
   const statusEl = document.getElementById("smart-paste-status");
   const warnEl = document.getElementById("smart-paste-warnings");
-
-  if (!text || text.length < 10) {
-    statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
-    statusEl.textContent = "Paste at least 10 characters.";
-    statusEl.classList.remove("hidden");
-    return;
-  }
 
   statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-blue-50 text-blue-800 border border-blue-200";
   statusEl.textContent = "{{ t('new_patient.smart_paste_loading') }}";
@@ -247,17 +326,73 @@ function smartParse() {
   warnEl.classList.add("hidden");
   warnEl.innerHTML = "";
 
-  fetch("/api/v1/patients/parse", {
-    method: "POST",
-    credentials: "same-origin",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({raw_text: text, llm_key_id: keyId}),
-  })
+  // Build request based on which tab is active
+  let fetchP;
+  if (spCurrentTab === "file") {
+    const f = _spFileInput.files[0];
+    if (!f) {
+      statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
+      statusEl.textContent = "Please choose a file first.";
+      return;
+    }
+    const fd = new FormData();
+    fd.append("file", f);
+    fd.append("llm_key_id", keyId);
+    const fp = document.getElementById("sp-focus-patient").value.trim();
+    if (fp) fd.append("patient_identifier", fp);
+    fetchP = fetch("/api/v1/patients/parse-file", {
+      method: "POST",
+      credentials: "same-origin",
+      body: fd,
+    });
+  } else {
+    const text = document.getElementById("smart-paste-text").value.trim();
+    if (!text || text.length < 10) {
+      statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
+      statusEl.textContent = "Paste at least 10 characters.";
+      return;
+    }
+    fetchP = fetch("/api/v1/patients/parse", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({raw_text: text, llm_key_id: keyId}),
+    });
+  }
+
+  fetchP
   .then(r => r.json().then(j => ({ok: r.ok, status: r.status, body: j})))
   .then(r => {
     if (!r.ok) {
       statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-red-50 text-red-800 border border-red-200";
       statusEl.textContent = "Error " + r.status + ": " + (r.body.detail || JSON.stringify(r.body));
+      return;
+    }
+
+    // ━━━ Special case: uploaded file was detected as RNA-Seq counts ━━━
+    // Don't touch the clinical form — instead, auto-populate the RNA-Seq
+    // file input below with the same file the user just uploaded.
+    if (r.body.is_rna_seq) {
+      const srcFile = _spFileInput.files[0];
+      if (srcFile) {
+        const rnaInput = document.getElementById("rna_counts");
+        // Use DataTransfer to set files programmatically
+        try {
+          const dt = new DataTransfer();
+          dt.items.add(srcFile);
+          rnaInput.files = dt.files;
+          rnaInput.classList.add("ai-filled");
+        } catch (e) {
+          console.warn("Could not auto-fill RNA-Seq input:", e);
+        }
+      }
+      const n = r.body.rna_seq_gene_count;
+      const mean = r.body.rna_seq_mean_value;
+      const tmpl = "{{ t('new_patient.smart_paste_auto_rna_detected') }}";
+      statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200";
+      statusEl.innerHTML = tmpl.replace("{n}", n).replace("{mean}", mean);
+      // Scroll to RNA-Seq section
+      document.getElementById("rna_counts").scrollIntoView({behavior: "smooth", block: "center"});
       return;
     }
 

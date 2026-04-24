@@ -285,8 +285,17 @@ def parse_clinical_text(
     provider: str,
     model: Optional[str] = None,
     max_tokens: int = 2000,
+    focus_patient: Optional[str] = None,
 ) -> ParsedClinicalText:
     """Use the user's LLM to extract structured AML patient data.
+
+    Args:
+      raw_text: Free-form clinical text (may be CSV/TSV; may contain many
+        patients in rows).
+      api_key / provider / model: BYOK LLM config.
+      focus_patient: optional "MRN 12345" / "patient A-001" / "row 3" /
+        "姓名: 张三" hint. If the paste contains multiple patients,
+        tells the LLM which one to extract; otherwise ignored.
 
     The LLM is instructed to return a JSON object with {parsed, confidence,
     warnings}. We robustly extract the first JSON object from its response
@@ -304,9 +313,21 @@ def parse_clinical_text(
         raise ValueError(f"Unsupported LLM provider: {provider}")
     model = model or _DEFAULT_MODEL_BY_PROVIDER[provider]
 
+    focus_hint = ""
+    if focus_patient and focus_patient.strip():
+        focus_hint = (
+            f"\n\nFOCUS PATIENT: The user has indicated the target patient "
+            f"is identified by: {focus_patient.strip()!r}. If this text "
+            f"contains multiple patients (e.g., a CSV table with many rows), "
+            f"extract ONLY that patient. If you cannot confidently find the "
+            f"requested patient, return an empty parsed object and add a "
+            f"warning listing the identifiers you did find.\n"
+        )
+
     user_prompt = (
-        "Clinical text to parse (may be multilingual):\n\n"
-        f"---\n{raw_text}\n---\n\n"
+        "Clinical text/CSV to parse (may be multilingual):\n\n"
+        f"---\n{raw_text}\n---"
+        f"{focus_hint}\n\n"
         "Respond with the JSON object only."
     )
 
