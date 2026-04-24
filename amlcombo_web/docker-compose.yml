@@ -50,7 +50,8 @@ services:
       KIT_ASSETS_ROOT: /data/canonical
     volumes:
       - storage_data:/data/storage
-      - ../data/canonical:/data/canonical:ro    # kit assets readonly
+      - ../data/canonical:/data/canonical:ro       # kit ref data (joblib/json/npz)
+      - ../runs:/app/amlcombo_web/runs:ro          # kit model checkpoints (.pt)
     depends_on:
       db:
         condition: service_healthy
@@ -76,6 +77,7 @@ services:
     volumes:
       - storage_data:/data/storage
       - ../data/canonical:/data/canonical:ro
+      - ../runs:/app/amlcombo_web/runs:ro          # kit model checkpoints (.pt)
     depends_on:
       db:
         condition: service_healthy
