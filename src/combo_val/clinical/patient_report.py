@@ -649,6 +649,257 @@ def _allo_sct_section(kit: KitInput, kit_out: KitOutput) -> str:
     return "\n".join(body)
 
 
+def _baseline_workup_section(kit: KitInput, kit_out: KitOutput) -> str:
+    """Per issue #6 — pre-induction workup checklist with conditional rules.
+
+    Rendered as Markdown task-list (`- [ ]`) so MD/HTML viewers show
+    checkboxes. PDF export keeps the same structure as plain text bullets.
+    """
+    lines = [
+        "**Pre-induction workup**: complete BEFORE starting treatment. "
+        "组织起来按时点,避免临床决策延误。",
+        "",
+        "**Universal — 所有 AML 患者**:",
+        "- [ ] CBC + diff + reticulocyte count",
+        "- [ ] CMP (Na/K/Cl/HCO₃, BUN/Cr, Ca/P/Mg, AST/ALT, total bilirubin, "
+        "albumin, total protein)",
+        "- [ ] **Coagulation panel** — PT/INR, aPTT, fibrinogen, D-dimer "
+        "(critical: APL screen + DIC baseline)",
+        "- [ ] **ECG** (baseline rhythm + QTc; pre-anthracycline + QT-prolonging "
+        "agents reference)",
+        "- [ ] **HBV / HCV / HIV** — surface antigen + viral load if positive "
+        "(reactivation risk on chemo / biologics; hepatitis B requires "
+        "entecavir or tenofovir prophylaxis)",
+        "- [ ] **Pregnancy test (β-hCG)** — premenopausal female",
+        "- [ ] **Type and screen / cross-match** — pretransfusion baseline",
+        "- [ ] **CYP3A4 medication review** — Ven, Quiz, Mido, azoles, "
+        "rifampin, calcium channel blockers; document concomitant meds",
+        "",
+    ]
+
+    age = kit.age
+    fitness = kit_out.fitness_flag
+    flags = kit_out.driver_flags or {}
+    cat_2022 = (kit_out.eln_2022 or {}).get("category") or kit_out.predicted_eln2017
+    fusions_str = " ".join(kit.fusions or []).upper()
+    is_apl = "PML-RARA" in fusions_str or "PML_RARA" in fusions_str
+
+    # Conditional: anthracycline-eligible (fit + not APL using ATRA+ATO low risk)
+    anthracycline_likely = (
+        fitness == "fit_for_intensive" and not is_apl
+        and (age is None or age <= 75)
+    )
+    if anthracycline_likely:
+        lines.extend([
+            "**强化诱导 (7+3 / CPX-351 等含蒽环类)**:",
+            "- [ ] **ECHO with EF** (anthracycline cardiotoxicity baseline; "
+            "stop if LVEF < 50% — switch to non-anthracycline regimen)",
+            "- [ ] Cardiac troponin baseline (high-risk: prior chest XRT, "
+            "diabetes, hypertension)",
+            "- [ ] Lipid panel + HbA1c (fitness optimization)",
+            "",
+        ])
+
+    # Conditional: FLT3i (any regimen recommends Mido / Quiz / Gilt)
+    flt3i_likely = flags.get("FLT3_ITD") or flags.get("FLT3_TKD")
+    if flt3i_likely:
+        lines.extend([
+            "**FLT3 抑制剂 (Mido/Quiz/Gilt)**:",
+            "- [ ] **ECG with QTc** (Quizartinib FDA black-box: cardiac "
+            "arrest with QTc > 500ms)",
+            "- [ ] **Electrolytes** — K ≥ 4.0 mmol/L, Mg ≥ 2.0 mg/dL "
+            "(target before + during therapy; QT-prolongation prophylaxis)",
+            "- [ ] **Avoid concurrent QT-prolonging agents** — review and "
+            "stop ondansetron, fluconazole, levofloxacin, quetiapine, etc.",
+            "",
+        ])
+
+    # Conditional: Venetoclax (any regimen recommends Ven)
+    ven_likely = (
+        kit_out.top_regimens and any(
+            "Venetoclax" in (r.get("drugs") or [])
+            for r in (kit_out.top_regimens or [])[:3]
+        )
+    )
+    if ven_likely:
+        lines.extend([
+            "**Venetoclax (Ven+Aza, Ven+LDAC, Ven+Dec, etc.)**:",
+            "- [ ] **TLS labs** — uric acid, K, P, Ca, Cr, LDH (重复 q6h × 24h "
+            "post first dose; aggressive ramp-up prophylaxis if WBC > 25 or "
+            "high disease burden)",
+            "- [ ] **Allopurinol 300mg PO** (start 24–48h pre-Ven) — "
+            "or **rasburicase** if UA > 7.5 mg/dL or rapid TLS risk",
+            "- [ ] **CYP3A4 strong inhibitor adjustment** — posaconazole "
+            "→ Ven dose reduce 75%; voriconazole → 50%; "
+            "fluconazole → 50%. **Never** with strong CYP3A inducers.",
+            "",
+        ])
+
+    # Conditional: hyperleukocytic OR monocytic OR M4/M5 (we don't have FAB,
+    # but high WBC is the proxy) → LP + IT MTX prophylaxis
+    high_wbc = kit.wbc is not None and float(kit.wbc) > 50
+    monocytic_signal = (
+        # Heuristic: NPM1, KMT2A-rearranged, or MLL fusions associate with M4/M5
+        flags.get("NPM1") or "KMT2A" in fusions_str or "MLLT" in fusions_str
+    )
+    if high_wbc or monocytic_signal:
+        lines.extend([
+            "**CNS leukemia prophylaxis (高 WBC / monocytic / KMT2A-r)**:",
+            "- [ ] **Lumbar puncture** with cytology + flow cytometry "
+            "(after platelets ≥ 50 ×10⁹/L, INR ≤ 1.5; transfuse if needed)",
+            "- [ ] **Intrathecal methotrexate 12–15 mg** prophylaxis "
+            "× 4–6 doses (or as per institutional protocol); "
+            "hold if CNS+ disease (treatment dosing instead)",
+            "- [ ] Brain MRI if focal neurologic findings",
+            "",
+        ])
+
+    # Conditional: ELN ≥ Intermediate AND fit → urgent HLA + transplant referral
+    if cat_2022 in ("Intermediate", "Adverse") and fitness == "fit_for_intensive":
+        lines.extend([
+            "**HLA + transplant prep (ELN ≥ Intermediate, fit)**:",
+            "- [ ] **HLA high-resolution typing** — patient + first-degree "
+            "relatives (siblings priority, then parents/children)",
+            "- [ ] **Refer to transplant center** within 30 days of CR1 "
+            "(MDT discussion, donor search, conditioning regimen choice)",
+            "- [ ] **HCT-CI (Hematopoietic Cell Transplant Comorbidity "
+            "Index)** scoring — guides MAC vs RIC decision",
+            "- [ ] **Unrelated donor search** initiated (NMDP / BMDW) — "
+            "median time-to-MUD ~3 months",
+            "",
+        ])
+
+    # Always: fertility + psychosocial
+    if age is not None and age <= 50:
+        lines.extend([
+            "**生育力 + 心理支持 (≤ 50 岁)**:",
+            "- [ ] Fertility consult — sperm banking (♂) or oocyte/embryo "
+            "cryopreservation (♀) BEFORE chemotherapy (chemo-induced "
+            "azoospermia/POI common after anthracycline)",
+            "- [ ] Social work / patient navigator referral",
+            "",
+        ])
+
+    return "\n".join(lines)
+
+
+def _mrd_monitoring_section(kit: KitInput, kit_out: KitOutput) -> str:
+    """Per issue #7 — MRD monitoring plan based on patient genomic profile.
+
+    References ELN 2021 MRD consensus (Heuser et al., Blood 2021;
+    PMID 33591443). Conditional rules:
+      - NPM1mut → NPM1 RT-qPCR
+      - FLT3-ITD → NGS-MRD (ClonoSEQ or in-house FLT3-ITD assay)
+      - CBF-AML (RUNX1-RUNX1T1 / CBFB-MYH11) → fusion-transcript RT-qPCR
+      - Other → multiparametric flow cytometry (MFC, sensitivity 1e-4)
+    """
+    flags = kit_out.driver_flags or {}
+    fusions_str = " ".join(kit.fusions or []).upper()
+
+    has_npm1 = bool(flags.get("NPM1"))
+    has_flt3_itd = bool(flags.get("FLT3_ITD"))
+    # Detect CBF from karyotype OR fusion list
+    from combo_val.clinical.karyotype_parser import parse_karyotype
+    k = parse_karyotype(kit.karyotype_text)
+    has_cbf = (
+        k.t_8_21 or k.inv_16
+        or any(
+            f in fusions_str
+            for f in ("RUNX1-RUNX1T1", "RUNX1_RUNX1T1",
+                      "CBFB-MYH11", "CBFB_MYH11", "AML1-ETO")
+        )
+    )
+    has_apl = "PML-RARA" in fusions_str or "PML_RARA" in fusions_str or k.t_15_17
+
+    lines = [
+        "**MRD monitoring plan** — measurable residual disease drives "
+        "post-CR1 decisions (consolidation choice, allo-SCT timing, "
+        "preemptive intervention). 参考 ELN 2021 MRD consensus "
+        "(Heuser et al., Blood 2021, PMID 33591443).",
+        "",
+        "**Standard timepoints (all patients)**:",
+        "- 诱导后 (end of induction, ~D28-D35)",
+        "- 巩固 1 后 (post-consolidation 1)",
+        "- 巩固 2 后 (post-consolidation 2)",
+        "- 巩固 3 后 / 移植前 (post-consolidation 3 / pre-SCT)",
+        "- 巩固后 q3 mo × 2 yr (post-treatment surveillance)",
+        "",
+    ]
+
+    # Choose primary modality based on patient profile (priority: APL > CBF > NPM1 > FLT3-ITD > MFC fallback)
+    if has_apl:
+        lines.extend([
+            "**主要 modality: PML-RARA RT-qPCR** (APL — distinct from other AML)",
+            "- 灵敏度 1e-4",
+            "- ATRA+ATO 后 PML-RARA 阴性 = 分子 CR (ELN 2021 APL: 巩固后 BCR ≥ 4 logs reduction)",
+            "- 阳性 → 早期 ATO/MTX 强化 (preemptive); confirmed molecular relapse → ATO + GO + ATRA",
+            "",
+        ])
+    elif has_cbf:
+        lines.extend([
+            "**主要 modality: 融合转录本 RT-qPCR**",
+            "- t(8;21) → **RUNX1-RUNX1T1** 转录本 (灵敏度 1e-4 to 1e-5)",
+            "- inv(16)/t(16;16) → **CBFB-MYH11** 转录本 (Type A 最常见)",
+            "- 目标: 巩固后 ≥ 3-log reduction = MRD-negative; 持续阳性或 > 0.1% "
+            "→ 高复发风险, 考虑 allo-SCT",
+            "- ELN 2021: CBF-AML 巩固后仍可检出低水平 MRD 但保持稳定 → 不一定需要"
+            "干预; 上升趋势 (rising MRD) 才是 actionable",
+            "",
+        ])
+    elif has_npm1:
+        lines.extend([
+            "**主要 modality: NPM1 RT-qPCR** (ELN 2021 SOC for NPM1mut AML)",
+            "- 灵敏度 1e-5 to 1e-6 (gold standard)",
+            "- Express as **NPM1mut/ABL ratio** (NCRI/AMLSG harmonized)",
+            "- **MRD-negative** = below detection limit OR < 2-log reduction maintained",
+            "- **MRD-positive at end of induction** → 巩固后 SCT；**MRD-positive "
+            "at end of consolidation** → 立即 SCT (Ivey et al. NEJM 2016 — "
+            "NPM1 MRD post-cons 是最强 RFS 预测因子)",
+            "- **Rising MRD (≥ 1-log increase)** during follow-up → preemptive "
+            "salvage (Ven+Aza or trial); 等到 frank relapse 治愈率显著降低",
+            "",
+        ])
+    else:
+        lines.extend([
+            "**主要 modality: 多参数流式细胞术 (MFC)** — non-NPM1 / non-CBF / "
+            "non-APL profile",
+            "- 灵敏度 1e-3 to 1e-4 (operator-dependent)",
+            "- 使用 difference-from-normal (DfN) approach 检测 leukemia-"
+            "associated immunophenotype (LAIP)",
+            "- ELN 2021: MFC MRD ≥ 0.1% 视为 MRD-positive; < 0.1% = "
+            "MRD-negative (但 < 0.01% 更可靠)",
+            "- 局限: 表型漂移 (treatment-induced phenotype change) 可能导致"
+            "假阴性; NGS-MRD (e.g., ClonoSEQ) 是更鲁棒的备选",
+            "",
+        ])
+
+    # Additional FLT3-ITD-specific monitoring (independent of primary modality)
+    if has_flt3_itd:
+        lines.extend([
+            "**FLT3-ITD 附加监测 (除主要 modality 外)**:",
+            "- **NGS-MRD for FLT3-ITD** (e.g., ClonoSEQ, in-house ITD-NGS) "
+            "灵敏度 1e-4 to 1e-5",
+            "- 时间点同上; FLT3-ITD MRD 阳性是 ADMIRAL/QUANTUM-First post-SCT "
+            "维持治疗 (Gilteritinib / Quizartinib) 的入组依据",
+            "- ELN 2021 FLT3-ITD MRD 共识仍在演化; 当前实践: NGS-MRD positive "
+            "post-SCT → 启动 FLT3i 维持 (per RATIFY/ADMIRAL protocols)",
+            "",
+        ])
+
+    lines.extend([
+        "**Reporting standards**:",
+        "- 所有 MRD 报告必须包含: 检测方法、灵敏度、对照基因 (e.g., ABL)、"
+        "样本来源 (BM > PB)、报告日期、检测实验室认证 (CAP/CLIA)",
+        "- ELN 2021 推荐使用 standardized reporting (NCRI/AMLSG schema)",
+        "",
+        "*References*: Heuser M et al. ELN 2021 MRD consensus. Blood 2021; "
+        "138(26):2753-2767. PMID 33591443. "
+        "Ivey A et al. NPM1 MRD predicts relapse. NEJM 2016; 374(5):422-433.",
+    ])
+
+    return "\n".join(lines)
+
+
 def _regimen_section(kit_out: KitOutput) -> str:
     """Render top 3 regimens as narrative paragraphs."""
     regimens = kit_out.top_regimens or []
@@ -930,9 +1181,22 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 4: Treatment Recommendations ----
+    # ---- Section 4: Pre-induction workup checklist (issue #6) ----
     sections.extend([
-        "## 四、治疗方案推荐",
+        "## 四、Pre-induction Workup Checklist",
+        "",
+        "在启动治疗前必须完成的基线评估。条件性 (conditional) 项目根据本患者的"
+        "基因型 + ELN 分层 + 体能状态自动激活。",
+        "",
+        _baseline_workup_section(kit, kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 5: Treatment Recommendations ----
+    sections.extend([
+        "## 五、治疗方案推荐",
         "",
         "以下方案按综合证据强度排序 (临床试验阶段、患者生物标志物匹配度、适应症严格度)。**每个方案的选择责任最终在主治医师**，本报告为辅助信息。",
         "",
@@ -942,15 +1206,25 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 5: Model Prediction ----
+    # ---- Section 6: MRD monitoring plan (issue #7) ----
     sections.extend([
-        "## 五、模型辅助预测 (Research-grade)",
+        "## 六、MRD 监测计划 (per ELN 2021)",
         "",
-        "### 5.1 组合 AUC 预测 (Layer 3)",
+        _mrd_monitoring_section(kit, kit_out),
+        "",
+        "---",
+        "",
+    ])
+
+    # ---- Section 7: Model Prediction ----
+    sections.extend([
+        "## 七、模型辅助预测 (Research-grade)",
+        "",
+        "### 7.1 组合 AUC 预测 (Layer 3)",
         "",
         _combo_prediction_narrative(kit_out),
         "",
-        "### 5.2 克隆生物学 rationale (Layer 2)",
+        "### 7.2 克隆生物学 rationale (Layer 2)",
         "",
         _clonal_coverage_narrative(kit_out),
         "",
@@ -958,9 +1232,9 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 6: Cautions ----
+    # ---- Section 8: Cautions ----
     sections.extend([
-        "## 六、用药警告与注意事项",
+        "## 八、用药警告与注意事项",
         "",
         _cautions_section(kit_out),
         "",
@@ -968,35 +1242,35 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 7: QC & Limitations ----
+    # ---- Section 9: QC & Limitations ----
     sections.extend([
-        "## 七、质量控制与局限 (Confidence & Limitations)",
+        "## 九、质量控制与局限 (Confidence & Limitations)",
         "",
         _confidence_narrative(kit_out),
         "",
-        "### 7.1 已知限制",
+        "### 9.1 已知限制",
         "",
         "- **Panel 覆盖**: 25 个核心驱动基因 panel，未覆盖 comprehensive gene list。"
         "  如 lab 报告含其他基因，请人工结合原始报告解读。",
-        "- **ELN 版本**: 本报告使用 ELN 2017 (因 BeatAML 训练队列 2014-2019，ELN 2017 "
-        "  label 才有质)。ELN 2022 升级已入 roadmap，主要差异:"
-        "  (1) FLT3-ITD 不再天然 adverse; "
-        "  (2) MDS-related 基因组 (BCOR, EZH2, SF3B1, SRSF2, STAG2, U2AF1) 进 adverse;"
-        "  (3) TP53 multi-hit 独立分层。",
+        "- **ELN 版本**: 本报告同时输出 ELN 2017 (训练 label 用) 与 ELN 2022 "
+        "  (current standard, Döhner Blood 2022); §3.7 显示双版本结果, "
+        "  不一致时给出 transition 解释。",
         "- **核型解析**: 正则启发式，覆盖约 85% 常见 ISCN 模式。"
         "  复杂/罕见核型（如 i(17q), idic(X), chromothripsis）需 cytogeneticist 人工审阅。",
         "- **组合预测**: 基于 613 BeatAML 患者的 ex-vivo drug sensitivity (AUC)，"
         "  **未经前瞻性临床验证**。AUC 预测与临床 CR 率相关性已在本 kit Route B 测试"
         "  中验证无显著相关 (Pearson ≈ 0.05)，建议以第三节试验证据为主。",
         "",
-        "### 7.2 审核建议 (Checklist)",
+        "### 9.2 审核建议 (Checklist)",
         "",
         "请 MDT 团队核查以下项目：",
         "",
-        "- [ ] ELN 风险分层与院内 cytogenetics 报告一致",
+        "- [ ] ELN 2022 风险分层与院内 cytogenetics 报告一致",
+        "- [ ] Pre-induction workup (§4) 全部完成",
+        "- [ ] MRD 监测计划 (§6) 已纳入治疗决策时间表",
         "- [ ] 推荐方案在本地药物可及性 + 保险范围内",
         "- [ ] 患者知情同意 + 适合接受推荐强度治疗",
-        "- [ ] 特殊用药警告 (TLS、QT 延长、心肝肾功能) 已核查",
+        "- [ ] 特殊用药警告 (TLS、QT 延长、心肝肾功能、leukostasis) 已核查",
         "- [ ] FLT3-ITD allelic ratio 与 lab 报告数值一致 (不同 lab denominator 定义可能略异)",
         "- [ ] TP53 如存在，是否已进行 allelic state (mono vs multi-hit) 判断",
         "",
@@ -1004,9 +1278,9 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 8: Methodology ----
+    # ---- Section 10: Methodology ----
     sections.extend([
-        "## 八、方法学背景",
+        "## 十、方法学背景",
         "",
         "本报告由 **AML Combo-Prediction Kit v0.2** 自动生成。该工具集成三层推荐：",
         "",
@@ -1029,18 +1303,19 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 9: References ----
+    # ---- Section 11: References ----
     sections.extend([
-        "## 九、关键参考文献",
+        "## 十一、关键参考文献",
         "",
-        "### 9.1 指南",
+        "### 11.1 指南",
         "",
         "- Döhner H et al. **ELN 2017**. *Blood* 2017, [PMID 27895058](https://pubmed.ncbi.nlm.nih.gov/27895058)",
         "- Döhner H et al. **ELN 2022**. *Blood* 2022, [PMID 35797463](https://pubmed.ncbi.nlm.nih.gov/35797463)",
+        "- Heuser M et al. **ELN 2021 MRD consensus**. *Blood* 2021, [PMID 33591443](https://pubmed.ncbi.nlm.nih.gov/33591443)",
         "- Khoury JD et al. **WHO 2022 Hematolymphoid Classification**. *Leukemia* 2022, [PMID 35732831](https://pubmed.ncbi.nlm.nih.gov/35732831)",
         "- NCCN Clinical Practice Guidelines in Oncology: AML v2.2024",
         "",
-        "### 9.2 关键临床试验",
+        "### 11.2 关键临床试验",
         "",
         "- Stone RM et al. **RATIFY** (Mid + 7+3). *NEJM* 2017, [PMID 28644114](https://pubmed.ncbi.nlm.nih.gov/28644114)",
         "- DiNardo CD et al. **VIALE-A** (Ven + Aza). *NEJM* 2020, [PMID 32813947](https://pubmed.ncbi.nlm.nih.gov/32813947)",
@@ -1048,8 +1323,9 @@ def build_clinical_report_markdown(
         "- Montesinos P et al. **AGILE** (Aza + Ivo IDH1-mut). *NEJM* 2022, [PMID 35443106](https://pubmed.ncbi.nlm.nih.gov/35443106)",
         "- Short NJ, Daver N et al. **Aza + Ven + Gilt triplet**. *JCO* 2024, [PMID 38277619](https://pubmed.ncbi.nlm.nih.gov/38277619)",
         "- Erba HP et al. **QUANTUM-First** (Quiz + 7+3). *Lancet* 2023, [PMID 37116523](https://pubmed.ncbi.nlm.nih.gov/37116523)",
+        "- Ivey A et al. **NPM1 MRD predicts relapse**. *NEJM* 2016, [PMID 26789727](https://pubmed.ncbi.nlm.nih.gov/26789727)",
         "",
-        "### 9.3 方法学",
+        "### 11.3 方法学",
         "",
         "- Palmer AC, Sorger PK. **Independent Drug Action**. *Cancer Discov* 2022, [PMID 34983746](https://pubmed.ncbi.nlm.nih.gov/34983746)",
         "- Julkunen H et al. **comboFM: Multi-way drug combination prediction**. *Nat Commun* 2020, [PMID 33262326](https://pubmed.ncbi.nlm.nih.gov/33262326)",

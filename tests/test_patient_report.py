@@ -253,11 +253,17 @@ def test_build_markdown_has_all_nine_sections():
     kit = _flt3_npm1_kit()
     out = _mk_output(kit, eln="Intermediate")
     md = build_clinical_report_markdown(kit, out)
-    # All 9 top-level sections present
+    # All 11 top-level sections present (issues #6 + #7 added pre-induction
+    # workup §4 and MRD plan §6, shifting downstream by 2).
     for header in ("一、临床快报", "二、患者基本信息", "三、分子特征",
-                   "四、治疗方案推荐", "五、模型辅助预测",
-                   "六、用药警告", "七、质量控制",
-                   "八、方法学背景", "九、关键参考文献"):
+                   "四、Pre-induction Workup",
+                   "五、治疗方案推荐",
+                   "六、MRD 监测计划",
+                   "七、模型辅助预测",
+                   "八、用药警告",
+                   "九、质量控制",
+                   "十、方法学背景",
+                   "十一、关键参考文献"):
         assert header in md, f"Missing section: {header}"
 
 

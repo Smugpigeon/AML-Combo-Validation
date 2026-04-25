@@ -163,6 +163,30 @@ def _check_kit_cautions(kit: KitInput, driver_flags: dict) -> list[str]:
         cautions.append(f"Age ≥ 75 — intensive induction carries excess mortality; consider Ven+Aza")
     if driver_flags.get("TP53"):
         cautions.append("TP53 mutation — conventional induction poorly effective; consider trial enrollment")
+    # Per issue #5 — hyperleukocytic AML / leukostasis warning
+    if kit.wbc is not None:
+        wbc = float(kit.wbc)
+        if wbc > 100:
+            cautions.append(
+                f"🚨 **HYPERLEUKOCYTIC EMERGENCY** (WBC {wbc:.0f} ×10⁹/L > 100) — "
+                f"high leukostasis risk: assess CNS (confusion, focal deficit), "
+                f"pulmonary (dyspnea, hypoxia), retinal hemorrhages. **Immediate "
+                f"hematology consult**; start hydroxyurea 50–100 mg/kg/day PO "
+                f"(divided BID) + IV fluids; **leukapheresis** if symptomatic. "
+                f"Aggressive TLS prophylaxis (allopurinol or rasburicase, IVF, "
+                f"monitor K/P/Ca/UA q6h). Defer 7+3 by 2–3 days until WBC < 50 "
+                f"and symptoms resolved."
+            )
+        elif wbc > 50:
+            cautions.append(
+                f"⚠ Hyperleukocytic AML (WBC {wbc:.0f} ×10⁹/L > 50) — "
+                f"assess for leukostasis (neuro, dyspnea, retinal hemorrhages). "
+                f"Start **hydroxyurea 50 mg/kg PO BID** for cytoreduction; "
+                f"consider leukapheresis if WBC > 100 or symptomatic; defer "
+                f"7+3 by 2–3 days if no urgent cytoreduction available. "
+                f"Aggressive TLS prophylaxis required (allopurinol, IVF, "
+                f"monitor electrolytes q6–8h)."
+            )
     return cautions
 
 
