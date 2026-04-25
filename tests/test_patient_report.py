@@ -273,7 +273,10 @@ def test_build_markdown_section_numbering_is_consistent():
     assert "### 3.4 核心驱动突变 — 临床解读" in md
     assert "### 3.5 融合基因" in md
     assert "### 3.6 细胞遗传学" in md
-    assert "### 3.7 ELN 2017 风险分层" in md
+    # Issue #4: section 3.7 now shows BOTH ELN 2017 + ELN 2022 (2022 primary).
+    assert "### 3.7 ELN 风险分层" in md
+    assert "ELN 2022" in md
+    assert "ELN 2017" in md
     # Section 4 subsections (Treatment Recommendations) must be 4.x
     assert "### 4.1 首选方案" in md
     # Must NOT re-use 3.1 numbering for section 4

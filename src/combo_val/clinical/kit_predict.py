@@ -606,6 +606,9 @@ def predict_for_patient(
         fitness_flag=fitness_flag,
         cautions=_check_kit_cautions(kit, driver_flags),
         confidence_notes=confidence_notes,
+        # Issue #4 — pass both ELN versions through to the report renderer.
+        eln_2017=diag.get("eln2017", {}),
+        eln_2022=diag.get("eln2022", {}),
     )
 
 

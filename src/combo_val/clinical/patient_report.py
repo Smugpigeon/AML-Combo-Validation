@@ -412,8 +412,66 @@ def _cytogenetic_narrative(cytogenetics: list[dict], karyotype_text: str | None)
     return "\n".join(lines)
 
 
+def _eln_dual_section(kit: KitInput, kit_out: KitOutput) -> str:
+    """Per issue #4 — render BOTH ELN 2017 and ELN 2022 with 2022 as primary
+    clinical guidance. Adds a transition note when the two systems disagree
+    so clinicians can see what changed and why."""
+    from combo_val.clinical.eln_2022 import compare_eln_versions
+
+    eln_2017_dict = kit_out.eln_2017 or {}
+    eln_2022_dict = kit_out.eln_2022 or {}
+    cat_2017 = eln_2017_dict.get("category") or kit_out.predicted_eln2017
+    cat_2022 = eln_2022_dict.get("category") or cat_2017
+    rationale_2017 = eln_2017_dict.get("rationale", [])
+    rationale_2022 = eln_2022_dict.get("rationale", [])
+
+    # Color emoji per category (same convention as Section 3.8)
+    def _emoji(c: str) -> str:
+        return {"Favorable": "🟢", "Intermediate": "🟡", "Adverse": "🔴"}.get(c, "⚪")
+
+    lines = [
+        "**ELN 2022 (Döhner Blood 2022, PMID 35797463) — primary, current standard**",
+        f"{_emoji(cat_2022)} 分层: **{cat_2022}**",
+        "",
+        "依据：",
+    ]
+    for r in rationale_2022:
+        lines.append(f"- {r}")
+    lines.append("")
+    lines.append(
+        f"**ELN 2017 (Döhner Blood 2017, PMID 27895058) — historical, "
+        f"matches BeatAML training labels**"
+    )
+    lines.append(f"{_emoji(cat_2017)} 分层: **{cat_2017}**")
+    lines.append("")
+    lines.append("依据：")
+    for r in rationale_2017:
+        lines.append(f"- {r}")
+    lines.append("")
+
+    # If the two versions diverge — explain why
+    transition_note = compare_eln_versions(cat_2017, cat_2022)
+    if transition_note:
+        lines.append(
+            f"> ⚠ **ELN 2017 vs ELN 2022 不一致** — "
+            f"2017 = {cat_2017}, 2022 = {cat_2022}\n"
+        )
+        lines.append(f"> {transition_note}")
+        lines.append("")
+        lines.append(
+            "*临床建议遵循 ELN 2022 (current standard)。ELN 2017 仅供与历史"
+            "数据 (BeatAML training cohort) 对照。*"
+        )
+        lines.append("")
+
+    # Append the existing prose-style narrative for clinical context
+    lines.append(_eln_rationale_prose(kit, kit_out))
+    return "\n".join(lines)
+
+
 def _eln_rationale_prose(kit: KitInput, kit_out: KitOutput) -> str:
-    """Narrative explanation of WHY the patient got their ELN category."""
+    """Narrative explanation of WHY the patient got their ELN category.
+    Still public (used by tests) and called by _eln_dual_section."""
     eln = kit_out.predicted_eln2017
     flags = kit_out.driver_flags
     drivers_active = [k for k, v in flags.items() if v]
@@ -860,9 +918,9 @@ def build_clinical_report_markdown(
             kit.karyotype_text,
         ),
         "",
-        "### 3.7 ELN 2017 风险分层",
+        "### 3.7 ELN 风险分层 (2022 优先, 2017 对照)",
         "",
-        _eln_rationale_prose(kit, kit_out),
+        _eln_dual_section(kit, kit_out),
         "",
         "### 3.8 Allo-SCT 推荐 + 准备 checklist",
         "",

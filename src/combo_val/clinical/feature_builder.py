@@ -197,6 +197,18 @@ def build_patient_features_from_raw(
         else:
             out[i] = float(v)
 
+    # Per issue #4 — compute BOTH ELN 2017 (matches BeatAML training labels)
+    # AND ELN 2022 (current Döhner Blood 2022 standard). The kit feeds 2017
+    # to the model (label-distribution-matched) but the report shows 2022 as
+    # primary clinical guidance.
+    from combo_val.clinical.eln_2022 import compute_eln2022
+    eln2017_full = compute_eln2017(
+        kit.karyotype_text, kit.mutations, kit.fusions
+    )
+    eln2022_full = compute_eln2022(
+        kit.karyotype_text, kit.mutations, kit.fusions,
+        prior_mds=kit.prior_mds,
+    )
     diag = {
         "n_features": len(feature_cols),
         "rna_genes_in_panel": int(len(bundle["kept_genes"])),
@@ -204,11 +216,15 @@ def build_patient_features_from_raw(
         "rna_gene_coverage_pct": qc_report.gene_coverage_pct,
         "n_imputed_fields": len(imputed_fields),
         "imputed_fields": imputed_fields,
-        "eln_predicted": (
-            kit.eln2017 or compute_eln2017(
-                kit.karyotype_text, kit.mutations, kit.fusions
-            ).category
-        ),
+        "eln_predicted": kit.eln2017 or eln2017_full.category,
+        "eln2017": {
+            "category": eln2017_full.category,
+            "rationale": list(eln2017_full.rationale),
+        },
+        "eln2022": {
+            "category": eln2022_full.category,
+            "rationale": list(eln2022_full.rationale),
+        },
         "qc": {
             "ood_severity": qc_report.ood_severity,
             "mahalanobis_distance": qc_report.mahalanobis_distance,

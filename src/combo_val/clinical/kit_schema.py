@@ -28,6 +28,9 @@ class MutationCall:
     is_TKD: bool = False                   # FLT3 specifically
     allelic_ratio: Optional[float] = None  # FLT3-ITD allelic ratio (ITD reads / WT reads)
     is_biallelic: bool = False             # CEBPA specifically
+    # Per ELN 2022 (Döhner Blood 2022, PMID 35797463):
+    is_bzip: bool = False                  # CEBPA bZIP in-frame mutation — single allele OK for Favorable
+    is_multi_hit: bool = False             # TP53 multi-hit (≥2 distinct TP53 mutations or VAF≥0.5+del17p) — independent Adverse
 
 
 @dataclass
@@ -84,7 +87,7 @@ class KitOutput:
     clinician audit against the NGS lab report.
     """
     patient_id: str
-    predicted_eln2017: str                  # computed or passed through
+    predicted_eln2017: str                  # computed or passed through (model-facing)
     top_combinations: list[dict]            # Layer 3: MLP [{rank, drug1, drug2, predicted_auc, mech_score, clonal_coverage_score, …}]
     top_single_drugs: list[dict]            # [{rank, drug, predicted_auc}]
     top_regimens: list[dict]                # Layer 1: Route C trial-evidence regimens w/ published CR/OS
@@ -95,3 +98,8 @@ class KitOutput:
     fitness_flag: str                       # "fit_for_intensive" | "unfit"
     cautions: list[str]                     # e.g. "TLS risk with Venetoclax; baseline LDH elevated"
     confidence_notes: list[str]             # e.g. "RNA-Seq gene coverage 4/5000 below training support"
+    # Per issue #4 — show BOTH ELN 2017 (training-label) and ELN 2022 (current
+    # standard, Döhner Blood 2022). The report uses 2022 as primary; 2017 is
+    # kept for label compatibility with the BeatAML-trained MLP.
+    eln_2017: dict = field(default_factory=dict)   # {"category": str, "rationale": list[str]}
+    eln_2022: dict = field(default_factory=dict)   # {"category": str, "rationale": list[str]}
