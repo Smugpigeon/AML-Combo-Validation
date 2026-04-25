@@ -63,6 +63,11 @@ class MatchedRegimen:
             "cautions": list(self.regimen.cautions),
             "pmid": self.regimen.pmid,
             "nct_id": self.regimen.nct_id,
+            # Issue #1 — surface clinical_tier so downstream renderers and
+            # external consumers can audit ranking decisions.
+            "clinical_tier": getattr(
+                self.regimen, "clinical_tier", "experimental_triplet"
+            ),
         }
 
 
