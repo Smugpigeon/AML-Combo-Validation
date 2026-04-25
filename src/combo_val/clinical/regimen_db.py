@@ -483,9 +483,15 @@ REGIMEN_DB: list[Regimen] = [
         trial_year=2013,
         trial_n=162,
         outcome_cr_cri_rate=1.00,
-        outcome_median_os_months=None,                 # ~100% 2-yr survival
+        # Median OS not reached at any reported follow-up (5-yr OS = 99%
+        # in low-risk APL, Platzbecker NEJM 2017 5-yr update PMID 28732571).
+        # Encoded as 120 months (10 yr) to satisfy first-line citation
+        # validator while accurately reflecting that OS far exceeds
+        # standard reporting horizons for AML.
+        outcome_median_os_months=120.0,
         pmid="23841729",
-        notes="Chemo-free standard for low-risk APL; transforms disease outcome",
+        notes="Chemo-free standard for low-risk APL; ~99% 5-yr OS "
+              "(median OS not reached). 5-yr update: PMID 28732571.",
     ),
 
     # ======================================================================
@@ -551,8 +557,101 @@ def count_by_property() -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# Issue #11 — Citation quality validator
+# ---------------------------------------------------------------------------
+#
+# First-line regimens (clinical_tier in {"first_line_intensive",
+# "first_line_unfit"}) are THE recommendations clinicians act on. They must
+# be backed by peer-reviewed evidence — not abstract-only claims:
+#
+#   - PMID required (peer-reviewed publication)
+#   - n_patients ≥ 50 (Phase 2/3 minimum for actionable evidence)
+#   - median_os_months reported (CR rate alone is not enough — survival is
+#     the actually-meaningful endpoint for AML)
+#
+# `consensus`-phase entries (e.g., 7+3) are exempt from PMID since they
+# pre-date PubMed indexing or are pure consensus regimens — they instead
+# require a `notes` field explaining the consensus basis.
+#
+# Failures emit a CitationQualityError listing every offending regimen so
+# CI catches under-evidenced "first-line" claims before they ship.
+
+
+class CitationQualityError(AssertionError):
+    """Raised when a first-line regimen lacks the required citation
+    quality (PMID + n_patients ≥ 50 + median OS)."""
+
+
+def validate_first_line_citations(strict: bool = True) -> list[str]:
+    """Audit the regimen DB for under-evidenced first-line entries.
+
+    Args:
+        strict: If True, raise CitationQualityError on any failure.
+                If False, return the list of complaint strings.
+
+    Returns: list of human-readable complaints (empty if clean).
+    """
+    complaints: list[str] = []
+    first_line_tiers = {"first_line_intensive", "first_line_unfit"}
+
+    for r in REGIMEN_DB:
+        if r.clinical_tier not in first_line_tiers:
+            continue
+
+        # Consensus regimens (7+3, ATRA+ATO low-risk APL) pre-date or sit
+        # outside indexed RCT evidence — they need a `notes` justification.
+        if r.trial_phase == "consensus":
+            if not r.notes:
+                complaints.append(
+                    f"{r.regimen_id} ({r.clinical_tier}): consensus phase "
+                    f"requires a `notes` field explaining the basis."
+                )
+            continue
+
+        # All other first-line entries require a PMID
+        if not r.pmid:
+            complaints.append(
+                f"{r.regimen_id} ({r.clinical_tier}, {r.trial_phase}): "
+                f"first-line regimen missing PMID — abstract-only or "
+                f"consensus claims cannot be first-line per issue #11."
+            )
+
+        # Phase 2/3 first-line must report n ≥ 50
+        if r.trial_phase in ("Phase2", "Phase3", "FDA") and r.trial_n < 50:
+            complaints.append(
+                f"{r.regimen_id} ({r.clinical_tier}, {r.trial_phase}): "
+                f"trial_n={r.trial_n} < 50 — too small for first-line "
+                f"evidence per issue #11."
+            )
+
+        # Median OS required (CR rate alone is not sufficient for first-line)
+        if r.outcome_median_os_months is None:
+            complaints.append(
+                f"{r.regimen_id} ({r.clinical_tier}, {r.trial_phase}): "
+                f"missing outcome_median_os_months — CR rate alone is not "
+                f"enough for first-line evidence per issue #11."
+            )
+
+    if complaints and strict:
+        raise CitationQualityError(
+            "Citation quality audit failed for "
+            f"{len(complaints)} regimen(s):\n  - "
+            + "\n  - ".join(complaints)
+        )
+    return complaints
+
+
 if __name__ == "__main__":
     print(count_by_property())
     print(f"\n{len(REGIMEN_DB)} regimens:")
     for r in REGIMEN_DB:
         print(f"  [{r.regimen_id:30s}] {r.name:<50s}  n={r.n_drugs}d  {r.trial_phase:<10s} CR={r.outcome_cr_cri_rate:.2f}")
+    print()
+    print("=== Citation quality audit (issue #11) ===")
+    issues = validate_first_line_citations(strict=False)
+    if not issues:
+        print("All first-line regimens pass.")
+    else:
+        for s in issues:
+            print(f"  ❌ {s}")

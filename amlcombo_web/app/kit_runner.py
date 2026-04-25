@@ -95,6 +95,11 @@ def run_kit_prediction(
             is_TKD=bool(m.get("is_TKD", False)),
             allelic_ratio=m.get("allelic_ratio"),
             is_biallelic=bool(m.get("is_biallelic", False)),
+            # Issues #4 + #9 + #13 — extended fields from LLM smart-paste
+            # for ELN 2022 / WHO 2022 / hotspot codon classification.
+            is_bzip=bool(m.get("is_bzip", False)),
+            is_multi_hit=bool(m.get("is_multi_hit", False)),
+            protein_codon=m.get("protein_codon"),
         )
         for m in input_json.get("mutations", [])
     ]

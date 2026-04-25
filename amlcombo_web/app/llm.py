@@ -166,7 +166,10 @@ Return ONLY a valid JSON object with exactly this top-level shape:
         "is_ITD":        bool,           // FLT3 only — true if ITD mentioned
         "is_TKD":        bool,           // FLT3 only — true if TKD / D835 / I836 mentioned
         "allelic_ratio": number|null,    // FLT3-ITD allelic ratio if reported, e.g. 0.62
-        "is_biallelic":  bool            // CEBPA only — true if biallelic / both alleles / bZIP mentioned
+        "is_biallelic":  bool,           // CEBPA only — true if biallelic / both alleles
+        "is_bzip":       bool,           // CEBPA only — true if bZIP / leucine zipper / b-ZIP region / in-frame bZIP mutation mentioned (per ELN 2022 / WHO 2022)
+        "is_multi_hit":  bool,           // TP53 only — true if multi-hit / biallelic TP53 / 2 distinct TP53 mutations / TP53 + del(17p) mentioned (per ELN 2022)
+        "protein_codon": string|null     // protein-level annotation if mentioned, e.g. "R882H" (DNMT3A), "R132H" (IDH1), "R140Q"/"R172K" (IDH2), "D835Y" (FLT3-TKD), "F691L" (FLT3 gatekeeper), "W288Cfs*12" (NPM1), "D816V" (KIT). Preserve verbatim. null if not in text.
       }
     ],
     "wbc":           number|null,        // ×10^9/L
@@ -198,7 +201,17 @@ Extraction rules:
 4. FLT3-TKD: "TKD", "D835Y/F/V", "I836", "tyrosine kinase domain" → is_TKD=true.
 5. Allelic ratio: accept "AR=0.62", "AR 0.6", "allelic ratio 0.45", "高负荷/high-burden" (0.5+ implied but keep null if not quantified), ratio forms "0.62/1". Always store as decimal.
 6. VAF: "45%" → 0.45; "VAF 0.42" → 0.42; "突变频率 40%" → 0.40.
-7. CEBPA biallelic: "biallelic", "two mutations", "双等位", "bZIP domain mutations" → is_biallelic=true.
+7. CEBPA fields (per ELN 2022 / WHO 2022):
+   - is_biallelic: set true when text says "biallelic" / "two mutations" / "双等位" / "both alleles".
+   - is_bzip:      set true when text mentions "bZIP" / "leucine zipper" / "b-ZIP region" / "in-frame bZIP" / specific bZIP-domain residues. ELN 2022 made bZIP single-allele Favorable, so this is independent of biallelic.
+7b. TP53 is_multi_hit: set true when text mentions "multi-hit TP53" / "biallelic TP53" / "two distinct TP53 mutations" / "TP53 + del(17p)" / TP53 with VAF ≥ 0.5. Per ELN 2022, multi-hit is an independent Adverse subtype.
+7c. protein_codon (NEW): if the text gives a protein-level annotation (e.g. "DNMT3A R882H", "IDH1 R132C", "FLT3 D835Y", "KIT D816V", "NPM1 W288Cfs*12") preserve the codon part verbatim ("R882H" not "DNMT3A R882H"). Skip leading gene symbol. If text only mentions ITD or TKD with no specific codon, leave protein_codon null. Hotspots that matter:
+    - DNMT3A R882* (canonical AML hotspot, independent adverse)
+    - IDH1 R132* (FDA-approved Ivosidenib target)
+    - IDH2 R140* / R172* (FDA-approved Enasidenib target)
+    - FLT3 D835* / I836 (Type-1 FLT3i preferred), F691L (Gilt-resistance gatekeeper)
+    - NPM1 exon 12 frameshift (W288Cfs, TCTG insertion)
+    - KIT D816V / N822 (CBF-AML adverse modifier)
 8. Sex: "男"/"M"/"male" → "male"; "女"/"F"/"female" → "female".
 9. Disease stage:
    - "初诊"/"de novo"/"newly diagnosed"/"primary" → is_initial_diagnosis=true

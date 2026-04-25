@@ -31,6 +31,11 @@ class MutationCall:
     # Per ELN 2022 (Döhner Blood 2022, PMID 35797463):
     is_bzip: bool = False                  # CEBPA bZIP in-frame mutation — single allele OK for Favorable
     is_multi_hit: bool = False             # TP53 multi-hit (≥2 distinct TP53 mutations or VAF≥0.5+del17p) — independent Adverse
+    # Per issues #9 + #13 — protein codon for hotspot detection. Free-text
+    # form e.g. "R882H" (DNMT3A), "R132H/C/G/L/S" (IDH1), "R140Q"/"R172K"
+    # (IDH2), "D835Y/F/V" + "I836" + "F691L" (FLT3-TKD). When None, parser
+    # could not extract a codon from the lab report.
+    protein_codon: Optional[str] = None
 
 
 @dataclass

@@ -39,6 +39,10 @@ class MutationIn(BaseModel):
     is_TKD: bool = False
     allelic_ratio: Optional[float] = None
     is_biallelic: bool = False
+    # Issues #4 + #9 + #13 — extended hotspot / ELN 2022 fields
+    is_bzip: bool = False
+    is_multi_hit: bool = False
+    protein_codon: Optional[str] = None
 
 
 class PatientInputJSON(BaseModel):

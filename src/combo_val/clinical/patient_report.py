@@ -348,6 +348,29 @@ def _render_rna_outlier_table_v2(
     return "\n".join(parts)
 
 
+def _hotspot_codon_section(mutations: list[MutationCall]) -> str:
+    """Per issues #9 + #13 — surface hotspot-codon-specific clinical
+    interpretation (DNMT3A R882, IDH1 R132, IDH2 R140/R172, FLT3-TKD
+    D835/I836/F691L, NPM1 exon 12, KIT D816)."""
+    from combo_val.clinical.hotspot_codons import hotspot_summary_for_report
+
+    summary = hotspot_summary_for_report(mutations or [])
+    if not summary:
+        return ""  # no hotspot info to add — silent
+
+    lines = ["**Hotspot codon analysis** (per issues #9 + #13):", ""]
+    for s in summary:
+        gene = s["gene"]
+        codon = s.get("codon") or "?"
+        label = s.get("hotspot_label") or "non-hotspot"
+        conf = s.get("confidence", "low")
+        marker = "⭐" if s["is_hotspot"] else "—"
+        lines.append(f"- {marker} **{gene} {codon}** ({label}, confidence: {conf})")
+        lines.append(f"  - {s['interpretation']}")
+        lines.append("")
+    return "\n".join(lines)
+
+
 def _mutation_narrative(mutations: list[MutationCall]) -> str:
     """Build a prose paragraph describing each driver mutation's clinical meaning."""
     if not mutations:
@@ -510,7 +533,7 @@ def _eln_rationale_prose(kit: KitInput, kit_out: KitOutput) -> str:
             parts.append("FLT3-ITD 高负荷 (无 NPM1 修正)")
         return (", ".join(parts) +
                 "。此组预后差,传统 7+3 效果有限,**强烈建议临床试验入组 + CR1 阶段"
-                "尽早 allo-SCT 桥接 — 立即启动 HLA 配型 + 供者搜索**(详见 §3.8)。")
+                "尽早 allo-SCT 桥接 — 立即启动 HLA 配型 + 供者搜索**(详见 §3.9)。")
 
     if eln == "Intermediate":
         if flags.get("NPM1") and flags.get("FLT3_ITD"):
@@ -520,12 +543,57 @@ def _eln_rationale_prose(kit: KitInput, kit_out: KitOutput) -> str:
                     "**建议路径**:(1) 标准 7+3 + FLT3 抑制剂(Mido per RATIFY 或 Quiz "
                     "per QUANTUM-First)强化诱导;(2) **CR1 阶段强烈推荐 allo-SCT** —— "
                     "FLT3-ITD 高 AR 即使有 NPM1 共突变,allo-SCT 仍显著降低复发,"
-                    "**立即启动 HLA 配型 + 供者搜索**(详见 §3.8)。")
+                    "**立即启动 HLA 配型 + 供者搜索**(详见 §3.9)。")
         return ("ELN 2017 分层为 **Intermediate**。无明确 favorable 或 adverse 特征。"
                 "**CR1 allo-SCT 通常推荐**(尤其有不良共突变如 RUNX1/ASXL1/TP53),"
-                "需结合体能状态、年龄、共病决定;启动 HLA 配型作为备选(详见 §3.8)。")
+                "需结合体能状态、年龄、共病决定;启动 HLA 配型作为备选(详见 §3.9)。")
 
     return f"ELN 2017 分层: {eln}。"
+
+
+def _who_icc_section(kit: KitInput) -> str:
+    """Per issue #12 — WHO 2022 + ICC 2022 entity classification.
+    Both systems revised in 2022 (WHO: Khoury Leukemia 2022 PMID 35732831,
+    ICC: Arber Blood 2022 PMID 35797568). They mostly agree but differ on
+    blast thresholds and TP53 handling."""
+    from combo_val.clinical.who_icc_2022 import classify_who_icc_2022
+    r = classify_who_icc_2022(
+        karyotype_text=kit.karyotype_text,
+        mutations=kit.mutations or [],
+        fusions=kit.fusions or [],
+        blast_pct=kit.blast_pct_bm,
+        prior_mds=kit.prior_mds,
+    )
+    lines = [
+        "**WHO 2022** (Khoury et al. *Leukemia* 2022, PMID 35732831):",
+        f"- 实体: **{r.who_2022}**",
+        "",
+        "**ICC 2022** (Arber et al. *Blood* 2022, PMID 35797568):",
+        f"- 实体: **{r.icc_2022}**",
+        "",
+    ]
+    if not r.concordant:
+        lines.extend([
+            f"> ⚠ **WHO 2022 vs ICC 2022 分歧** — 两个分类系统对本患者的"
+            f"诊断分类不一致:",
+            f">",
+            f"> - WHO 2022: `{r.who_2022}`",
+            f"> - ICC 2022: `{r.icc_2022}`",
+            f">",
+            f"> 常见差异原因:",
+            f"> 1. 母细胞百分比阈值不同 (WHO 2022 不再要求 ≥ 20% blast for "
+            f"defining genetic abnormality; ICC 2022 保留 10%/20% 阈值)",
+            f"> 2. TP53 (ICC 2022 单独实体, WHO 2022 归 AML-MR)",
+            f">",
+            f"> **临床建议**: 依据您所在区域 / 中心的报告标准选择。两系统在"
+            f"治疗推荐上多数情况下一致, 主要差异在于诊断登记 (registry coding)。",
+            "",
+        ])
+    if r.rationale:
+        lines.append("**分类依据**:")
+        for s in r.rationale:
+            lines.append(f"- {s}")
+    return "\n".join(lines)
 
 
 def _allo_sct_section(kit: KitInput, kit_out: KitOutput) -> str:
@@ -1046,8 +1114,104 @@ def _confidence_narrative(kit_out: KitOutput) -> str:
     return "\n".join(lines)
 
 
+def _drug_interaction_warnings(kit_out: KitOutput) -> list[str]:
+    """Per issue #8 — generate drug-interaction warnings (CYP3A4, QT, etc.)
+    based on the patient's top recommended regimens.
+
+    Returns a list of formatted warning bullets ready to merge into the
+    cautions section.
+    """
+    regimens = kit_out.top_regimens or []
+    if not regimens:
+        return []
+
+    # Collect distinct drugs across the top-3 regimens
+    top3_drugs: set[str] = set()
+    for r in regimens[:3]:
+        top3_drugs.update(d for d in (r.get("drugs") or []))
+
+    warnings: list[str] = []
+
+    # ---- Venetoclax + CYP3A4 inhibitor (azole prophylaxis is SOC) ----
+    if "Venetoclax" in top3_drugs:
+        warnings.append(
+            "💊 **Venetoclax + 强效 CYP3A4 抑制剂 (常见: 唑类抗真菌)**: "
+            "Ven + posaconazole → AUC ↑ 6-7×, **必须减量**. "
+            "**Posaconazole / itraconazole / voriconazole** (强效抑制) → "
+            "Ven 维持剂量降至 **100 mg/day**, ramp-up 也按比例 (10 → 20 → 50 → 100 mg). "
+            "**Fluconazole** (中效) → Ven 减 50%. "
+            "**与强效 CYP3A4 诱导剂 (rifampin, phenytoin, carbamazepine, St. John's wort) "
+            "同用** → Ven 暴露下降 ≥ 70%, **应避免同用**; 必须时改用其他方案。"
+        )
+
+    # ---- Quizartinib QT/CYP3A4 interactions (FDA black-box) ----
+    if "Quizartinib (AC220)" in top3_drugs or "Quizartinib" in top3_drugs:
+        warnings.append(
+            "⚠ **Quizartinib + 强效 CYP3A4 抑制剂 (FDA black-box: cardiac arrest)**: "
+            "Quiz 是 CYP3A4 底物 + QT 延长药物. 强效 CYP3A4 抑制剂 (azoles) → "
+            "Quiz 暴露 ↑ 90%, **维持期减量至 30 mg/day** (诱导 35.4 mg/day, "
+            "巩固 53 mg/day). **避免**与其他 QT 延长药物同用 (ondansetron, "
+            "fluoroquinolones, methadone, antipsychotics, tricyclics). "
+            "**基线 QTc > 450 ms 或药物相互作用无法管理 → 改用 Gilteritinib** "
+            "(QT 风险更低)."
+        )
+
+    # ---- Midostaurin CYP3A4 caveat (less stringent than Quiz) ----
+    if "Midostaurin" in top3_drugs:
+        warnings.append(
+            "💊 **Midostaurin + CYP3A4 调节剂**: Mido 是 CYP3A4 底物且自我诱导 "
+            "(steady-state AUC ↓ ~75% over 28 days). 强效抑制剂 (posaconazole) → "
+            "Cmax ↑ 1.6×, 临床通常无需调整 (RATIFY 允许同用). 强效诱导剂 "
+            "(rifampin) → Cmax ↓ ~94%, **避免同用**. 与 Ven 同方案时 (e.g., "
+            "假设性 7+3 + Mido + Ven 联合) 注意累加 CYP3A4 负担."
+        )
+
+    # ---- Gilteritinib CYP3A4 (less drastic) ----
+    if "Gilteritinib" in top3_drugs:
+        warnings.append(
+            "💊 **Gilteritinib + 强效 CYP3A4 抑制剂**: Gilt 是 CYP3A4 + P-gp 底物. "
+            "Itraconazole → Gilt AUC ↑ 2.2×; 监测毒性 (主要: 骨髓抑制、QT). "
+            "强效诱导剂 (rifampin) → Gilt AUC ↓ 70%, **避免同用**. "
+            "Gilt 的 QT 风险显著低于 Quiz; 仍建议基线 + 治疗期 ECG 监测."
+        )
+
+    # ---- Ivosidenib differentiation syndrome + CYP3A4 ----
+    if "Ivosidenib" in top3_drugs:
+        warnings.append(
+            "⚠ **Ivosidenib differentiation syndrome (~25%) + CYP3A4 互作**: "
+            "Ivo 是 CYP3A4 底物 + 诱导剂. 强效抑制剂 (posaconazole) → Ivo AUC ↑ 2×; "
+            "**避免**与强效诱导剂同用. **DS 警示**: 治疗早期 (D1-D60) 不明原因发热、"
+            "肺浸润、皮疹、外周水肿 → 立即 dexamethasone 10 mg IV q12h + 中断 Ivo "
+            "至缓解. 同时关注 QT 延长 (基线 + 周 1, 2, 3, 4, 然后月度 ECG)."
+        )
+
+    # ---- Enasidenib similar warning (often co-treated with azoles) ----
+    if "Enasidenib" in top3_drugs:
+        warnings.append(
+            "⚠ **Enasidenib differentiation syndrome (~15%) + CYP3A4 互作**: "
+            "Ena 是多 CYP 通路底物 (CYP3A4 + 1A2 + 2C19). 强效抑制剂 (azole) → "
+            "Ena AUC ↑ 1.5×. **DS 警示** 同 Ivo (dexamethasone + 暂停). "
+            "Ena 的 QT 风险较低但仍需基线 ECG."
+        )
+
+    # ---- Anthracycline + cardiotoxic medication interactions ----
+    if "Daunorubicin" in top3_drugs or "Idarubicin" in top3_drugs:
+        warnings.append(
+            "💉 **蒽环类心毒性 + 联合心毒性药物**: 累积剂量限制 - "
+            "Daunorubicin ≤ 550 mg/m² lifetime, Idarubicin ≤ 90 mg/m². "
+            "**避免**同用其他心毒性药物 (trastuzumab, 高剂量 cyclophosphamide). "
+            "基线 ECHO (LVEF ≥ 50%) + 累积剂量后或剂量调整后复查. "
+            "Dexrazoxane 可作为心保护剂 (Idarubicin 高累积剂量时考虑)."
+        )
+
+    return warnings
+
+
 def _cautions_section(kit_out: KitOutput) -> str:
-    cautions = kit_out.cautions or []
+    cautions = list(kit_out.cautions or [])
+    # Issue #8 — append regimen-specific drug-interaction warnings.
+    interaction_warnings = _drug_interaction_warnings(kit_out)
+    cautions.extend(interaction_warnings)
     if not cautions:
         return "*未检测到特殊用药禁忌。*"
     return "\n".join(f"- {c}" for c in cautions)
@@ -1158,6 +1322,8 @@ def build_clinical_report_markdown(
         "",
         _mutation_narrative(kit.mutations or []),
         "",
+        _hotspot_codon_section(kit.mutations or []),
+        "",
         "### 3.5 融合基因",
         "",
         _fusion_narrative(kit.fusions or []),
@@ -1173,7 +1339,11 @@ def build_clinical_report_markdown(
         "",
         _eln_dual_section(kit, kit_out),
         "",
-        "### 3.8 Allo-SCT 推荐 + 准备 checklist",
+        "### 3.8 WHO 2022 + ICC 2022 分类",
+        "",
+        _who_icc_section(kit),
+        "",
+        "### 3.9 Allo-SCT 推荐 + 准备 checklist",
         "",
         _allo_sct_section(kit, kit_out),
         "",
@@ -1216,9 +1386,27 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 7: Model Prediction ----
+    # ---- Section 7: Model Prediction (Research-grade) ----
+    # Issue #10 — prominent caveat banner BEFORE the AUC predictions, so
+    # clinicians can't miss that this section has not been clinically
+    # validated. The Pearson correlation between AUC predictions and
+    # clinical CR rates was ≈ 0.05 in our Route B test, i.e. effectively
+    # uncorrelated. This section is for hypothesis generation only.
     sections.extend([
         "## 七、模型辅助预测 (Research-grade)",
+        "",
+        "> ⚠ **Research-grade prediction — DO NOT base treatment decisions on "
+        "this section alone.**",
+        ">",
+        "> Layer-3 AUC 预测**未经前瞻性临床验证**，"
+        "Route B (BeatAML 内部留出验证集) 中预测 AUC 与临床 CR 率的相关性"
+        "**Pearson r ≈ 0.05** (即统计上无显著相关)。"
+        "本节仅用于**机制假设生成 (hypothesis generation)** + "
+        "不同 backbone 的横向对照, **不可单独驱动治疗决策**。"
+        ">",
+        "> **临床决策请参考第五节** (循证试验方案, Layer 1, 含 PMID + n + median OS) "
+        "或第三节 §3.6 (克隆生物学 + ELN 2022 分层)。这两层不依赖 AUC 预测，"
+        "对临床更有指导性。",
         "",
         "### 7.1 组合 AUC 预测 (Layer 3)",
         "",
