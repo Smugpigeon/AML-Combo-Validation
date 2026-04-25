@@ -378,8 +378,11 @@ def exp6_head_to_head(v2: SetDrugInference, v3: SetDrugInference) -> dict:
     )
 
     def _pairs(out):
+        # Skip Layer-3 OOD suppression markers (per issue #3) — they have no
+        # drug1/drug2 fields and aren't valid combo predictions.
         return [tuple(sorted([c["drug1"], c["drug2"]]))
-                for c in out.top_combinations]
+                for c in out.top_combinations
+                if not c.get("suppressed")]
 
     mlp_top = _pairs(out_mlp)
     v2_top = _pairs(out_v2)

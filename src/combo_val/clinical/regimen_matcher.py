@@ -181,46 +181,109 @@ def _check_eligibility(regimen: Regimen,
     return eligible, matches, violations
 
 
+def _clinical_tier_match_bonus(regimen: Regimen,
+                                 fitness: str, stage: str) -> float:
+    """Hard tier match: ensures SOC ranks above experimental for context.
+
+    Per issue #1 — for fit + newly-Dx FLT3-ITD AML, the SOC is 7+3 + FLT3i
+    (RATIFY / QUANTUM-First, peer-reviewed Phase 3 + FDA approved). It must
+    rank above HMA-based 'experimental triplets' that report inflated CR
+    rates from small abstracts.
+
+    Returns:
+      +200 — strong match (regimen tier matches patient context)
+       -50 — clear mismatch (e.g., experimental triplet for fit newly-Dx)
+         0 — neutral
+    """
+    tier = regimen.clinical_tier
+    if tier == "first_line_intensive":
+        if fitness == "fit" and stage == "newly_diagnosed":
+            return 200.0
+        return -50.0
+
+    if tier == "first_line_unfit":
+        if fitness == "unfit" and stage == "newly_diagnosed":
+            return 200.0
+        return -30.0
+
+    if tier == "experimental_triplet":
+        # Available for any newly-Dx with the right biomarker, but never
+        # first-choice over peer-reviewed SOC. Sized to not exceed the
+        # +200 SOC bonus — so SOC always wins, but experimental still
+        # ranks ABOVE salvage when patient has the biomarker.
+        return -50.0
+
+    if tier == "salvage":
+        if stage == "relapsed_refractory":
+            return 200.0
+        return -150.0
+
+    if tier == "supportive":
+        return -100.0
+
+    return 0.0
+
+
 def _score(regimen: Regimen,
             features: Mapping[str, float],
-            matched_biomarkers: list[str]) -> float:
+            matched_biomarkers: list[str],
+            fitness: str = "any",
+            stage: str = "any") -> float:
     """Rank-ordering score among eligible regimens.
 
-    Design intent:
-      - Evidence-level is the base score (FDA=100, P3=80, ...)
-      - Published CR rate scales linearly 0-100
-      - A regimen that explicitly `required_*` the patient's driver is
-        "biomarker-specific" — bigger bonus than a generally-eligible regimen.
-      - APL (PML-RARA) gets the largest bonus — chemo is contraindicated,
-        ATRA+ATO is the only reasonable choice.
-      - Triplets carry a small tiebreaker since evidence is shifting that way.
+    Design (post-issue #1):
+      1. Clinical-tier match dominates (±200) — SOC for the patient
+         context (fit/unfit × newly-Dx/R/R) wins by default.
+      2. Evidence level (FDA / P3 / P2 / consensus) is the base
+      3. Published CR rate adds 0-100, but is capped lower for low-evidence
+         trials so a 95% Phase-2 abstract can't outrank a 60% Phase-3
+      4. Biomarker-specificity (moderate)
+      5. APL (PML-RARA) extra ATRA/ATO bonus
     """
-    s = float(EVIDENCE_SCORE.get(regimen.trial_phase, 0))
-    s += 100.0 * regimen.outcome_cr_cri_rate
-    # Preferred biomarkers (soft)
+    s = 0.0
+    # 1. Tier match (the headline change in issue #1)
+    s += _clinical_tier_match_bonus(regimen, fitness, stage)
+    # 2. Evidence level
+    s += float(EVIDENCE_SCORE.get(regimen.trial_phase, 0))
+    # 3. CR rate, weighted by evidence quality (caps inflation from small
+    #    abstracts)
+    cr_weight = {
+        "FDA": 100.0, "Phase3": 100.0, "Phase2": 60.0,
+        "Phase1": 30.0, "consensus": 50.0,
+    }.get(regimen.trial_phase, 50.0)
+    s += cr_weight * regimen.outcome_cr_cri_rate
+    # 4. Preferred biomarkers (soft)
     for pref in regimen.preferred:
         if _bio_present(features, pref):
             s += 5.0
-    # Target-specificity bonus: regimen declared required_all/any for a
-    # biomarker the patient HAS → this is a targeted match, boost hard.
-    # Calibrated so biomarker-targeted Phase-2 triplets can outrank FDA
-    # generic regimens when the targeted CR rate advantage is substantial
-    # (FLT3-triplet 96% vs VIALE-A 66% = 30-point CR delta; required_any
-    # bonus of +18 + triplet bonus +3 bridges that gap + evidence gap).
+    # 5. Target-specificity (moderate boost when the regimen explicitly
+    #    targets a driver the patient has)
+    has_targeted_match = False
     for bio in regimen.required_all:
         if _bio_present(features, bio):
-            s += 30.0
+            s += 15.0
+            has_targeted_match = True
     for bio in regimen.required_any:
         if _bio_present(features, bio):
-            s += 18.0
+            s += 10.0
+            has_targeted_match = True
             break
-    # APL is the sharpest-edged biology rule: PML-RARA + ATRA/ATO is near
-    # mandatory. Extra boost on top of required_all handling above.
+    # 5b. Targeted-FDA bonus: when the regimen is BOTH (a) FDA-approved
+    #     for an SOC tier matching the patient, AND (b) targets a specific
+    #     driver mutation the patient carries, it should beat a general
+    #     SOC regimen. Example: AGILE (Aza+Ivo for IDH1-mut unfit) must
+    #     rank above Ven+Aza for an IDH1-mut elderly unfit patient.
+    if (has_targeted_match
+            and regimen.trial_phase in ("FDA", "Phase3")
+            and regimen.clinical_tier in ("first_line_intensive",
+                                            "first_line_unfit")):
+        s += 50.0
+    # 6. APL biology rule
     if "ATRA" in regimen.drugs and _bio_present(features, "fusion_PML_RARA"):
-        s += 20.0
-    # Prefer triplets when available (2024+ evidence trend).
+        s += 30.0
+    # 7. Triplet preference (small tiebreaker)
     if regimen.n_drugs >= 3:
-        s += 3.0
+        s += 2.0
     return s
 
 
@@ -249,7 +312,9 @@ def match_patient(
         eligible, matched_bio, violations = _check_eligibility(
             regimen, patient_features, stage, fitness, age,
         )
-        s = _score(regimen, patient_features, matched_bio) if eligible else 0.0
+        s = (_score(regimen, patient_features, matched_bio,
+                     fitness=fitness, stage=stage)
+             if eligible else 0.0)
         all_matches.append(MatchedRegimen(
             regimen=regimen,
             eligible=eligible,

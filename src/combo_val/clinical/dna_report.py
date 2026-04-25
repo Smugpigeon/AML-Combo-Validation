@@ -583,15 +583,24 @@ def generate_patient_readme(
         # Layer 3 — Predicted AUC
         if getattr(kit_output, "top_combinations", None):
             lines.append("### Layer 3 — Predicted combo AUC (lower = more cell-killing)\n")
-            for c in (kit_output.top_combinations or [])[:3]:
-                mark = "★" if c.get("both_mech_annotated") else " "
-                lines.append(
-                    f"- {mark} {c['drug1']} + {c['drug2']}"
-                    f" — AUC {c.get('predicted_combo_auc', '?'):.1f}"
-                    f" (mech {c.get('mech_score', 0):+.2f})"
-                )
+            tc = kit_output.top_combinations or []
+            # Per issue #3 — show suppression banner if Layer-3 was disabled
+            # (RNA-Seq input is far OOD vs BeatAML training distribution).
+            if tc and tc[0].get("suppressed"):
+                sev = tc[0].get("ood_severity", "?")
+                reason = tc[0].get("suppress_reason", "")
+                lines.append(f"> ⚠ **Layer-3 suppressed (RNA-Seq OOD, severity={sev})**\n")
+                lines.append(f"> {reason}\n")
+            else:
+                for c in tc[:3]:
+                    mark = "★" if c.get("both_mech_annotated") else " "
+                    lines.append(
+                        f"- {mark} {c['drug1']} + {c['drug2']}"
+                        f" — AUC {c.get('predicted_combo_auc', '?'):.1f}"
+                        f" (mech {c.get('mech_score', 0):+.2f})"
+                    )
             lines.append("")
-            backbone = (kit_output.top_combinations or [{}])[0].get("layer3_backbone", "?")
+            backbone = tc[0].get("layer3_backbone", "?") if tc else "?"
             lines.append(f"_Backbone used: `{backbone}`_\n")
 
     # ---- File manifest ----

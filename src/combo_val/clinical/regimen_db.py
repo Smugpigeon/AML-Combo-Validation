@@ -39,6 +39,26 @@ class Regimen:
     # --- Preferred biomarkers (score-boost if present, not required) ---
     preferred: tuple[str, ...] = ()
 
+    # --- Clinical tier (issue #1) ---
+    # Hard hierarchy of WHEN this regimen is the standard of care.
+    # Used by the matcher to ensure 7+3+FLT3i ranks first for fit
+    # newly-Dx FLT3-ITD AML, not a Phase-2 abstract HMA-triplet that
+    # happens to report higher CR rate.
+    #
+    # Values:
+    #   "first_line_intensive" — SOC for fit, newly-Dx (7+3 ± FLT3i,
+    #                            7+3+GO for CBF-AML, ATRA+ATO for APL,
+    #                            CPX-351 for AML-MRC ≤ 75)
+    #   "first_line_unfit"     — SOC for unfit, newly-Dx (Ven+Aza,
+    #                            Ven+Dec, AGILE, ENAVEN, etc.)
+    #   "experimental_triplet" — Promising P2 / abstract-only data;
+    #                            available but not first-choice in
+    #                            either fit or unfit until peer-
+    #                            reviewed Phase 3 readout
+    #   "salvage"              — R/R-only (Gilt mono, MEC, FLAG-Ida)
+    #   "supportive"           — When no curative option (HU, transfusion)
+    clinical_tier: str = "experimental_triplet"
+
     # --- Published outcomes (0-1 fractions, months for OS) ---
     trial_name: str = "consensus"
     trial_phase: str = "consensus"                  # "FDA" | "Phase3" | "Phase2" | "Phase1" | "consensus"
@@ -80,6 +100,7 @@ REGIMEN_DB: list[Regimen] = [
         name="7+3 (Cytarabine + Daunorubicin)",
         drugs=("Cytarabine", "Daunorubicin"),
         n_drugs=2,
+        clinical_tier="first_line_intensive",
         age_max=75,
         fitness="fit",
         stage="newly_diagnosed",
@@ -97,6 +118,7 @@ REGIMEN_DB: list[Regimen] = [
         name="7+3 + Midostaurin (RATIFY)",
         drugs=("Cytarabine", "Daunorubicin", "Midostaurin"),
         n_drugs=3,
+        clinical_tier="first_line_intensive",
         required_any=("mut_FLT3", "clin_flt3_itd"),
         age_max=70,
         fitness="fit",
@@ -118,6 +140,7 @@ REGIMEN_DB: list[Regimen] = [
         name="7+3 + Quizartinib (QUANTUM-First)",
         drugs=("Cytarabine", "Daunorubicin", "Quizartinib (AC220)"),
         n_drugs=3,
+        clinical_tier="first_line_intensive",
         required_any=("clin_flt3_itd",),               # ITD-specific, not TKD
         age_max=75,
         fitness="fit",
@@ -139,6 +162,7 @@ REGIMEN_DB: list[Regimen] = [
         name="CPX-351 (Vyxeos; liposomal Cyt+Dauno 5:1)",
         drugs=("Cytarabine", "Daunorubicin"),           # liposomal, drug-combo product
         n_drugs=2,
+        clinical_tier="first_line_intensive",
         required_any=("karyo_complex", "karyo_monosomy_5_or_7",
                        "karyo_del_17p", "clin_prior_mds"),
         age_min=60,
@@ -165,6 +189,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Venetoclax + Azacitidine (VIALE-A)",
         drugs=("Venetoclax", "Azacytidine"),
         n_drugs=2,
+        clinical_tier="first_line_unfit",
         fitness="unfit",
         stage="newly_diagnosed",
         excluded_any=("fusion_PML_RARA",),
@@ -186,6 +211,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Venetoclax + Decitabine",
         drugs=("Venetoclax", "Decitabine"),
         n_drugs=2,
+        clinical_tier="first_line_unfit",
         fitness="unfit",
         stage="newly_diagnosed",
         excluded_any=("fusion_PML_RARA",),
@@ -204,6 +230,7 @@ REGIMEN_DB: list[Regimen] = [
         name="LDAC + Glasdegib (BRIGHT)",
         drugs=("Cytarabine", "Glasdegib"),
         n_drugs=2,
+        clinical_tier="first_line_unfit",
         fitness="unfit",
         stage="newly_diagnosed",
         trial_name="BRIGHT AML 1003 (Cortes et al.)",
@@ -222,6 +249,7 @@ REGIMEN_DB: list[Regimen] = [
         name="LDAC + Venetoclax (VIALE-C)",
         drugs=("Cytarabine", "Venetoclax"),
         n_drugs=2,
+        clinical_tier="first_line_unfit",
         fitness="unfit",
         stage="newly_diagnosed",
         excluded_any=("fusion_PML_RARA",),
@@ -245,6 +273,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Azacitidine + Ivosidenib (AGILE)",
         drugs=("Azacytidine", "Ivosidenib"),
         n_drugs=2,
+        clinical_tier="first_line_unfit",
         required_all=("mut_IDH1",),
         fitness="unfit",
         stage="newly_diagnosed",
@@ -265,6 +294,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Ivosidenib monotherapy",
         drugs=("Ivosidenib",),
         n_drugs=1,
+        clinical_tier="salvage",
         required_all=("mut_IDH1",),
         stage="relapsed_refractory",
         trial_name="DiNardo et al.",
@@ -282,6 +312,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Azacitidine + Venetoclax + Ivosidenib (Triplet)",
         drugs=("Azacytidine", "Venetoclax", "Ivosidenib"),
         n_drugs=3,
+        clinical_tier="experimental_triplet",
         required_all=("mut_IDH1",),
         stage="newly_diagnosed",
         trial_name="DiNardo et al. MDA",
@@ -304,6 +335,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Enasidenib monotherapy",
         drugs=("Enasidenib",),
         n_drugs=1,
+        clinical_tier="salvage",
         required_all=("mut_IDH2",),
         stage="relapsed_refractory",
         trial_name="Stein et al.",
@@ -321,6 +353,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Azacitidine + Venetoclax + Enasidenib (Triplet)",
         drugs=("Azacytidine", "Venetoclax", "Enasidenib"),
         n_drugs=3,
+        clinical_tier="experimental_triplet",
         required_all=("mut_IDH2",),
         stage="newly_diagnosed",
         trial_name="Venugopal et al. MDA",
@@ -342,6 +375,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Gilteritinib monotherapy (ADMIRAL)",
         drugs=("Gilteritinib",),
         n_drugs=1,
+        clinical_tier="salvage",
         required_any=("mut_FLT3", "clin_flt3_itd"),
         stage="relapsed_refractory",
         trial_name="ADMIRAL (Perl et al.)",
@@ -360,6 +394,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Azacitidine + Gilteritinib (LACEWING)",
         drugs=("Azacytidine", "Gilteritinib"),
         n_drugs=2,
+        clinical_tier="experimental_triplet",
         required_any=("mut_FLT3", "clin_flt3_itd"),
         fitness="unfit",
         stage="newly_diagnosed",
@@ -379,6 +414,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Azacitidine + Venetoclax + Gilteritinib (Triplet)",
         drugs=("Azacytidine", "Venetoclax", "Gilteritinib"),
         n_drugs=3,
+        clinical_tier="experimental_triplet",
         required_any=("mut_FLT3", "clin_flt3_itd"),
         stage="any",                                    # works in both ND and R/R
         trial_name="Short/Daver et al. (JCO 2024)",
@@ -398,6 +434,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Quizartinib + Venetoclax + Decitabine (Triplet)",
         drugs=("Quizartinib (AC220)", "Venetoclax", "Decitabine"),
         n_drugs=3,
+        clinical_tier="experimental_triplet",
         required_all=("clin_flt3_itd",),                # ITD-specific
         stage="newly_diagnosed",
         trial_name="ASH 2024 abstract",
@@ -415,6 +452,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Gilteritinib + Venetoclax (R/R FLT3-mut)",
         drugs=("Gilteritinib", "Venetoclax"),
         n_drugs=2,
+        clinical_tier="salvage",
         required_any=("mut_FLT3", "clin_flt3_itd"),
         stage="relapsed_refractory",
         trial_name="Daver et al. MDA",
@@ -437,6 +475,7 @@ REGIMEN_DB: list[Regimen] = [
         name="ATRA + ATO (low-risk APL)",
         drugs=("ATRA", "Arsenic Trioxide"),
         n_drugs=2,
+        clinical_tier="first_line_intensive",
         required_all=("fusion_PML_RARA",),
         stage="newly_diagnosed",
         trial_name="APL0406 (Lo-Coco et al.)",
@@ -458,6 +497,7 @@ REGIMEN_DB: list[Regimen] = [
         name="FLAG-Ida (Flu + ARA-C + GCSF + Ida)",
         drugs=("Fludarabine", "Cytarabine", "G-CSF", "Idarubicin"),
         n_drugs=4,
+        clinical_tier="salvage",
         fitness="fit",
         stage="relapsed_refractory",
         trial_name="consensus salvage",
@@ -477,6 +517,7 @@ REGIMEN_DB: list[Regimen] = [
         name="Supportive care or clinical trial (no standard targeted option)",
         drugs=("Hydroxyurea", "transfusion support", "consider clinical trial enrollment"),
         n_drugs=0,
+        clinical_tier="supportive",
         stage="any",
         trial_name="NCCN / ELN consensus",
         trial_phase="consensus",

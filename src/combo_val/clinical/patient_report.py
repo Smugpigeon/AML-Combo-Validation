@@ -451,18 +451,144 @@ def _eln_rationale_prose(kit: KitInput, kit_out: KitOutput) -> str:
         if flags.get("FLT3_ITD") and not flags.get("NPM1"):
             parts.append("FLT3-ITD 高负荷 (无 NPM1 修正)")
         return (", ".join(parts) +
-                "。此组预后差，传统 7+3 效果有限，建议临床试验入组 + allo-SCT 早期桥接。")
+                "。此组预后差,传统 7+3 效果有限,**强烈建议临床试验入组 + CR1 阶段"
+                "尽早 allo-SCT 桥接 — 立即启动 HLA 配型 + 供者搜索**(详见 §3.8)。")
 
     if eln == "Intermediate":
         if flags.get("NPM1") and flags.get("FLT3_ITD"):
-            return ("ELN 2017 分层为 **Intermediate**，依据: NPM1 突变 + FLT3-ITD 高负荷组合 "
-                    "(按 ELN 2017 修正规则，高 AR FLT3-ITD 原为 adverse，但 NPM1 "
+            return ("ELN 2017 分层为 **Intermediate**,依据: NPM1 突变 + FLT3-ITD 高负荷组合 "
+                    "(按 ELN 2017 修正规则,高 AR FLT3-ITD 原为 adverse,但 NPM1 "
                     "co-mutation 将整体归为 Intermediate)。"
-                    "建议强化诱导 + FLT3 抑制剂 + 考虑 allo-SCT。")
+                    "**建议路径**:(1) 标准 7+3 + FLT3 抑制剂(Mido per RATIFY 或 Quiz "
+                    "per QUANTUM-First)强化诱导;(2) **CR1 阶段强烈推荐 allo-SCT** —— "
+                    "FLT3-ITD 高 AR 即使有 NPM1 共突变,allo-SCT 仍显著降低复发,"
+                    "**立即启动 HLA 配型 + 供者搜索**(详见 §3.8)。")
         return ("ELN 2017 分层为 **Intermediate**。无明确 favorable 或 adverse 特征。"
-                "具体治疗强度选择根据患者体能状态 + 共突变分布综合判断。")
+                "**CR1 allo-SCT 通常推荐**(尤其有不良共突变如 RUNX1/ASXL1/TP53),"
+                "需结合体能状态、年龄、共病决定;启动 HLA 配型作为备选(详见 §3.8)。")
 
     return f"ELN 2017 分层: {eln}。"
+
+
+def _allo_sct_section(kit: KitInput, kit_out: KitOutput) -> str:
+    """Per-issue-#2: replace 'consider allo-SCT' with explicit recommendation
+    + readiness checklist when ELN ≥ Intermediate AND patient is fit.
+
+    Recommendation strength tiers:
+      - **Strongly recommended** (大写,加粗) — Adverse OR (Intermediate
+        with FLT3-ITD high AR / TP53 / RUNX1 / ASXL1 / cytogenetic adverse)
+      - **Recommended** — Intermediate without high-risk co-mutations
+      - **Discuss case-by-case** — Favorable (NPM1 isolated, CEBPA
+        biallelic, CBF-AML in CR1 with MRD negative)
+      - **Not indicated** — APL (PML-RARA) in CR
+    """
+    eln = kit_out.predicted_eln2017
+    flags = kit_out.driver_flags
+    fit = kit_out.fitness_flag == "fit_for_intensive"
+    fusions_str = " ".join((kit.fusions or [])).upper()
+
+    # APL: SCT not standard for low-risk APL in CR
+    if "PML-RARA" in fusions_str or "PML_RARA" in fusions_str:
+        return (
+            "**APL (PML-RARA)** — Allo-SCT 通常**不作为 CR1 阶段标准推荐**。"
+            "ATRA + ATO 治疗后达到分子学缓解的 APL 患者长期生存极好(>90%);"
+            "仅在分子学复发或难治时再评估 SCT。"
+        )
+
+    # Decide recommendation strength
+    if not fit:
+        strength = "**Allo-SCT 须结合体能 + 共病评估**"
+        rationale = (
+            "患者当前体能/共病评估为 **unfit for intensive induction**。"
+            "传统 myeloablative SCT 风险高;可考虑**减低强度预处理(RIC)** "
+            "SCT,需 transplant 团队评估 HCT-CI 评分。"
+        )
+    elif eln == "Adverse":
+        strength = "🔴 **CR1 阶段强烈推荐 Allo-SCT(Strongly recommended)**"
+        rationale = (
+            "ELN Adverse 风险组(TP53 / RUNX1 / ASXL1 / 复杂核型 / "
+            "FLT3-ITD 无 NPM1 等),传统化疗治愈率 < 20%,"
+            "**SCT 是唯一可能治愈的途径**。**今日**启动 HLA + 供者搜索。"
+        )
+    elif eln == "Intermediate":
+        # FLT3-ITD high AR + NPM1 still benefits from SCT
+        if flags.get("FLT3_ITD"):
+            strength = "🔴 **CR1 阶段强烈推荐 Allo-SCT(Strongly recommended)**"
+            rationale = (
+                "FLT3-ITD 高 AR 即使有 NPM1 共突变,SCT 仍显著降低复发率"
+                "(SORMAIN, GIMEMA AML0310 等多项研究)。**今日**启动 HLA + "
+                "供者搜索,目标 CR1 后 3 个月内移植。"
+            )
+        elif flags.get("RUNX1") or flags.get("ASXL1") or flags.get("TP53"):
+            strength = "🔴 **CR1 阶段强烈推荐 Allo-SCT**"
+            rationale = (
+                "Intermediate 风险伴不良共突变(RUNX1/ASXL1/TP53),复发风险 "
+                "实际偏高,移植获益明确。"
+            )
+        else:
+            strength = "🟡 **CR1 阶段推荐 Allo-SCT**(Recommended)"
+            rationale = (
+                "Intermediate 无明显高危共突变。需结合 MRD 状态、年龄、"
+                "供者可及性、患者意愿决定。"
+            )
+    elif eln == "Favorable":
+        if flags.get("NPM1") and not flags.get("FLT3_ITD"):
+            strength = "🟢 **CR1 不常规推荐 Allo-SCT**(NPM1-only Favorable)"
+            rationale = (
+                "Isolated NPM1-mut 是 ELN Favorable,5 年 OS 60-70%。"
+                "若 CR1 + MRD 阴性,**不推荐**前置 SCT;若 MRD 持续阳性"
+                "或早期复发,再考虑 SCT。"
+            )
+        else:
+            strength = "🟢 **CR1 不常规推荐 Allo-SCT**(Favorable)"
+            rationale = (
+                "CBF-AML / CEBPA biallelic 等 Favorable 亚型,化疗"
+                "+ HiDAC 巩固足够,SCT 留作复发挽救。"
+            )
+    else:
+        strength = "**Allo-SCT 推荐待评估**"
+        rationale = "ELN 分层信息不足,需 MDT 综合判断。"
+
+    # Build the readiness checklist (only render full checklist when actually
+    # recommended — avoid clutter for Favorable / APL)
+    show_checklist = (
+        eln in ("Adverse", "Intermediate")
+        and (kit_out.predicted_eln2017 != "Favorable")
+        and "PML-RARA" not in fusions_str
+    )
+
+    body = [strength, "", rationale]
+    if show_checklist:
+        body.extend([
+            "",
+            "**SCT 准备 checklist(MDT 团队按时点核对)**:",
+            "",
+            "**今日 / D0**:",
+            "- [ ] HLA 高分辨配型 — 患者 + 一级亲属(同胞/父母/子女)",
+            "- [ ] 转诊移植中心(CR1 起 30 天内确诊转诊)",
+            "- [ ] 计算 **HCT-CI 评分**(共病指数,> 3 提示 RIC)",
+            "- [ ] 评估 ECOG / KPS 体能状态",
+            "- [ ] 启动**供者搜索**(BMDW、骨髓库 / NMDP)",
+            "",
+            "**诱导期间**:",
+            "- [ ] 心脏 baseline:ECG、ECHO(LVEF)",
+            "- [ ] 肺功能:DLCO 校正、FEV1",
+            "- [ ] 肝肾功能 baseline、HBV / HCV / HIV / CMV / EBV 血清学",
+            "- [ ] 牙科评估、感染灶清除",
+            "- [ ] 生育力咨询(育龄患者)",
+            "- [ ] 心理 + 社工支持评估",
+            "",
+            "**CR1 巩固阶段**:",
+            "- [ ] 确认 MRD 状态(NPM1 RT-qPCR / 流式)",
+            "- [ ] 选择供者:Matched Sibling > MUD > Haploidentical > Cord",
+            "- [ ] 预处理方案(MAC vs RIC,基于 HCT-CI + 年龄 + 供者类型)",
+            "- [ ] 入院 SCT 时间窗:CR1 后 ≤ 3 个月内为佳",
+            "",
+            "_⚠ 不做 SCT 的复发风险:_ FLT3-ITD high AR + NPM1 患者 5 年 RFS"
+            "化疗组 ~30-40%,SCT 组 ~50-65%(GIMEMA AML0310, SORMAIN 等)。",
+        ])
+
+    return "\n".join(body)
 
 
 def _regimen_section(kit_out: KitOutput) -> str:
@@ -510,7 +636,34 @@ def _combo_prediction_narrative(kit_out: KitOutput) -> str:
     combos = kit_out.top_combinations or []
     if not combos:
         return "*模型未返回组合预测。*"
+
+    # Per issue #3 — Layer-3 OOD suppression marker takes precedence.
+    # When the upstream kit detects that the RNA-Seq sample is far from
+    # BeatAML training distribution, top_combos is replaced with a single
+    # suppression sentinel: drug1/drug2/auc fields are NOT populated. We
+    # render a yellow warning banner instead of crashing on missing keys.
     top = combos[0]
+    if top.get("suppressed"):
+        backbone = top.get("layer3_backbone", "unknown")
+        severity = top.get("ood_severity", "unknown")
+        m_raw = top.get("mahalanobis_raw")
+        m_qn = top.get("mahalanobis_qn")
+        reason = top.get("suppress_reason") or ""
+        m_raw_str = f"{m_raw:.1f}" if isinstance(m_raw, (int, float)) else "n/a"
+        m_qn_str = f"{m_qn:.1f}" if isinstance(m_qn, (int, float)) else "n/a"
+        return (
+            f"> ⚠ **Layer-3 组合预测已禁用 (per issue #3 — RNA-Seq OOD)**\n\n"
+            f"上游 QC 检测到本样本 RNA-Seq 与 BeatAML 2.0 训练分布偏离过远，"
+            f"MLP 输出在数值上看似合理，实际为外推幻觉，不可作为临床决策依据。\n\n"
+            f"- **OOD 等级**: `{severity}`\n"
+            f"- **Mahalanobis 距离 (raw)**: {m_raw_str}\n"
+            f"- **Mahalanobis 距离 (post-QN)**: {m_qn_str}\n"
+            f"- **Backbone**: `{backbone}`\n\n"
+            f"*详情*: {reason}\n\n"
+            f"**替代依据**: 请优先参考第 3 节 (循证一线方案) 与第 4 节 "
+            f"(克隆覆盖三联体)；这两层不依赖 RNA-Seq 表达，对 OOD 样本仍稳健。"
+        )
+
     backbone = top.get("layer3_backbone", "unknown")
     lines = [
         f"基于 `{backbone}` backbone 在 BeatAML 2.0 (613 患者 × 165 药) 数据集上训练，"
@@ -710,6 +863,10 @@ def build_clinical_report_markdown(
         "### 3.7 ELN 2017 风险分层",
         "",
         _eln_rationale_prose(kit, kit_out),
+        "",
+        "### 3.8 Allo-SCT 推荐 + 准备 checklist",
+        "",
+        _allo_sct_section(kit, kit_out),
         "",
         "---",
         "",

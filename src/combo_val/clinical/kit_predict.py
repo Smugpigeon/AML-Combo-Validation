@@ -555,6 +555,44 @@ def predict_for_patient(
             "transcriptome_scan_meta": {"available": False},
         }
 
+    # Issue #3 — suppress Layer-3 predictions when RNA-Seq input is OOD.
+    # The kit's MLP was trained on BeatAML 2.0; samples whose Mahalanobis
+    # distance from the training PC distribution is far outside the
+    # training cohort will produce predictions that look numerically
+    # plausible but are actually meaningless extrapolations. Don't ship
+    # those as "top-3 combos" — replace with a single suppression marker
+    # so downstream renderers (patient_report, dna_report, pretty_print)
+    # can show a banner instead.
+    #
+    # Done LAST, after all upstream annotation loops (clonal-coverage scoring,
+    # mech tagging) so they don't need to special-case the marker shape.
+    qc_for_layer3 = diag.get("qc", {})
+    severity_for_layer3 = qc_for_layer3.get("ood_severity", "ok")
+    if severity_for_layer3 in ("far_ood", "ood", "pipeline_mismatch"):
+        def _fmt_mahal(val):
+            if isinstance(val, (int, float)):
+                return f"{val:.1f}"
+            return "n/a"
+        m_raw_str = _fmt_mahal(qc_for_layer3.get("mahalanobis_raw"))
+        m_qn_str = _fmt_mahal(qc_for_layer3.get("mahalanobis_qn"))
+        suppress_msg = (
+            f"Layer-3 prediction suppressed — RNA-Seq sample is "
+            f"out-of-distribution (severity: {severity_for_layer3}, "
+            f"raw Mahalanobis = {m_raw_str}, post-QN = {m_qn_str}). "
+            f"Per issue #3, predictions on far-OOD samples are unreliable; "
+            f"refer to Layer 1 (evidence-based regimens) and Layer 2 "
+            f"(clonal coverage) instead."
+        )
+        top_combos = [{
+            "rank": 0,
+            "suppressed": True,
+            "suppress_reason": suppress_msg,
+            "ood_severity": severity_for_layer3,
+            "mahalanobis_raw": qc_for_layer3.get("mahalanobis_raw"),
+            "mahalanobis_qn": qc_for_layer3.get("mahalanobis_qn"),
+            "layer3_backbone": layer3_backbone,
+        }]
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
@@ -600,15 +638,22 @@ def pretty_print_kit_output(out: KitOutput) -> str:
         "║",
         f"║ LAYER 3 — TOP COMBINATIONS ({backbone}, ★ = both drugs mech-annotated)",
     ]
-    for c in out.top_combinations:
-        mark = "★" if c["both_mech_annotated"] else " "
-        cov = c.get("clonal_coverage_score")
-        cov_str = f"  cov={cov:+.2f}" if cov is not None else ""
-        lines.append(
-            f"║  {c['rank']}.{mark} {c['drug1']:<22s} + {c['drug2']:<22s}  "
-            f"AUC = {c['predicted_combo_auc']:6.1f}  "
-            f"(mech {c['mech_score']:+.2f}{cov_str})"
-        )
+    # Per issue #3 — render OOD suppression marker if Layer-3 was disabled.
+    if out.top_combinations and out.top_combinations[0].get("suppressed"):
+        sev = out.top_combinations[0].get("ood_severity", "?")
+        reason = out.top_combinations[0].get("suppress_reason", "")
+        lines.append(f"║  ⚠ SUPPRESSED — RNA-Seq OOD (severity={sev})")
+        lines.append(f"║    {reason}")
+    else:
+        for c in out.top_combinations:
+            mark = "★" if c["both_mech_annotated"] else " "
+            cov = c.get("clonal_coverage_score")
+            cov_str = f"  cov={cov:+.2f}" if cov is not None else ""
+            lines.append(
+                f"║  {c['rank']}.{mark} {c['drug1']:<22s} + {c['drug2']:<22s}  "
+                f"AUC = {c['predicted_combo_auc']:6.1f}  "
+                f"(mech {c['mech_score']:+.2f}{cov_str})"
+            )
 
     lines += [
         "║",
