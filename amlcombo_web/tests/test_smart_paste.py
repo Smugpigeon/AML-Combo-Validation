@@ -363,6 +363,47 @@ def _make_zip(files: list[tuple[str, bytes]]) -> bytes:
     return buf.getvalue()
 
 
+def test_extract_zip_files_chinese_filename_recovered():
+    """macOS / Chinese-Windows zip tools store CJK names as raw GBK/UTF-8
+    bytes WITHOUT setting the UTF-8 flag bit, so Python's zipfile decodes
+    them as CP437 → mojibake. Our _decode_zip_filename() recovers them."""
+    from app.routers.patients import _extract_zip_files
+    import zipfile as _zip
+    import io as _io
+    buf = _io.BytesIO()
+    with _zip.ZipFile(buf, "w") as zf:
+        zf.writestr("测试套件/患者A.txt", b"45 yo F, FLT3-ITD")
+    raw = buf.getvalue()
+    # Python's writestr DOES set the UTF-8 flag (good). Verify we leave
+    # well-formed UTF-8 names alone.
+    out = _extract_zip_files(raw)
+    assert any("测试套件" in n for n, _ in out)
+
+
+def test_decode_zip_filename_recovers_cp437_garble():
+    """Direct unit test: simulate a ZipInfo where the filename is the
+    CP437 mojibake of a UTF-8 Chinese name."""
+    import zipfile as _zip
+    from app.routers.patients import _decode_zip_filename
+    # Build a ZipInfo with the WRONG decoding (no UTF-8 flag, name is
+    # already in mojibake form as Python's zipfile would produce).
+    info = _zip.ZipInfo()
+    info.filename = "测试套件/患者A.txt".encode("utf-8").decode("cp437")
+    info.flag_bits = 0  # crucial: UTF-8 flag NOT set
+    fixed = _decode_zip_filename(info)
+    assert "测试套件" in fixed
+    assert "患者A" in fixed
+
+
+def test_decode_zip_filename_keeps_ascii_unchanged():
+    import zipfile as _zip
+    from app.routers.patients import _decode_zip_filename
+    info = _zip.ZipInfo()
+    info.filename = "rna_counts.csv"
+    info.flag_bits = 0
+    assert _decode_zip_filename(info) == "rna_counts.csv"
+
+
 def test_extract_zip_files_basic():
     from app.routers.patients import _extract_zip_files
     z = _make_zip([
@@ -382,6 +423,29 @@ def test_extract_zip_rejects_invalid_zip():
     from app.routers.patients import _extract_zip_files
     with pytest.raises(HTTPException := __import__("fastapi").HTTPException):
         _extract_zip_files(b"not a zip")
+
+
+def test_classify_file_skips_documentation():
+    """README / guide files should NOT be passed to LLM, even if their
+    content decodes as text. Saves tokens + avoids context pollution."""
+    from app.routers.patients import _classify_file
+    readme_text = b"""# AMLCombo Test Kit
+
+## How to use this kit
+
+Step 1: sign up at amlcombo.org
+Step 2: drop the zip into the smart-paste area
+Step 3: enter the focus patient ID
+
+This guide explains how to use the platform.
+"""
+    kind, _ = _classify_file("README.md", readme_text)
+    assert kind == "documentation"
+
+    # Filename hint also catches files without strong content markers
+    cn_text = "步骤一：注册账号\n步骤二：上传文件".encode("utf-8")
+    kind, _ = _classify_file("使用指南.md", cn_text)
+    assert kind == "documentation"
 
 
 def test_classify_file_routes_correctly():

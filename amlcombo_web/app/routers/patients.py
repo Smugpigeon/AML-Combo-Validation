@@ -285,6 +285,45 @@ def _try_extract_xlsx_as_csv(data: bytes) -> Optional[str]:
         return None
 
 
+def _decode_zip_filename(info: zipfile.ZipInfo) -> str:
+    """Decode a ZipInfo's filename, fixing Chinese-name garble from macOS/
+    Windows zip tools that don't set the UTF-8 flag (bit 0x800).
+
+    Per the ZIP spec, when bit 0x800 of `flag_bits` is set, the filename
+    is UTF-8; otherwise CP437. macOS Finder and many Chinese Windows zip
+    tools store the filename as raw GBK/UTF-8 bytes WITHOUT setting the
+    flag — so Python's zipfile decodes them as CP437, producing mojibake
+    like "μ┤ïΦ»òσÑùΣ┐┤" instead of "测试套件".
+
+    Recovery: take Python's CP437-decoded string, re-encode back to
+    bytes, then try UTF-8 / GBK / GB18030. Whichever decodes cleanly
+    AND looks like real Chinese (i.e., contains CJK characters) wins.
+    """
+    name = info.filename
+    # If the encoder set the UTF-8 flag, the name is already correct
+    if info.flag_bits & 0x800:
+        return name
+    # ASCII-only names are safe as-is
+    if all(ord(c) < 128 for c in name):
+        return name
+    # Recover the original bytes
+    try:
+        raw = name.encode("cp437")
+    except UnicodeEncodeError:
+        return name  # Can't reach the raw bytes; give up
+    for enc in ("utf-8", "gbk", "gb18030"):
+        try:
+            decoded = raw.decode(enc)
+        except UnicodeDecodeError:
+            continue
+        # Accept the candidate if it has any CJK chars (which is what we
+        # were trying to recover) — otherwise fall through and keep
+        # trying the next encoding.
+        if any("一" <= ch <= "鿿" for ch in decoded):
+            return decoded
+    return name  # All decodings failed; return whatever Python gave us
+
+
 def _extract_zip_files(zip_bytes: bytes,
                         max_files: int = 50,
                         max_total_bytes: int = 5 * 1024 * 1024,
@@ -295,6 +334,7 @@ def _extract_zip_files(zip_bytes: bytes,
       - max_files entries (avoids zip bombs)
       - max_total_bytes uncompressed (also avoids zip bombs)
     Skips dotfiles (e.g., __MACOSX/, .DS_Store) and directories.
+    Fixes mojibake'd Chinese filenames via _decode_zip_filename().
     """
     out: list[tuple[str, bytes]] = []
     total = 0
@@ -306,7 +346,7 @@ def _extract_zip_files(zip_bytes: bytes,
     for info in zf.infolist():
         if info.is_dir():
             continue
-        name = info.filename
+        name = _decode_zip_filename(info)
         # Skip macOS metadata + hidden files
         base = Path(name).name
         if base.startswith(".") or "__MACOSX" in name:
@@ -329,13 +369,47 @@ def _extract_zip_files(zip_bytes: bytes,
     return out
 
 
+_DOC_FILENAME_HINTS = (
+    "readme", "说明", "指南", "教程", "帮助", "help", "guide",
+    "manual", "instructions", "tutorial", "license",
+    "test_kit", "测试套件", "测试包", "demo_guide",
+    "expected_results",
+)
+
+
+def _looks_like_documentation(name: str, text: str) -> bool:
+    """Heuristic: is this likely a usage doc (not patient data)?
+
+    Combines filename hints (README.md, *指南*.md, etc.) with content
+    sniffing (presence of phrases like "this is a test kit", "下载示例",
+    "step 1:", URL-heavy, etc.). Used to skip docs that would otherwise
+    bloat the LLM context with irrelevant content.
+    """
+    lower_name = name.lower()
+    base = Path(lower_name).name
+    for hint in _DOC_FILENAME_HINTS:
+        if hint in base:
+            return True
+    # Content sniff: look for tutorial-style markers in the first 2 KB
+    head = text[:2000].lower()
+    doc_markers = (
+        "## ", "### ", "step 1", "step 2", "first, ",
+        "this guide", "this tutorial", "this kit",
+        "本指南", "本教程", "本测试", "本套件",
+        "如何使用", "怎么用", "instructions:",
+    )
+    n_markers = sum(1 for m in doc_markers if m in head)
+    return n_markers >= 3   # Need 3+ tutorial markers to call it a doc
+
+
 def _classify_file(name: str, data: bytes) -> tuple[str, Optional[str]]:
     """Decide what kind of file this is and return (kind, decoded_text).
 
     kinds:
-      - "rna_seq"   → looks like RNA counts CSV/TSV
-      - "clinical"  → text/CSV/TSV/PDF/XLSX/TXT — pass to LLM
-      - "ignored"   → unsupported binary; skip
+      - "rna_seq"        → looks like RNA counts CSV/TSV
+      - "clinical"       → patient text/CSV/TSV/PDF/XLSX/TXT — pass to LLM
+      - "documentation"  → README / guide / how-to — skip from LLM context
+      - "ignored"        → unsupported binary; skip
     """
     lower = name.lower()
     text: Optional[str] = None
@@ -350,6 +424,8 @@ def _classify_file(name: str, data: bytes) -> tuple[str, Optional[str]]:
     is_rna, _, _ = _looks_like_rna_seq(text)
     if is_rna:
         return "rna_seq", text
+    if _looks_like_documentation(name, text):
+        return "documentation", text
     return "clinical", text
 
 
@@ -468,6 +544,8 @@ async def parse_patient_file(
             elif kind == "clinical":
                 # Prefix with filename so the LLM has context
                 clinical_chunks.append(f"=== {name} ===\n{text}")
+            # documentation / ignored: tracked in summary but NOT sent to
+            # LLM — keeps tutorial-style text out of the patient context
 
         if not clinical_chunks and rna_seq_member is None:
             raise HTTPException(

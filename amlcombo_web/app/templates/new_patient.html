@@ -459,9 +459,17 @@ function smartParse() {
     if (r.body.zip_summary && r.body.zip_summary.length > 0) {
       const zipEl = document.getElementById("sp-zip-summary");
       if (zipEl) {
+        const kindIcon = {rna_seq: "🧬", clinical: "📄", documentation: "📚", ignored: "⏭"};
+        const kindLabel = {
+          rna_seq: "RNA-Seq",
+          clinical: "{% if lang == 'zh' %}临床数据{% else %}clinical{% endif %}",
+          documentation: "{% if lang == 'zh' %}文档(已跳过){% else %}docs (skipped){% endif %}",
+          ignored: "{% if lang == 'zh' %}已忽略{% else %}ignored{% endif %}",
+        };
         const lines = r.body.zip_summary.map(item => {
-          const kindIcon = {rna_seq: "🧬", clinical: "📄", ignored: "⏭"}[item.kind] || "?";
-          return `<div>${kindIcon} <code>${item.name}</code> · ${(item.size/1024).toFixed(1)} KB · <span class="text-slate-500">${item.kind}</span></div>`;
+          const icon = kindIcon[item.kind] || "?";
+          const label = kindLabel[item.kind] || item.kind;
+          return `<div>${icon} <code>${item.name}</code> · ${(item.size/1024).toFixed(1)} KB · <span class="text-slate-500">${label}</span></div>`;
         }).join("");
         zipEl.innerHTML = '<div class="font-medium mb-1">{{ t("new_patient.smart_paste_zip_summary_label") }}</div>' + lines;
         zipEl.classList.remove("hidden");
