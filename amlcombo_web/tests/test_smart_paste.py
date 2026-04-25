@@ -347,6 +347,200 @@ def test_parse_file_endpoint_reads_gbk_encoded_file(auth_client_with_llm_key):
     assert r.json()["is_rna_seq"] is True
 
 
+# ---------------------------------------------------------------------------
+# Zip archive support
+# ---------------------------------------------------------------------------
+
+
+def _make_zip(files: list[tuple[str, bytes]]) -> bytes:
+    """Build an in-memory zip containing the given (name, bytes) entries."""
+    import io as _io
+    import zipfile as _zip
+    buf = _io.BytesIO()
+    with _zip.ZipFile(buf, "w") as zf:
+        for name, data in files:
+            zf.writestr(name, data)
+    return buf.getvalue()
+
+
+def test_extract_zip_files_basic():
+    from app.routers.patients import _extract_zip_files
+    z = _make_zip([
+        ("clinical.txt", b"45 yo F, FLT3-ITD"),
+        ("rna_counts.csv", b"symbol,count\nFLT3,42.5"),
+        ("__MACOSX/._foo", b"junk"),     # should be filtered
+        (".DS_Store", b"junk"),          # should be filtered
+    ])
+    out = _extract_zip_files(z)
+    names = [n for n, _ in out]
+    assert "clinical.txt" in names
+    assert "rna_counts.csv" in names
+    assert not any("MACOSX" in n or n.startswith(".") for n in names)
+
+
+def test_extract_zip_rejects_invalid_zip():
+    from app.routers.patients import _extract_zip_files
+    with pytest.raises(HTTPException := __import__("fastapi").HTTPException):
+        _extract_zip_files(b"not a zip")
+
+
+def test_classify_file_routes_correctly():
+    from app.routers.patients import _classify_file
+    # Clinical text file
+    kind, text = _classify_file("note.txt", b"45 yo F newly diagnosed AML")
+    assert kind == "clinical"
+    assert text and "45 yo" in text
+    # RNA-Seq file (need >= 100 rows for the heuristic)
+    rna_csv = b"symbol,count\n" + b"\n".join(
+        f"GENE{i:04d},{42.5 + i % 10}".encode() for i in range(150)
+    )
+    kind, text = _classify_file("counts.csv", rna_csv)
+    assert kind == "rna_seq"
+    # Garbage binary
+    kind, text = _classify_file("photo.bin", b"\x00\x01\xff\xfe" * 100)
+    # latin-1 decodes anything; the heuristic just doesn't match RNA
+    assert kind in ("clinical", "ignored")
+
+
+@patch("app.llm._call_openai")
+def test_parse_file_zip_with_clinical_only(mock_openai, auth_client_with_llm_key):
+    """Zip with only a clinical text file: server LLM-parses it, no RNA staged."""
+    mock_openai.return_value = _fake_response()
+    client, key_id = auth_client_with_llm_key
+    z = _make_zip([
+        ("ngs_report.txt",
+         b"Patient A: 45 F, FLT3-ITD AR=0.62 VAF 45%, NPM1 missense"),
+    ])
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id},
+        files={"file": ("submission.zip", z, "application/zip")},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["parsed"]["age"] == 45
+    assert body["rna_seq_attachment_b64"] is None
+    assert len(body["zip_summary"]) == 1
+    assert body["zip_summary"][0]["kind"] == "clinical"
+
+
+def test_parse_file_zip_rna_only(auth_client_with_llm_key):
+    """Zip with only an RNA-Seq file: short-circuits, no LLM, returns base64."""
+    client, key_id = auth_client_with_llm_key
+    rna_bytes = b"symbol,count\n" + b"\n".join(
+        f"GENE{i:04d},{50 + i}".encode() for i in range(200)
+    )
+    z = _make_zip([("counts.csv", rna_bytes)])
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id},
+        files={"file": ("rna_only.zip", z, "application/zip")},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["is_rna_seq"] is True
+    assert body["rna_seq_attachment_b64"] is not None
+    assert body["rna_seq_attachment_filename"] == "counts.csv"
+    # Verify base64 decodes back to the original CSV
+    import base64 as _b64
+    decoded = _b64.b64decode(body["rna_seq_attachment_b64"])
+    assert decoded == rna_bytes
+    assert body["model"] == "(no LLM used)"
+
+
+@patch("app.llm._call_openai")
+def test_parse_file_zip_mixed_clinical_and_rna(mock_openai, auth_client_with_llm_key):
+    """The killer use case: zip with BOTH clinical text AND RNA-Seq counts."""
+    mock_openai.return_value = _fake_response()
+    client, key_id = auth_client_with_llm_key
+    rna_bytes = b"symbol,count\n" + b"\n".join(
+        f"G{i:04d},{i*1.0}".encode() for i in range(150)
+    )
+    z = _make_zip([
+        ("patient_note.txt", b"45 yo F, FLT3-ITD positive AR=0.62"),
+        ("expression.csv", rna_bytes),
+        ("__MACOSX/._junk", b"system junk"),
+    ])
+    r = client.post(
+        "/api/v1/patients/parse-file",
+        data={"llm_key_id": key_id, "patient_identifier": "first patient"},
+        files={"file": ("submission.zip", z, "application/zip")},
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    # Clinical fields should be parsed
+    assert body["parsed"]["age"] == 45
+    # RNA-Seq attachment present
+    assert body["rna_seq_attachment_b64"] is not None
+    assert body["rna_seq_attachment_filename"] == "expression.csv"
+    # Zip summary classifies both files (MACOSX filtered out)
+    kinds = {item["kind"] for item in body["zip_summary"]}
+    assert "clinical" in kinds
+    assert "rna_seq" in kinds
+
+
+# ---------------------------------------------------------------------------
+# Demo RNA-Seq toggle on submission
+# ---------------------------------------------------------------------------
+
+
+def test_submit_with_demo_rna_seq_skips_file_requirement(
+    auth_client_with_llm_key, monkeypatch,
+):
+    """Setting use_demo_rna_seq=true allows submitting without an rna_counts file.
+
+    We mock out the celery task so the test doesn't actually run the kit;
+    we just verify the submission row is created and the demo CSV is
+    materialized on disk.
+    """
+    client, _ = auth_client_with_llm_key
+
+    # Stub out the celery enqueue call so no kit prediction is attempted
+    monkeypatch.setattr(
+        "app.routers.patients.run_patient_kit",
+        type("_FakeTask", (), {"delay": staticmethod(lambda *a, **kw: None)}),
+    )
+
+    # Stub joblib + numpy lookups in the demo-CSV generator (the real
+    # joblib path won't exist in the test env)
+    fake_kept = [f"GENE{i:04d}" for i in range(100)]
+
+    class _FakeBundle(dict):
+        pass
+
+    fake_bundle = _FakeBundle({"kept_genes": fake_kept})
+
+    import joblib as _real_joblib
+    monkeypatch.setattr(_real_joblib, "load", lambda *a, **kw: fake_bundle)
+
+    payload = {
+        "patient_label": "DEMO-TEST",
+        "age": 50, "sex": "male",
+        "mutations": [{"gene": "FLT3", "is_ITD": True, "vaf": 0.4}],
+    }
+    r = client.post(
+        "/api/v1/patients",
+        data={"payload_json": __import__("json").dumps(payload),
+               "use_demo_rna_seq": "true"},
+    )
+    assert r.status_code == 202, r.text
+    body = r.json()
+    assert body["status"] == "queued"
+    assert body["patient_label"] == "DEMO-TEST"
+
+
+def test_submit_without_rna_or_demo_rejected(auth_client_with_llm_key):
+    """If neither a real file nor the demo flag is given, expect 400."""
+    client, _ = auth_client_with_llm_key
+    payload = {"patient_label": "FAIL-TEST", "age": 50, "sex": "male"}
+    r = client.post(
+        "/api/v1/patients",
+        data={"payload_json": __import__("json").dumps(payload)},
+    )
+    assert r.status_code == 400
+    assert "rna" in r.json()["detail"].lower()
+
+
 @patch("app.llm._call_openai")
 def test_focus_patient_gets_into_prompt(mock_openai):
     mock_openai.return_value = _fake_response()

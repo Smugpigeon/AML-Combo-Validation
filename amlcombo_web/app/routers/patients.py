@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import base64
+import io
 import json
 import shutil
 import uuid
+import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -199,6 +202,16 @@ class ParseFileResponse(ParseResponse):
     file_name: str = ""
     file_bytes: int = 0
 
+    # When the user dropped a .zip with multiple files, server may have
+    # extracted an RNA-Seq counts file from inside. We base64-encode it
+    # in the response so the client can reconstitute it as a File and
+    # populate the RNA-Seq input below — no second upload needed.
+    rna_seq_attachment_b64: Optional[str] = None
+    rna_seq_attachment_filename: Optional[str] = None
+
+    # When zip contained multiple files, summary of what was found.
+    zip_summary: list[dict] = []
+
 
 def _read_upload_as_text(file: UploadFile) -> str:
     """Read an uploaded CSV/TSV/TXT file as UTF-8 text.
@@ -223,6 +236,121 @@ def _read_upload_as_text(file: UploadFile) -> str:
             continue
     raise HTTPException(status_code=400,
                          detail="Could not decode file as text.")
+
+
+def _try_decode(data: bytes) -> Optional[str]:
+    """Best-effort decode of bytes → text. Returns None if we can't."""
+    for enc in ("utf-8-sig", "utf-8", "gb18030", "gbk", "latin-1"):
+        try:
+            return data.decode(enc)
+        except UnicodeDecodeError:
+            continue
+    return None
+
+
+def _try_extract_pdf_text(data: bytes) -> Optional[str]:
+    """Extract text from a PDF bytes blob using pypdfium2 if available."""
+    try:
+        import pypdfium2 as pdfium
+    except ImportError:
+        return None
+    try:
+        pdf = pdfium.PdfDocument(data)
+        chunks = []
+        for page in pdf:
+            try:
+                tp = page.get_textpage()
+                chunks.append(tp.get_text_range())
+            except Exception:
+                continue
+        return "\n\n".join(c for c in chunks if c)
+    except Exception:
+        return None
+
+
+def _try_extract_xlsx_as_csv(data: bytes) -> Optional[str]:
+    """Read .xlsx → flatten first sheet to CSV-like text."""
+    try:
+        from openpyxl import load_workbook
+    except ImportError:
+        return None
+    try:
+        wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+        ws = wb.active
+        rows = []
+        for row in ws.iter_rows(values_only=True):
+            rows.append(",".join("" if c is None else str(c) for c in row))
+        return "\n".join(rows)
+    except Exception:
+        return None
+
+
+def _extract_zip_files(zip_bytes: bytes,
+                        max_files: int = 50,
+                        max_total_bytes: int = 5 * 1024 * 1024,
+                        ) -> list[tuple[str, bytes]]:
+    """Pull (filename, raw_bytes) pairs out of a .zip archive.
+
+    Caps:
+      - max_files entries (avoids zip bombs)
+      - max_total_bytes uncompressed (also avoids zip bombs)
+    Skips dotfiles (e.g., __MACOSX/, .DS_Store) and directories.
+    """
+    out: list[tuple[str, bytes]] = []
+    total = 0
+    try:
+        zf = zipfile.ZipFile(io.BytesIO(zip_bytes))
+    except zipfile.BadZipFile:
+        raise HTTPException(status_code=400,
+                             detail="File is not a valid zip archive")
+    for info in zf.infolist():
+        if info.is_dir():
+            continue
+        name = info.filename
+        # Skip macOS metadata + hidden files
+        base = Path(name).name
+        if base.startswith(".") or "__MACOSX" in name:
+            continue
+        # Skip very large single entries (5 MB cap per file)
+        if info.file_size > 5 * 1024 * 1024:
+            continue
+        with zf.open(info) as f:
+            data = f.read()
+        total += len(data)
+        if total > max_total_bytes:
+            raise HTTPException(
+                status_code=413,
+                detail=(f"Zip uncompressed size exceeds {max_total_bytes // (1024*1024)} MB. "
+                         f"Smart paste won't process beyond that — split into smaller archives."),
+            )
+        out.append((name, data))
+        if len(out) >= max_files:
+            break
+    return out
+
+
+def _classify_file(name: str, data: bytes) -> tuple[str, Optional[str]]:
+    """Decide what kind of file this is and return (kind, decoded_text).
+
+    kinds:
+      - "rna_seq"   → looks like RNA counts CSV/TSV
+      - "clinical"  → text/CSV/TSV/PDF/XLSX/TXT — pass to LLM
+      - "ignored"   → unsupported binary; skip
+    """
+    lower = name.lower()
+    text: Optional[str] = None
+    if lower.endswith(".pdf"):
+        text = _try_extract_pdf_text(data)
+    elif lower.endswith(".xlsx") or lower.endswith(".xlsm"):
+        text = _try_extract_xlsx_as_csv(data)
+    else:
+        text = _try_decode(data)
+    if text is None or not text.strip():
+        return "ignored", None
+    is_rna, _, _ = _looks_like_rna_seq(text)
+    if is_rna:
+        return "rna_seq", text
+    return "clinical", text
 
 
 def _looks_like_rna_seq(text: str) -> tuple[bool, int, float]:
@@ -315,7 +443,150 @@ async def parse_patient_file(
         raise HTTPException(status_code=400,
                              detail="That LLM key has been revoked")
 
-    text = _read_upload_as_text(file)
+    # Read raw bytes once; route on extension
+    raw = file.file.read(2 * 1024 * 1024 + 1)
+    if len(raw) > 2 * 1024 * 1024:
+        raise HTTPException(
+            status_code=413,
+            detail="File exceeds 2 MB smart-parse limit.",
+        )
+    fname_lower = (file.filename or "").lower()
+
+    # ─── Case 0: ZIP archive — extract, classify each file, then run
+    #            both RNA detection AND LLM parse on the assembled text ───
+    if fname_lower.endswith(".zip"):
+        members = _extract_zip_files(raw)
+        zip_summary: list[dict] = []
+        rna_seq_member: Optional[tuple[str, bytes, str]] = None  # (name, raw, text)
+        clinical_chunks: list[str] = []
+
+        for name, data in members:
+            kind, text = _classify_file(name, data)
+            zip_summary.append({"name": name, "size": len(data), "kind": kind})
+            if kind == "rna_seq" and rna_seq_member is None:
+                rna_seq_member = (name, data, text or "")
+            elif kind == "clinical":
+                # Prefix with filename so the LLM has context
+                clinical_chunks.append(f"=== {name} ===\n{text}")
+
+        if not clinical_chunks and rna_seq_member is None:
+            raise HTTPException(
+                status_code=400,
+                detail=("Zip archive contained no parseable files. "
+                         "Supported: CSV, TSV, TXT, PDF, XLSX. Check the "
+                         "summary in the response."),
+            )
+
+        # If only RNA-Seq found, return early
+        if not clinical_chunks and rna_seq_member is not None:
+            n_genes = len(rna_seq_member[2].splitlines()) - 1
+            db.add(UsageEvent(
+                user_id=user.id, event_type="llm_parse_zip_rna_only",
+                meta={"file_name": file.filename, "members": len(members)},
+            ))
+            db.commit()
+            return ParseFileResponse(
+                parsed={}, confidence={}, warnings=[
+                    f"Zip contained only an RNA-Seq counts file "
+                    f"({rna_seq_member[0]}, {n_genes} genes). Will be used "
+                    f"as the RNA-Seq input below."
+                ],
+                model="(no LLM used)", provider="(zip-extraction)",
+                tokens_in=None, tokens_out=None,
+                is_rna_seq=True,
+                rna_seq_gene_count=n_genes,
+                rna_seq_mean_value=0.0,
+                file_name=file.filename or "",
+                file_bytes=len(raw),
+                rna_seq_attachment_b64=base64.b64encode(rna_seq_member[1]).decode(),
+                rna_seq_attachment_filename=rna_seq_member[0],
+                zip_summary=zip_summary,
+            )
+
+        # Otherwise: send clinical chunks to LLM, also stage RNA if present
+        combined_text = "\n\n".join(clinical_chunks)
+
+        try:
+            plaintext_key = decrypt_llm_key(llm_key.encrypted_key)
+        except ValueError:
+            raise HTTPException(
+                status_code=500,
+                detail=("Could not decrypt the stored LLM key. "
+                         "Please revoke it and re-add."),
+            )
+
+        try:
+            result = parse_clinical_text(
+                raw_text=combined_text, api_key=plaintext_key,
+                provider=llm_key.provider,
+                focus_patient=patient_identifier,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=f"Parse failed: {e}")
+        except Exception as e:
+            msg = str(e)
+            hint = ""
+            if "401" in msg or "Unauthorized" in msg:
+                hint = (f" Your {llm_key.provider} API key appears to be "
+                         f"invalid — re-add it in /llm-keys.")
+            raise HTTPException(status_code=400,
+                                 detail=f"LLM provider error: {msg}.{hint}")
+
+        llm_key.last_used_at = datetime.now(tz=timezone.utc)
+        db.add(UsageEvent(
+            user_id=user.id, event_type="llm_parse_zip_combined",
+            meta={
+                "provider": llm_key.provider, "model": result.model,
+                "tokens_in": result.tokens_in, "tokens_out": result.tokens_out,
+                "members": len(members),
+                "rna_seq_in_zip": rna_seq_member is not None,
+                "warnings_count": len(result.warnings),
+            },
+        ))
+        db.commit()
+
+        # Add a meta-warning summarizing what was processed
+        synthetic_warning = (
+            f"Zip processed: {len(zip_summary)} files. "
+            f"Clinical text chunks: {len(clinical_chunks)}. "
+            f"RNA-Seq counts: "
+            f"{'found ' + rna_seq_member[0] if rna_seq_member else 'not found'}."
+        )
+        warnings_out = [synthetic_warning] + (result.warnings or [])
+
+        rna_b64 = (base64.b64encode(rna_seq_member[1]).decode()
+                    if rna_seq_member else None)
+        rna_name = rna_seq_member[0] if rna_seq_member else None
+
+        return ParseFileResponse(
+            parsed=result.parsed,
+            confidence=result.confidence,
+            warnings=warnings_out,
+            model=result.model, provider=result.provider,
+            tokens_in=result.tokens_in, tokens_out=result.tokens_out,
+            is_rna_seq=False,
+            rna_seq_gene_count=(
+                len(rna_seq_member[2].splitlines()) - 1
+                if rna_seq_member else 0
+            ),
+            rna_seq_mean_value=0.0,
+            file_name=file.filename or "",
+            file_bytes=len(raw),
+            rna_seq_attachment_b64=rna_b64,
+            rna_seq_attachment_filename=rna_name,
+            zip_summary=zip_summary,
+        )
+
+    # ─── Case 1+2: single-file path (CSV / TSV / TXT / PDF / XLSX) ───
+    # Re-decode the raw we already read
+    text = _try_decode(raw)
+    if text is None and fname_lower.endswith(".pdf"):
+        text = _try_extract_pdf_text(raw)
+    if text is None and (fname_lower.endswith(".xlsx") or fname_lower.endswith(".xlsm")):
+        text = _try_extract_xlsx_as_csv(raw)
+    if text is None:
+        raise HTTPException(status_code=400,
+                             detail="Could not decode file as text.")
     file_bytes = len(text.encode("utf-8"))
 
     # Case 1: RNA-Seq detection
@@ -339,6 +610,12 @@ async def parse_patient_file(
             rna_seq_mean_value=round(float(mean_v), 3),
             file_name=file.filename or "",
             file_bytes=file_bytes,
+            # Stage the same bytes back for the client to reconstitute.
+            # This is what makes "drag CSV → form below auto-fills" work
+            # even when DataTransfer.items.add() fails on certain Safari
+            # versions (we just rebuild the File from base64).
+            rna_seq_attachment_b64=base64.b64encode(raw).decode(),
+            rna_seq_attachment_filename=file.filename or "rna_counts.csv",
         )
 
     # Case 2: looks like clinical — hand to LLM
@@ -480,8 +757,17 @@ def parse_patient_text(
 @router.post("", response_model=SubmissionOut, status_code=202)
 def submit_patient(
     payload_json: str = Form(..., description="JSON string matching PatientInputJSON"),
-    rna_counts: UploadFile = File(..., description="2-col CSV: symbol,count (5000-gene panel)"),
+    rna_counts: Optional[UploadFile] = File(
+        None, description="2-col CSV: symbol,count (5000-gene panel). "
+                          "Optional only when use_demo_rna_seq=true."),
     rna_full: Optional[UploadFile] = File(None, description="Optional 2-col CSV: full transcriptome"),
+    use_demo_rna_seq: bool = Form(
+        False,
+        description="If true, server fills in a built-in demo RNA-Seq counts "
+                    "file when the user has none. The kit's Layer-3 prediction "
+                    "becomes meaningless (synthetic input) — the report adds "
+                    "an explicit caveat so the clinician knows.",
+    ),
     user: User = Depends(current_user),
     db: Session = Depends(get_db),
 ):
@@ -494,6 +780,24 @@ def submit_patient(
     except Exception as e:
         raise HTTPException(status_code=400,
                              detail=f"Invalid payload_json: {e}")
+
+    if rna_counts is None and not use_demo_rna_seq:
+        raise HTTPException(
+            status_code=400,
+            detail=("RNA-Seq counts file is required. Upload a real one OR "
+                     "set use_demo_rna_seq=true to use a built-in demo "
+                     "(Layer-3 prediction will be synthetic and the report "
+                     "will say so)."),
+        )
+
+    # Inject a confidence note if running on demo data
+    if rna_counts is None and use_demo_rna_seq:
+        # Append a synthetic-data warning into intent_comment so the
+        # downstream kit's confidence_notes reflect it.
+        existing = payload.intent_comment or ""
+        marker = "[SYNTHETIC RNA-SEQ — DEMO DATA — Layer-3 prediction not clinically valid]"
+        if marker not in existing:
+            payload.intent_comment = (existing + "\n" + marker).strip()
 
     # Create submission row
     sub = Submission(
@@ -508,7 +812,24 @@ def submit_patient(
     # Save uploads
     s = get_settings()
     sub_dir = s.STORAGE_ROOT / str(user.id) / str(sub.id)
-    sub.rna_counts_path = _persist_upload(rna_counts, sub_dir, "rna_counts")
+    if rna_counts is not None:
+        sub.rna_counts_path = _persist_upload(rna_counts, sub_dir, "rna_counts")
+    else:
+        # Generate the demo CSV directly into the submission dir
+        import joblib as _joblib
+        import numpy as _np
+        bundle = _joblib.load(s.KIT_ASSETS_ROOT
+                              / "beataml_rna_preprocessor.joblib")
+        kept = bundle["kept_genes"]
+        rng = _np.random.default_rng(17)
+        counts = rng.lognormal(mean=4.0, sigma=1.2, size=len(kept))
+        sub_dir.mkdir(parents=True, exist_ok=True)
+        demo_path = sub_dir / "rna_counts_DEMO.csv"
+        with open(demo_path, "w") as fh:
+            fh.write("symbol,count\n")
+            for g, c in zip(kept, counts):
+                fh.write(f"{g},{c:.1f}\n")
+        sub.rna_counts_path = str(demo_path)
     if rna_full is not None:
         sub.rna_full_path = _persist_upload(rna_full, sub_dir, "rna_full")
 

@@ -90,7 +90,17 @@
             <div id="sp-file-drop-label" class="text-sm text-slate-700">{{ t("new_patient.smart_paste_file_drop") }}</div>
             <div class="text-xs text-slate-500 mt-1">{{ t("new_patient.smart_paste_file_hint") }}</div>
           </label>
-          <input type="file" id="sp-file-input" accept=".csv,.tsv,.txt,.xlsx" class="hidden">
+          <input type="file" id="sp-file-input" accept=".csv,.tsv,.txt,.xlsx,.xlsm,.pdf,.zip" class="hidden">
+
+          <div class="text-xs text-slate-600 bg-white/60 border border-slate-200 rounded-lg px-3 py-2">
+            {% if lang == 'zh' %}
+            支持文件:CSV、TSV、TXT、PDF、XLSX,以及 <strong>.zip 压缩包</strong>(自动解压并分类 — 临床文本走 AI 解析,RNA-Seq counts 自动填到下方输入框)。
+            {% else %}
+            Supports CSV, TSV, TXT, PDF, XLSX, and <strong>.zip archives</strong> (auto-extracted & classified — clinical text → AI parse, RNA-Seq counts → routed to the input below).
+            {% endif %}
+          </div>
+
+          <div id="sp-zip-summary" class="hidden text-xs bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"></div>
 
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">{{ t("new_patient.smart_paste_focus_patient") }}</label>
@@ -223,6 +233,50 @@
           {{ t("new_patient.rna_counts_demo_link") }}
         </a>
       </p>
+
+      <!-- Demo RNA toggle -->
+      <label class="flex items-start gap-2 mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg cursor-pointer">
+        <input type="checkbox" id="use_demo_rna" class="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+               onchange="toggleDemoRna(this.checked)">
+        <span class="text-sm">
+          <span class="font-medium text-amber-900">{{ t("new_patient.use_demo_rna_label") }}</span>
+          <span class="block text-xs text-amber-700 mt-0.5">{{ t("new_patient.use_demo_rna_caveat") }}</span>
+        </span>
+      </label>
+
+      <!-- RNA-5000 explainer (collapsible) -->
+      <details class="mt-3 group">
+        <summary class="cursor-pointer text-xs text-brand-700 hover:underline font-medium select-none">
+          ❓ {{ t("new_patient.rna_5000_what_is_this") }}
+        </summary>
+        <div class="mt-2 text-xs text-slate-600 leading-relaxed bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2">
+          {% if lang == 'zh' %}
+          <p><strong>5000 基因 panel 是什么:</strong>Kit 的 Layer-3 MLP 模型在 BeatAML 2.0 数据集上训练时用了 5000 个特征基因(从原始 ~22,000 个基因里通过特征工程筛选出来的最有预测力的子集)。这是 <em>固定的训练时基因清单</em>,所有新患者都按这套基因来对齐。</p>
+          <p><strong>你需要怎么准备:</strong></p>
+          <ul class="list-disc list-inside space-y-1 ml-2">
+            <li>2 列 CSV:<code class="bg-white px-1 rounded">symbol,count</code></li>
+            <li>第一列是 <strong>HUGO 基因符号</strong>(如 <code class="bg-white px-1 rounded">FLT3</code>、<code class="bg-white px-1 rounded">NPM1</code>),大小写敏感</li>
+            <li>第二列是 <strong>表达数值</strong> —— raw counts、CPM、TPM 都行,kit 内部会做 quantile-normalize 对齐到 BeatAML 训练分布</li>
+            <li>可以上传 <strong>多于 5000</strong> 行,kit 自动选 panel 内的子集</li>
+            <li>少于 5000 也行,缺的基因插补为 0 + 报告里加 QC 警告</li>
+          </ul>
+          <p><strong>典型来源:</strong>STAR 比对 + featureCounts / Salmon / Kallisto 等任意 RNA-Seq 流程的输出,选你的那个样本一列,导出成 CSV。</p>
+          <p><strong>临床实验室通常的格式:</strong>大部分医院 RNA-Seq 出的是基因 × 样本矩阵(如 Excel 一列叫 GENE,后面每列一个样本)。把你目标样本那一列提取出来配上 GENE 列,2 列存成 CSV 即可。</p>
+          {% else %}
+          <p><strong>What it is:</strong> The Layer-3 MLP was trained on 5,000 specific gene-expression features selected from BeatAML 2.0 (originally ~22k genes — feature engineering picked the 5,000 with the most signal for ex-vivo drug-response prediction). This list is <em>fixed at training time</em> — all new patients align to it.</p>
+          <p><strong>How to prepare your file:</strong></p>
+          <ul class="list-disc list-inside space-y-1 ml-2">
+            <li>2-column CSV: <code class="bg-white px-1 rounded">symbol,count</code></li>
+            <li>Column 1 = <strong>HUGO gene symbol</strong> (e.g., <code class="bg-white px-1 rounded">FLT3</code>, <code class="bg-white px-1 rounded">NPM1</code>), case-sensitive</li>
+            <li>Column 2 = <strong>expression value</strong> — raw counts, CPM, or TPM are all fine; the kit quantile-normalizes to the BeatAML training distribution internally</li>
+            <li><strong>More than 5000</strong> genes is fine — kit picks its panel subset</li>
+            <li><strong>Fewer than 5000</strong> is fine too — missing genes imputed to 0 with a QC warning in the report</li>
+          </ul>
+          <p><strong>Typical source:</strong> output of any RNA-Seq pipeline (STAR + featureCounts, Salmon, Kallisto, etc.) — extract your target sample's column.</p>
+          <p><strong>Hospital export format:</strong> most hospitals provide a gene × sample matrix (e.g., one column "GENE" + one column per patient). Pull your sample's column, save as 2-col CSV.</p>
+          {% endif %}
+        </div>
+      </details>
     </div>
 
     <div>
@@ -374,29 +428,53 @@ function smartParse() {
       return;
     }
 
-    // ━━━ Special case: uploaded file was detected as RNA-Seq counts ━━━
-    // Don't touch the clinical form — instead, auto-populate the RNA-Seq
-    // file input below with the same file the user just uploaded.
-    if (r.body.is_rna_seq) {
-      const srcFile = _spFileInput.files[0];
-      if (srcFile) {
+    // ━━━ Reconstitute RNA-Seq attachment from server, if present ━━━
+    // Server may have:
+    //   (a) detected the upload itself as RNA-Seq counts, OR
+    //   (b) extracted RNA-Seq from a .zip alongside clinical files
+    // Either way, it ships back the file bytes as base64 in
+    // rna_seq_attachment_b64. We rebuild a File via Blob and use
+    // DataTransfer to populate the form's RNA-Seq input — no second
+    // upload needed from the user.
+    if (r.body.rna_seq_attachment_b64) {
+      try {
+        const b64 = r.body.rna_seq_attachment_b64;
+        const fname = r.body.rna_seq_attachment_filename || "rna_counts.csv";
+        const binary = atob(b64);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        const blob = new Blob([bytes], {type: "text/csv"});
+        const file = new File([blob], fname, {type: "text/csv"});
         const rnaInput = document.getElementById("rna_counts");
-        // Use DataTransfer to set files programmatically
-        try {
-          const dt = new DataTransfer();
-          dt.items.add(srcFile);
-          rnaInput.files = dt.files;
-          rnaInput.classList.add("ai-filled");
-        } catch (e) {
-          console.warn("Could not auto-fill RNA-Seq input:", e);
-        }
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        rnaInput.files = dt.files;
+        rnaInput.classList.add("ai-filled");
+      } catch (e) {
+        console.warn("Could not reconstitute RNA-Seq from base64:", e);
       }
+    }
+
+    // ━━━ Show zip summary if server returned one ━━━
+    if (r.body.zip_summary && r.body.zip_summary.length > 0) {
+      const zipEl = document.getElementById("sp-zip-summary");
+      if (zipEl) {
+        const lines = r.body.zip_summary.map(item => {
+          const kindIcon = {rna_seq: "🧬", clinical: "📄", ignored: "⏭"}[item.kind] || "?";
+          return `<div>${kindIcon} <code>${item.name}</code> · ${(item.size/1024).toFixed(1)} KB · <span class="text-slate-500">${item.kind}</span></div>`;
+        }).join("");
+        zipEl.innerHTML = '<div class="font-medium mb-1">{{ t("new_patient.smart_paste_zip_summary_label") }}</div>' + lines;
+        zipEl.classList.remove("hidden");
+      }
+    }
+
+    // ━━━ Pure RNA-Seq case (no clinical fields to fill) ━━━
+    if (r.body.is_rna_seq) {
       const n = r.body.rna_seq_gene_count;
       const mean = r.body.rna_seq_mean_value;
       const tmpl = "{{ t('new_patient.smart_paste_auto_rna_detected') }}";
       statusEl.className = "text-sm rounded-lg px-3.5 py-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200";
       statusEl.innerHTML = tmpl.replace("{n}", n).replace("{mean}", mean);
-      // Scroll to RNA-Seq section
       document.getElementById("rna_counts").scrollIntoView({behavior: "smooth", block: "center"});
       return;
     }
@@ -484,7 +562,23 @@ function smartParse() {
   });
 }
 
+// ────────── Demo RNA toggle ──────────
+function toggleDemoRna(checked) {
+  const rnaInput = document.getElementById("rna_counts");
+  if (checked) {
+    rnaInput.removeAttribute("required");
+    rnaInput.disabled = true;
+    rnaInput.classList.add("opacity-50");
+  } else {
+    rnaInput.setAttribute("required", "required");
+    rnaInput.disabled = false;
+    rnaInput.classList.remove("opacity-50");
+  }
+}
+
 function submitPatient() {
+  const useDemoRna = document.getElementById("use_demo_rna")?.checked || false;
+
   const payload = {
     patient_label: document.getElementById('patient_label').value.trim(),
     age: Number(document.getElementById('age').value) || null,
@@ -513,11 +607,15 @@ function submitPatient() {
 
   if (!payload.patient_label) { alert('Patient label is required'); return; }
   const rnaFile = document.getElementById('rna_counts').files[0];
-  if (!rnaFile) { alert('RNA-Seq counts file is required'); return; }
+  if (!rnaFile && !useDemoRna) {
+    alert('RNA-Seq counts file is required (or check the demo toggle below it).');
+    return;
+  }
 
   const fd = new FormData();
   fd.append('payload_json', JSON.stringify(payload));
-  fd.append('rna_counts', rnaFile);
+  if (rnaFile) fd.append('rna_counts', rnaFile);
+  if (useDemoRna) fd.append('use_demo_rna_seq', 'true');
   const rnaFull = document.getElementById('rna_full').files[0];
   if (rnaFull) fd.append('rna_full', rnaFull);
 
