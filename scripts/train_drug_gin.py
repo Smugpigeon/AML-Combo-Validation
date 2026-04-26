@@ -277,14 +277,17 @@ def main():
     print(f"[cv] {args.n_folds}-fold patient-level CV", flush=True)
 
     fold_summary = []
+    # Pre-cache patient_id-as-string for fast set lookup. Avoids the
+    # int-vs-str type mismatch that produces train=0/val=0.
+    pid_str_per_row = dataset.rows["patient_id"].astype(str).values
     for k, (train_pids, val_pids) in enumerate(folds):
         if args.single_fold_only and k > 0:
             break
         print(f"\n--- Fold {k+1}/{args.n_folds} ---")
         train_idx = [i for i in range(len(dataset))
-                      if dataset.rows.iloc[i]["patient_id"] in train_pids]
+                      if pid_str_per_row[i] in train_pids]
         val_idx = [i for i in range(len(dataset))
-                    if dataset.rows.iloc[i]["patient_id"] in val_pids]
+                    if pid_str_per_row[i] in val_pids]
         train_subset = torch.utils.data.Subset(dataset, train_idx)
         val_subset = torch.utils.data.Subset(dataset, val_idx)
         print(f"[fold {k+1}] train={len(train_subset)} val={len(val_subset)}", flush=True)
