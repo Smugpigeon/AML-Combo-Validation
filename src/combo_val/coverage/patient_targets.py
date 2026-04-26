@@ -97,4 +97,18 @@ def infer_active_targets(
             # Final weight = default_weight × evidence_strength, capped at 1.0
             out[tgt.id] = float(min(1.0, tgt.default_weight * evidence_strength))
 
+    # Phase D.1 — Apply RNA-program → axis modulation as a post-pass.
+    # If patient's RNA expression shows e.g. BCL2_high, multiply BCL2
+    # axis weight by a [0.5, 1.5] factor (clipped to [0, 1] final).
+    # This is a separate signal from rna_modifier in patient_evidence
+    # (which only boosts ACTIVATION); modulation here SCALES weight.
+    try:
+        from combo_val.coverage.rna_programs import program_to_axis_modulation
+        modulation = program_to_axis_modulation(rna_programs or {})
+    except ImportError:
+        modulation = {}
+    for axis_id, mult in modulation.items():
+        if axis_id in out:
+            out[axis_id] = float(min(1.0, out[axis_id] * mult))
+
     return out

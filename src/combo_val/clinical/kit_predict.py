@@ -704,6 +704,9 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
         pf[f"mut_{m.gene.upper()}"] = 1
         if getattr(m, "is_ITD", False):
             pf["clin_flt3_itd"] = 1
+            ar = getattr(m, "allelic_ratio", None)
+            if ar is not None:
+                pf["clin_flt3_allelic_ratio"] = float(ar)
         if getattr(m, "is_TKD", False):
             pf["clin_flt3_tkd"] = 1
         if m.gene.upper() == "TP53" and getattr(m, "is_multi_hit", False):
@@ -721,9 +724,32 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
         if pf.get("mut_TP53"):
             pf["tp53_multihit"] = True
 
-    active = infer_active_targets(pd.Series(pf), tx)
+    # D.1 — Score 8 AML transcriptional programs from full RNA-Seq, if
+    # provided. Output {program_name: score [0,1]} feeds infer_active_targets
+    # which then scales axis weights via program_to_axis_modulation.
+    rna_programs: dict = {}
+    if kit.rna_expression_full is not None:
+        try:
+            from combo_val.coverage.rna_programs import score_programs
+            rna_programs = score_programs(kit.rna_expression_full)
+        except Exception:
+            rna_programs = {}
+
+    active = infer_active_targets(pd.Series(pf), tx, rna_programs=rna_programs)
     if not active:
         return {"active_targets": {}, "top_combinations": []}
+
+    # D.2 — Apply mutation cooperativity rules. Modifies axis weights per
+    # known co-mutation patterns (e.g., NPM1+DNMT3A → MENIN ↑, TP53
+    # multi-hit → BCL2 ↓, FLT3-ITD high AR → MCL1 + JAK_STAT activation).
+    cooperativity_fired: list[str] = []
+    try:
+        from combo_val.coverage.cooperativity import apply_cooperativity_rules
+        active, cooperativity_fired = apply_cooperativity_rules(
+            pd.Series(pf), active,
+        )
+    except Exception:
+        pass
 
     # 3-tier drug pool: Expert taxonomy ∪ ChEMBL bioactivity ∪ GIN-novel.
     # Per Phase B.4: ChEMBL adds ~70 multi-kinase drugs beyond the
@@ -733,14 +759,62 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
     drug_pool_ids = pool.known_drugs
     cm = pool.build_coverage_matrix(drug_pool_ids)
 
-    # Constraints — start with the taxonomy defaults; could be patient-
-    # specific in the future (e.g., loosen QT ceiling if no FLT3 active)
+    # D.3 — Clinical feature constraint adjustment.
+    # Patient-specific constraints based on age, WBC, fitness, prior treatment.
     constraints = dict(tx.constraints_default)
-    # If patient is unfit, prefer arity ≤ 3 to limit toxicity stacking
+    clinical_adjustments: list[str] = []
+
+    # Unfit (≥75 or TP53 multi-hit) → cap arity at 3
     is_unfit = (kit.age is not None and kit.age >= 75) or \
-                (driver_flags.get("TP53") is True)
+                pf.get("tp53_multihit") is True
     if is_unfit:
-        constraints["max_arity"] = min(constraints.get("max_arity", 4), 3)
+        old = constraints.get("max_arity", 4)
+        constraints["max_arity"] = min(old, 3)
+        clinical_adjustments.append(
+            f"Unfit patient (age≥75 or TP53 multi-hit) → max_arity {old}→3"
+        )
+
+    # Very elderly (≥80) → cap arity at 2 + tighter myelosuppression
+    if kit.age is not None and kit.age >= 80:
+        constraints["max_arity"] = min(constraints.get("max_arity", 4), 2)
+        # Tighten myelosuppression ceiling (less reserve at 80+)
+        tox_ceil = dict(constraints.get("toxicity_ceiling", {}))
+        tox_ceil["myelosuppression"] = min(
+            tox_ceil.get("myelosuppression", 2.5), 2.0,
+        )
+        constraints["toxicity_ceiling"] = tox_ceil
+        clinical_adjustments.append(
+            "Very elderly (age≥80) → max_arity 2, myelosuppression ceiling 2.0"
+        )
+
+    # Hyperleukocytic (WBC > 50) → OXPHOS axis emphasized (Ven mechanism)
+    # + force inclusion of cytoreduction modality if WBC > 100
+    if kit.wbc is not None:
+        if kit.wbc > 50:
+            from combo_val.coverage.taxonomy import load_taxonomy as _lt
+            # Already-active OXPHOS axis gets boosted (1.4×)
+            if "OXPHOS" in active:
+                active["OXPHOS"] = min(1.0, active["OXPHOS"] * 1.4)
+                clinical_adjustments.append(
+                    f"Hyperleukocytic (WBC={kit.wbc:.0f}) → OXPHOS axis ×1.4"
+                )
+        if kit.wbc > 100:
+            clinical_adjustments.append(
+                "🚨 WBC > 100 — emergency cytoreduction (hydroxyurea + "
+                "consider leukapheresis) before any combo-pharm decision"
+            )
+
+    # Prior HMA failure → handled in cooperativity rules; nothing extra here
+
+    # FLT3-ITD active → ensure QT ceiling is respected; tighten if NOT
+    # already in active
+    if pf.get("clin_flt3_itd") and "FLT3" in active:
+        # FLT3i candidates are mostly QT-prolonging; keep tight ceiling
+        tox_ceil = dict(constraints.get("toxicity_ceiling", {}))
+        tox_ceil["QT_prolongation"] = min(
+            tox_ceil.get("QT_prolongation", 1.8), 1.6,
+        )
+        constraints["toxicity_ceiling"] = tox_ceil
 
     try:
         results = find_top_combinations(active, cm, constraints,
@@ -769,6 +843,9 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
         "top_combinations": serialized,
         "framework": "Palmer-Sorger IDA (Cell 2017, PMID 29245013)",
         "taxonomy_version": tx.version,
+        "rna_programs": rna_programs,                       # D.1 provenance
+        "cooperativity_rules_fired": cooperativity_fired,   # D.2 provenance
+        "clinical_adjustments": clinical_adjustments,       # D.3 provenance
     }
 
 
