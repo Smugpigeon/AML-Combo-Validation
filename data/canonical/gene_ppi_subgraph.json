@@ -1,0 +1,305 @@
+{
+  "schema_version": "1.0",
+  "string_version": "12.0",
+  "species_taxon_id": 9606,
+  "score_threshold": 700,
+  "network_type": "physical",
+  "nodes": [
+    "FLT3",
+    "NPM1",
+    "DNMT3A",
+    "IDH1",
+    "IDH2",
+    "TP53",
+    "RUNX1",
+    "ASXL1",
+    "TET2",
+    "CEBPA",
+    "KIT",
+    "NRAS",
+    "KRAS",
+    "PTPN11",
+    "WT1",
+    "BCOR",
+    "STAG2",
+    "PHF6",
+    "SRSF2",
+    "SF3B1",
+    "U2AF1",
+    "EZH2",
+    "KMT2A",
+    "MECOM",
+    "CBFB"
+  ],
+  "node_features": {
+    "FLT3": {
+      "string_id": "9606.ENSP00000241453",
+      "preferred_name": "FLT3",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Receptor-type tyrosine-protein kinase FLT3; Tyrosine-protein kinase that acts as cell-surface receptor for the cytokine FLT3LG and regulates differentiation, proliferation and survival of hematopoieti"
+    },
+    "NPM1": {
+      "string_id": "9606.ENSP00000296930",
+      "preferred_name": "NPM1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Nucleophosmin; Involved in diverse cellular processes such as ribosome biogenesis, centrosome duplication, protein chaperoning, histone assembly, cell proliferation, and regulation of tumor suppressor"
+    },
+    "DNMT3A": {
+      "string_id": "9606.ENSP00000264709",
+      "preferred_name": "DNMT3A",
+      "ncbi_taxon_id": 9606,
+      "annotation": "DNA (cytosine-5)-methyltransferase 3A; Required for genome-wide de novo methylation and is essential for the establishment of DNA methylation patterns during development. DNA methylation is coordinate"
+    },
+    "IDH1": {
+      "string_id": "9606.ENSP00000390265",
+      "preferred_name": "IDH1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Isocitrate dehydrogenase 1."
+    },
+    "IDH2": {
+      "string_id": "9606.ENSP00000331897",
+      "preferred_name": "IDH2",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Isocitrate dehydrogenase [NADP], mitochondrial; Plays a role in intermediary metabolism and energy production. It may tightly associate or interact with the pyruvate dehydrogenase complex; Belongs to "
+    },
+    "TP53": {
+      "string_id": "9606.ENSP00000269305",
+      "preferred_name": "TP53",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Cellular tumor antigen p53; Acts as a tumor suppressor in many tumor types; induces growth arrest or apoptosis depending on the physiological circumstances and cell type. Involved in cell cycle regula"
+    },
+    "RUNX1": {
+      "string_id": "9606.ENSP00000300305",
+      "preferred_name": "RUNX1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Runt-related transcription factor 1; Forms the heterodimeric complex core-binding factor (CBF) with CBFB. RUNX members modulate the transcription of their target genes through recognizing the core con"
+    },
+    "ASXL1": {
+      "string_id": "9606.ENSP00000364839",
+      "preferred_name": "ASXL1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Polycomb group protein ASXL1; Probable Polycomb group (PcG) protein involved in transcriptional regulation mediated by ligand-bound nuclear hormone receptors, such as retinoic acid receptors (RARs) an"
+    },
+    "TET2": {
+      "string_id": "9606.ENSP00000442788",
+      "preferred_name": "TET2",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Methylcytosine dioxygenase TET2; Dioxygenase that catalyzes the conversion of the modified genomic base 5-methylcytosine (5mC) into 5-hydroxymethylcytosine (5hmC) and plays a key role in active DNA de"
+    },
+    "CEBPA": {
+      "string_id": "9606.ENSP00000427514",
+      "preferred_name": "CEBPA",
+      "ncbi_taxon_id": 9606,
+      "annotation": "CCAAT/enhancer-binding protein alpha; Transcription factor that coordinates proliferation arrest and the differentiation of myeloid progenitors, adipocytes, hepatocytes, and cells of the lung and the "
+    },
+    "KIT": {
+      "string_id": "9606.ENSP00000288135",
+      "preferred_name": "KIT",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Mast/stem cell growth factor receptor Kit; Tyrosine-protein kinase that acts as cell-surface receptor for the cytokine KITLG/SCF and plays an essential role in the regulation of cell survival and prol"
+    },
+    "NRAS": {
+      "string_id": "9606.ENSP00000358548",
+      "preferred_name": "NRAS",
+      "ncbi_taxon_id": 9606,
+      "annotation": "GTPase NRas; Ras proteins bind GDP/GTP and possess intrinsic GTPase activity."
+    },
+    "KRAS": {
+      "string_id": "9606.ENSP00000256078",
+      "preferred_name": "KRAS",
+      "ncbi_taxon_id": 9606,
+      "annotation": "GTPase KRas, N-terminally processed; Ras proteins bind GDP/GTP and possess intrinsic GTPase activity. Plays an important role in the regulation of cell proliferation. Plays a role in promoting oncogen"
+    },
+    "PTPN11": {
+      "string_id": "9606.ENSP00000489597",
+      "preferred_name": "PTPN11",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Tyrosine-protein phosphatase non-receptor type 11; Acts downstream of various receptor and cytoplasmic protein tyrosine kinases to participate in the signal transduction from the cell surface to the n"
+    },
+    "WT1": {
+      "string_id": "9606.ENSP00000368370",
+      "preferred_name": "WT1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Wilms tumor protein; Transcription factor that plays an important role in cellular development and cell survival. Recognizes and binds to the DNA sequence 5'-GCG(T/G)GGGCG-3'. Regulates the expression"
+    },
+    "BCOR": {
+      "string_id": "9606.ENSP00000367705",
+      "preferred_name": "BCOR",
+      "ncbi_taxon_id": 9606,
+      "annotation": "BCL-6 corepressor; Transcriptional corepressor. May specifically inhibit gene expression when recruited to promoter regions by sequence-specific DNA- binding proteins such as BCL6 and MLLT3. This repr"
+    },
+    "STAG2": {
+      "string_id": "9606.ENSP00000218089",
+      "preferred_name": "STAG2",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Cohesin subunit SA-2; Component of cohesin complex, a complex required for the cohesion of sister chromatids after DNA replication. The cohesin complex apparently forms a large proteinaceous ring with"
+    },
+    "PHF6": {
+      "string_id": "9606.ENSP00000329097",
+      "preferred_name": "PHF6",
+      "ncbi_taxon_id": 9606,
+      "annotation": "PHD finger protein 6; Transcriptional regulator that associates with ribosomal RNA promoters and suppresses ribosomal RNA (rRNA) transcription."
+    },
+    "SRSF2": {
+      "string_id": "9606.ENSP00000376276",
+      "preferred_name": "SRSF2",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Serine/arginine-rich splicing factor 2; Necessary for the splicing of pre-mRNA. It is required for formation of the earliest ATP-dependent splicing complex and interacts with spliceosomal components b"
+    },
+    "SF3B1": {
+      "string_id": "9606.ENSP00000335321",
+      "preferred_name": "SF3B1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Splicing factor 3B subunit 1; Involved in pre-mRNA splicing as a component of the splicing factor SF3B complex. SF3B complex is required for 'A' complex assembly formed by the stable binding of U2 snR"
+    },
+    "U2AF1": {
+      "string_id": "9606.ENSP00000291552",
+      "preferred_name": "U2AF1",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Splicing factor U2AF 35 kDa subunit; Plays a critical role in both constitutive and enhancer- dependent splicing by mediating protein-protein interactions and protein-RNA interactions required for acc"
+    },
+    "EZH2": {
+      "string_id": "9606.ENSP00000320147",
+      "preferred_name": "EZH2",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Histone-lysine N-methyltransferase EZH2; Polycomb group (PcG) protein. Catalytic subunit of the PRC2/EED-EZH2 complex, which methylates 'Lys-9' (H3K9me) and 'Lys-27' (H3K27me) of histone H3, leading t"
+    },
+    "KMT2A": {
+      "string_id": "9606.ENSP00000436786",
+      "preferred_name": "KMT2A",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Histone-lysine N-methyltransferase 2A; Histone methyltransferase that plays an essential role in early development and hematopoiesis. Catalytic subunit of the MLL1/MLL complex, a multiprotein complex "
+    },
+    "MECOM": {
+      "string_id": "9606.ENSP00000264674",
+      "preferred_name": "MECOM",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Histone-lysine N-methyltransferase MECOM; [Isoform 1]: Functions as a transcriptional regulator binding to DNA sequences in the promoter region of target genes and regulating positively or negatively "
+    },
+    "CBFB": {
+      "string_id": "9606.ENSP00000415151",
+      "preferred_name": "CBFB",
+      "ncbi_taxon_id": 9606,
+      "annotation": "Core-binding factor subunit beta; Forms the heterodimeric complex core-binding factor (CBF) with RUNX family proteins (RUNX1, RUNX2, and RUNX3). RUNX members modulate the transcription of their target"
+    }
+  },
+  "edges": [
+    {
+      "a": "KRAS",
+      "b": "NRAS",
+      "combined_score": 936,
+      "experimental": 0.395,
+      "database": 0.9,
+      "textmining": 0.0,
+      "coexpression": 0.0
+    },
+    {
+      "a": "MECOM",
+      "b": "RUNX1",
+      "combined_score": 900,
+      "experimental": 0.0,
+      "database": 0.9,
+      "textmining": 0.044,
+      "coexpression": 0.0
+    },
+    {
+      "a": "DNMT3A",
+      "b": "EZH2",
+      "combined_score": 994,
+      "experimental": 0.457,
+      "database": 0.5,
+      "textmining": 0.982,
+      "coexpression": 0.0
+    },
+    {
+      "a": "CEBPA",
+      "b": "TP53",
+      "combined_score": 805,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.805,
+      "coexpression": 0.0
+    },
+    {
+      "a": "TP53",
+      "b": "WT1",
+      "combined_score": 880,
+      "experimental": 0.457,
+      "database": 0.0,
+      "textmining": 0.789,
+      "coexpression": 0.0
+    },
+    {
+      "a": "NPM1",
+      "b": "TP53",
+      "combined_score": 944,
+      "experimental": 0.549,
+      "database": 0.0,
+      "textmining": 0.883,
+      "coexpression": 0.0
+    },
+    {
+      "a": "KIT",
+      "b": "PTPN11",
+      "combined_score": 739,
+      "experimental": 0.457,
+      "database": 0.4,
+      "textmining": 0.263,
+      "coexpression": 0.0
+    },
+    {
+      "a": "SRSF2",
+      "b": "U2AF1",
+      "combined_score": 988,
+      "experimental": 0.618,
+      "database": 0.0,
+      "textmining": 0.972,
+      "coexpression": 0.0
+    },
+    {
+      "a": "PTPN11",
+      "b": "RUNX1",
+      "combined_score": 900,
+      "experimental": 0.0,
+      "database": 0.9,
+      "textmining": 0.0,
+      "coexpression": 0.0
+    },
+    {
+      "a": "CBFB",
+      "b": "RUNX1",
+      "combined_score": 999,
+      "experimental": 0.972,
+      "database": 0.9,
+      "textmining": 0.986,
+      "coexpression": 0.0
+    },
+    {
+      "a": "ASXL1",
+      "b": "EZH2",
+      "combined_score": 992,
+      "experimental": 0.292,
+      "database": 0.9,
+      "textmining": 0.904,
+      "coexpression": 0.0
+    },
+    {
+      "a": "KMT2A",
+      "b": "PHF6",
+      "combined_score": 793,
+      "experimental": 0.0,
+      "database": 0.0,
+      "textmining": 0.793,
+      "coexpression": 0.0
+    },
+    {
+      "a": "IDH1",
+      "b": "IDH2",
+      "combined_score": 959,
+      "experimental": 0.608,
+      "database": 0.9,
+      "textmining": 0.0,
+      "coexpression": 0.0
+    }
+  ]
+}
