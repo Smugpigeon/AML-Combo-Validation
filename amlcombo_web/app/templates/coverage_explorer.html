@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block title %}Coverage Explorer · {{ t("meta.site_name") }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-xs text-blue-700 mb-4">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+      <span>Multi-Target Coverage · Palmer-Sorger IDA framework</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl font-bold text-slate-900 mb-2">
+      🎯 多靶点覆盖 Explorer
+    </h1>
+    <p class="text-slate-600 max-w-3xl">
+      用 <a class="text-blue-600 hover:underline" href="https://pubmed.ncbi.nlm.nih.gov/29245013/" target="_blank">Independent Drug Action 框架</a>
+      在 18 个 vulnerability target 上对患者做 set-cover 优化 — 推荐能覆盖
+      患者关键 vulnerability 的最小药数组合。结果不替代临床决策, 但提供
+      <strong>多靶点药学的 hypothesis-generation 工具</strong>。
+    </p>
+  </div>
+
+  <div x-data="coverageExplorer()" x-init="init()" class="grid lg:grid-cols-5 gap-6">
+
+    <!-- ───── LEFT: Patient + Constraints input ───── -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- Patient mutations -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">患者 vulnerability profile</h3>
+
+        <label class="block text-xs font-medium text-slate-600 mb-1">驱动突变 (HUGO symbol, 逗号分隔)</label>
+        <input x-model="muts" type="text" placeholder="FLT3, NPM1, DNMT3A"
+               class="w-full px-3 py-2 border rounded text-sm" />
+
+        <label class="block text-xs font-medium text-slate-600 mt-3 mb-1">融合基因</label>
+        <input x-model="fusions" type="text" placeholder="PML_RARA, KMT2A_r"
+               class="w-full px-3 py-2 border rounded text-sm" />
+
+        <div class="grid grid-cols-2 gap-3 mt-3">
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" x-model="flt3_itd" /> FLT3-ITD
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" x-model="flt3_tkd" /> FLT3-TKD
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" x-model="tp53_multihit" /> TP53 multi-hit
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" x-model="karyo_del_17p" /> del(17p)
+          </label>
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" x-model="is_relapse" /> R/R
+          </label>
+        </div>
+
+        <label class="block text-xs font-medium text-slate-600 mt-3 mb-1">年龄</label>
+        <input x-model.number="age" type="number" min="18" max="100" placeholder="60"
+               class="w-32 px-3 py-2 border rounded text-sm" />
+      </div>
+
+      <!-- Constraints -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-3">求解约束</h3>
+
+        <label class="block text-xs font-medium text-slate-600 mb-1">最大药数 (max arity)</label>
+        <input x-model.number="max_arity" type="number" min="1" max="8" value="4"
+               class="w-32 px-3 py-2 border rounded text-sm" />
+
+        <label class="block text-xs font-medium text-slate-600 mt-3 mb-1">覆盖率阈值 (0-1)</label>
+        <input x-model.number="coverage_threshold" type="number" min="0" max="1" step="0.05" value="0.65"
+               class="w-32 px-3 py-2 border rounded text-sm" />
+
+        <label class="block text-xs font-medium text-slate-600 mt-3 mb-1">候选药池</label>
+        <p class="text-xs text-slate-500 mb-2">默认: taxonomy 内全部 31 个 AML 药</p>
+        <details class="text-sm">
+          <summary class="cursor-pointer text-blue-600 hover:underline">📋 展开自定义药池</summary>
+          <div class="mt-2 max-h-48 overflow-y-auto bg-slate-50 p-2 rounded border">
+            <template x-for="d in available_drugs" :key="d">
+              <label class="flex items-center gap-1 text-xs py-0.5">
+                <input type="checkbox" :value="d" x-model="custom_pool" />
+                <span x-text="d"></span>
+              </label>
+            </template>
+          </div>
+          <p class="text-xs text-slate-400 mt-1" x-show="custom_pool.length === 0">
+            (未选 = 用全部 taxonomy pool)
+          </p>
+          <p class="text-xs text-slate-600 mt-1" x-show="custom_pool.length > 0">
+            自定义池: <span x-text="custom_pool.length"></span> 药
+          </p>
+        </details>
+      </div>
+
+      <!-- Submit -->
+      <button @click="run()" :disabled="loading"
+              class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-300
+                     text-white font-medium rounded-lg shadow transition">
+        <span x-show="!loading">🎯 求解 top-K 组合</span>
+        <span x-show="loading">求解中...</span>
+      </button>
+
+      <p class="text-xs text-slate-400">
+        所有计算在服务器端进行, 输入数据仅用于本次求解, 不写入数据库,
+        不发往任何第三方。
+      </p>
+    </div>
+
+    <!-- ───── RIGHT: Results ───── -->
+    <div class="lg:col-span-3">
+
+      <!-- Empty state -->
+      <div x-show="!result && !loading" class="bg-slate-50 border-2 border-dashed border-slate-200 rounded-xl p-12 text-center">
+        <div class="text-5xl mb-3">🧬</div>
+        <p class="text-slate-600">填左侧 patient profile + 约束, 点 "求解" 开始。</p>
+        <p class="text-xs text-slate-400 mt-2">典型场景:</p>
+        <div class="text-xs text-slate-500 mt-1 space-y-1">
+          <button @click="loadExample('flt3_npm1')"
+                  class="px-2 py-1 bg-white border rounded hover:bg-slate-50">
+            示例: FLT3+NPM1+DNMT3A 45yo
+          </button>
+          <button @click="loadExample('apl')"
+                  class="px-2 py-1 bg-white border rounded hover:bg-slate-50 ml-1">
+            示例: APL t(15;17)
+          </button>
+          <button @click="loadExample('idh1_unfit')"
+                  class="px-2 py-1 bg-white border rounded hover:bg-slate-50 ml-1">
+            示例: IDH1 elderly
+          </button>
+          <button @click="loadExample('kmt2a')"
+                  class="px-2 py-1 bg-white border rounded hover:bg-slate-50 ml-1">
+            示例: KMT2A-r
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div x-show="loading" class="text-center py-12">
+        <div class="inline-block w-12 h-12 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+        <p class="mt-3 text-slate-600">Set-cover 求解器运行中 (greedy + local-search × 8 multistart)…</p>
+      </div>
+
+      <!-- Results -->
+      <div x-show="result" class="space-y-6">
+        <!-- Active targets -->
+        <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+          <h3 class="font-semibold text-slate-800 mb-3">
+            🎯 推断出的活跃 vulnerability 靶点
+            <span class="text-xs text-slate-400 ml-2"
+                  x-text="'(' + Object.keys(result?.active_targets || {}).length + ' 个)'"></span>
+          </h3>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="[tid, w] in Object.entries(result?.active_targets || {}).sort((a,b) => b[1] - a[1])"
+                      :key="tid">
+              <span class="px-2 py-1 rounded text-xs"
+                    :class="w >= 0.8 ? 'bg-red-100 text-red-700 border border-red-200' :
+                            w >= 0.5 ? 'bg-yellow-100 text-yellow-700 border border-yellow-200' :
+                                        'bg-slate-100 text-slate-600 border border-slate-200'">
+                <strong x-text="tid"></strong>
+                <span x-text="' ' + w.toFixed(2)"></span>
+              </span>
+            </template>
+          </div>
+        </div>
+
+        <!-- No combos found -->
+        <div x-show="result?.top_combinations?.length === 0"
+             class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+          <p class="text-amber-800 font-medium">⚠ 没有找到可行组合</p>
+          <p class="text-sm text-amber-700 mt-1">
+            放宽约束 (减小 coverage threshold 或增加 max arity) 后重试。
+          </p>
+        </div>
+
+        <!-- Top combinations -->
+        <template x-for="(combo, idx) in result?.top_combinations || []" :key="idx">
+          <div class="bg-white rounded-xl border shadow-sm p-5"
+               :class="combo.feasible ? 'border-green-200' : 'border-amber-200'">
+            <div class="flex items-start justify-between mb-3">
+              <div>
+                <div class="text-xs text-slate-400 mb-1" x-text="'#' + (idx + 1)"></div>
+                <div class="font-semibold text-slate-900 text-lg" x-text="combo.drug_ids.join(' + ')"></div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-500">weighted coverage</div>
+                <div class="text-2xl font-bold"
+                     :class="combo.weighted_coverage >= 0.7 ? 'text-green-600' : 'text-amber-600'"
+                     x-text="combo.weighted_coverage.toFixed(3)"></div>
+                <div class="text-xs"
+                     :class="combo.feasible ? 'text-green-600' : 'text-amber-600'"
+                     x-text="combo.feasible ? '✅ feasible' : '⚠ ' + (combo.constraint_violations?.[0] || 'below threshold')"></div>
+              </div>
+            </div>
+
+            <!-- Per-target coverage table -->
+            <div class="overflow-x-auto">
+              <table class="text-xs w-full">
+                <thead class="text-slate-500 border-b">
+                  <tr><th class="text-left py-1">Target</th>
+                      <th class="text-right py-1">Patient weight</th>
+                      <th class="text-right py-1">Coverage</th></tr>
+                </thead>
+                <tbody>
+                  <template x-for="[tid, cov] in Object.entries(combo.coverage_per_target).sort((a,b) => (result.active_targets[b[0]] || 0) - (result.active_targets[a[0]] || 0))"
+                            :key="tid">
+                    <tr class="border-b border-slate-50">
+                      <td class="py-1" x-text="tid"></td>
+                      <td class="text-right text-slate-500"
+                          x-text="(result.active_targets[tid] || 0).toFixed(2)"></td>
+                      <td class="text-right">
+                        <span :class="cov >= 0.7 ? 'text-green-700' : cov >= 0.4 ? 'text-yellow-700' : 'text-red-500'"
+                              x-text="(cov >= 0.7 ? '🟢 ' : cov >= 0.4 ? '🟡 ' : '🔴 ') + cov.toFixed(2)"></span>
+                      </td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Toxicity -->
+            <details class="mt-3 text-xs">
+              <summary class="cursor-pointer text-slate-500">毒性叠加详情</summary>
+              <div class="mt-2 grid grid-cols-2 gap-1">
+                <template x-for="[ax, val] in Object.entries(combo.toxicity_per_axis).filter(e => e[1] > 0).sort((a,b) => b[1] - a[1])"
+                          :key="ax">
+                  <div class="text-slate-600">
+                    <span x-text="ax"></span>: <strong x-text="val.toFixed(2)"></strong>
+                  </div>
+                </template>
+              </div>
+            </details>
+          </div>
+        </template>
+
+        <!-- Framework caveats -->
+        <div class="text-xs text-slate-500 p-4 bg-slate-50 rounded border">
+          <p class="font-medium mb-1">⚠ 框架局限:</p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>IDA 假设 drugs 在不同 sub-clone 上独立起效 — 不直接建模 PD synergy</li>
+            <li>Drug coverage values 是专家手动标注 (taxonomy v<span x-text="result?.taxonomy_version"></span>)</li>
+            <li>不替代 NCCN 循证 regimen — 用作 hypothesis generation</li>
+            <li>Theoretical novel combos 必须在 IRB-approved trial 内使用</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+function coverageExplorer() {
+  return {
+    // Inputs
+    muts: '', fusions: '',
+    flt3_itd: false, flt3_tkd: false, tp53_multihit: false,
+    karyo_del_17p: false, is_relapse: false,
+    age: 60,
+    max_arity: 4, coverage_threshold: 0.65,
+    available_drugs: [], custom_pool: [],
+
+    // State
+    loading: false, result: null,
+
+    async init() {
+      try {
+        const r = await fetch('/api/v1/coverage/taxonomy');
+        const d = await r.json();
+        this.available_drugs = d.drug_pool || [];
+      } catch (e) { console.warn('taxonomy fetch failed', e); }
+    },
+
+    loadExample(which) {
+      this.muts = ''; this.fusions = '';
+      this.flt3_itd = false; this.flt3_tkd = false;
+      this.tp53_multihit = false; this.karyo_del_17p = false;
+      this.is_relapse = false;
+      if (which === 'flt3_npm1') {
+        this.muts = 'FLT3, NPM1, DNMT3A';
+        this.flt3_itd = true; this.age = 45;
+      } else if (which === 'apl') {
+        this.fusions = 'PML_RARA'; this.age = 38;
+      } else if (which === 'idh1_unfit') {
+        this.muts = 'IDH1'; this.age = 78;
+      } else if (which === 'kmt2a') {
+        this.muts = 'KMT2A'; this.fusions = 'KMT2A_r'; this.age = 50;
+      }
+      this.run();
+    },
+
+    async run() {
+      this.loading = true; this.result = null;
+      const body = {
+        mutations: this.muts.split(',').map(s => s.trim()).filter(Boolean),
+        fusions: this.fusions.split(',').map(s => s.trim()).filter(Boolean),
+        flt3_itd: this.flt3_itd, flt3_tkd: this.flt3_tkd,
+        tp53_multihit: this.tp53_multihit,
+        karyo_del_17p: this.karyo_del_17p,
+        is_relapse: this.is_relapse,
+        age: this.age,
+        max_arity: this.max_arity,
+        coverage_threshold: this.coverage_threshold,
+        drug_pool: this.custom_pool.length > 0 ? this.custom_pool : null,
+        n_solutions: 5,
+      };
+      try {
+        const r = await fetch('/api/v1/coverage/compute', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(body),
+        });
+        if (!r.ok) {
+          const err = await r.text();
+          alert('求解失败: ' + err);
+          this.loading = false; return;
+        }
+        this.result = await r.json();
+      } catch (e) {
+        alert('网络错误: ' + e.message);
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

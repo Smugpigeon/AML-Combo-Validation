@@ -14,7 +14,7 @@ from fastapi.staticfiles import StaticFiles
 from app.config import get_settings
 from app.db import Base, engine
 from app.routers import (
-    api_keys, auth, llm_keys, pages, patients, reports,
+    api_keys, auth, coverage, llm_keys, pages, patients, reports,
 )
 
 
@@ -79,6 +79,7 @@ app.include_router(api_keys.router)
 app.include_router(llm_keys.router)
 app.include_router(patients.router)
 app.include_router(reports.router)
+app.include_router(coverage.router)
 
 
 # --- Health check ---
