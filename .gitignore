@@ -39,3 +39,4 @@ build/
 # v0.6 Phase 0 transient files (kept locally, not in git)
 data/canonical/_drug_smiles_cache.json
 data/canonical/*.csv.bak
+data/canonical/chembl_drug_targets.cache.json

@@ -139,8 +139,41 @@ def main():
     model = make_coverage_predictor(cfg)
     print(f"[model] {sum(p.numel() for p in model.parameters() if p.requires_grad):,} params")
 
+    # Compute positive-class weight per axis to handle 18-axis sparsity
+    # (most drug-axis pairs are 0 because most drugs only hit 1-3 axes).
+    train_labels = labels[train_idx]
+    pos_frac = train_labels.mean(axis=0).clip(min=0.01, max=0.99)
+    pos_weight = torch.tensor(
+        ((1 - pos_frac) / pos_frac).clip(max=20.0).astype(np.float32),
+    )  # cap to avoid extreme weights for never-positive axes
+    print(f"[pos_weight] axis pos-freq:  {pos_frac.round(3).tolist()}")
+    print(f"[pos_weight] axis pos_weight: {pos_weight.numpy().round(2).tolist()}")
+
     opt = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=1e-5)
-    loss_fn = nn.MSELoss()
+
+    def loss_fn(pred, target):
+        """Hybrid MSE + per-axis weighted BCE.
+
+        Pred is in [0, 1] from sigmoid. Target is in [0, 1] (continuous
+        coverage). Use:
+          - MSE on (pred, target) for overall fit
+          - BCEWithLogitsLoss on (logit, target>0.1 binary) with
+            pos_weight to avoid collapse on sparse classes
+        """
+        # MSE for fit on continuous labels
+        mse = ((pred - target) ** 2).mean()
+        # BCE with pos_weight on each axis to fight class imbalance.
+        # Need the pre-sigmoid logit. Recover via inverse:
+        #   logit = log(p / (1-p))
+        # Clamp p to avoid log(0).
+        p_clamped = pred.clamp(1e-6, 1 - 1e-6)
+        logit = torch.log(p_clamped / (1 - p_clamped))
+        bin_target = (target > 0.1).float()
+        bce = nn.functional.binary_cross_entropy_with_logits(
+            logit, bin_target,
+            pos_weight=pos_weight.to(logit.device),
+        )
+        return mse + 0.5 * bce
     history = []
     best_val_mse = float("inf")
 

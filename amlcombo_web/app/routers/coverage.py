@@ -103,8 +103,16 @@ class CoverageComputeRequest(BaseModel):
     is_relapse: bool = False
     # RNA program scores (optional)
     rna_programs: dict[str, float] = Field(default_factory=dict)
-    # Drug pool restriction (None = use full taxonomy pool)
+    # Drug pool restriction (None = use full merged pool — Expert ∪ ChEMBL)
     drug_pool: list[str] | None = None
+    # Novel drugs added at request time: {label: SMILES} — go through GIN
+    # tier-3 inference, then join the merged pool for this request only.
+    novel_drugs: dict[str, str] = Field(
+        default_factory=dict,
+        description="Map of {drug_label: SMILES} for novel drugs not in "
+                     "Expert taxonomy or ChEMBL. Coverage predicted via "
+                     "GIN. drug_pool can include these labels.",
+    )
     # Constraints (None = taxonomy defaults)
     max_arity: int | None = None
     coverage_threshold: float | None = None
@@ -136,7 +144,8 @@ class CoverageComputeResponse(BaseModel):
 def compute_coverage(req: CoverageComputeRequest):
     try:
         from combo_val.coverage.set_cover import find_top_combinations
-        from combo_val.coverage.taxonomy import build_coverage_matrix, load_taxonomy
+        from combo_val.coverage.taxonomy import load_taxonomy
+        from combo_val.coverage.merged_pool import MergedDrugPool
         from combo_val.coverage.patient_targets import infer_active_targets
     except ImportError:
         raise HTTPException(500, "coverage module unavailable")
@@ -171,15 +180,21 @@ def compute_coverage(req: CoverageComputeRequest):
             taxonomy_version=tx.version, top_combinations=[],
         )
 
-    # Drug pool
+    # 3-tier merged drug pool: Expert ∪ ChEMBL ∪ GIN-novel
+    merged = MergedDrugPool(taxonomy=tx)
+    if req.novel_drugs:
+        merged.register_novel_smiles(req.novel_drugs)
+
     if req.drug_pool:
         pool = list(req.drug_pool)
+        # Include any novel drug names in the pool that weren't passed
+        for d in req.novel_drugs:
+            if d not in pool:
+                pool.append(d)
     else:
-        all_drugs: set[str] = set()
-        for t in tx.targets:
-            all_drugs.update(t.covered_by_drug_examples.keys())
-        pool = sorted(all_drugs)
-    cm = build_coverage_matrix(tx, pool)
+        pool = list(merged.known_drugs) + list(req.novel_drugs.keys())
+
+    cm = merged.build_coverage_matrix(pool, smiles_lookup=req.novel_drugs)
 
     # Constraints (defaults from taxonomy, overridden by request)
     constraints = dict(tx.constraints_default)

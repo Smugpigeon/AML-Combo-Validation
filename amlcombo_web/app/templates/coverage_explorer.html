@@ -61,6 +61,30 @@
                class="w-32 px-3 py-2 border rounded text-sm" />
       </div>
 
+      <!-- Novel drug input (Tier-3 GIN) -->
+      <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
+        <h3 class="font-semibold text-slate-800 mb-1">🧪 新药 SMILES (Tier-3 GIN)</h3>
+        <p class="text-xs text-slate-500 mb-3">
+          Expert taxonomy + ChEMBL 没有的药 (e.g. 国产 PROTAC、新 FDA),
+          输入 SMILES → GIN 推 18-axis coverage → 立刻进 set cover。
+          <strong>当前 GIN val Pearson ≈ 0.2,推断仅供探索, 不可替代专家注释</strong>。
+        </p>
+        <template x-for="(d, i) in novel_drugs" :key="i">
+          <div class="grid grid-cols-12 gap-2 mb-2">
+            <input x-model="d.label" placeholder="标签 (e.g. NewDrug-1)"
+                   class="col-span-3 px-2 py-1 border rounded text-xs" />
+            <input x-model="d.smiles" placeholder="SMILES, e.g. CC(=O)Oc1ccccc1C(=O)O"
+                   class="col-span-8 px-2 py-1 border rounded text-xs font-mono" />
+            <button @click="novel_drugs.splice(i, 1)"
+                    class="col-span-1 text-red-500 hover:text-red-700 text-sm">×</button>
+          </div>
+        </template>
+        <button @click="novel_drugs.push({label: '', smiles: ''})"
+                class="text-xs text-blue-600 hover:underline mt-1">
+          + 添加新药
+        </button>
+      </div>
+
       <!-- Constraints -->
       <div class="bg-white rounded-xl border border-slate-200 shadow-sm p-5">
         <h3 class="font-semibold text-slate-800 mb-3">求解约束</h3>
@@ -260,6 +284,7 @@ function coverageExplorer() {
     age: 60,
     max_arity: 4, coverage_threshold: 0.65,
     available_drugs: [], custom_pool: [],
+    novel_drugs: [],   // [{label, smiles}, ...]
 
     // State
     loading: false, result: null,
@@ -292,6 +317,13 @@ function coverageExplorer() {
 
     async run() {
       this.loading = true; this.result = null;
+      // Pack novel_drugs from [{label, smiles}, ...] to {label: smiles}
+      const novel = {};
+      for (const d of this.novel_drugs) {
+        if (d.label && d.smiles) {
+          novel[d.label.trim()] = d.smiles.trim();
+        }
+      }
       const body = {
         mutations: this.muts.split(',').map(s => s.trim()).filter(Boolean),
         fusions: this.fusions.split(',').map(s => s.trim()).filter(Boolean),
@@ -303,6 +335,7 @@ function coverageExplorer() {
         max_arity: this.max_arity,
         coverage_threshold: this.coverage_threshold,
         drug_pool: this.custom_pool.length > 0 ? this.custom_pool : null,
+        novel_drugs: novel,
         n_solutions: 5,
       };
       try {

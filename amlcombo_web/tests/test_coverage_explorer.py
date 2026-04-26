@@ -52,9 +52,14 @@ def test_compute_returns_correct_combo_for_flt3_npm1(client):
     assert "MENIN_NPM1" in d["active_targets"]
     assert len(d["top_combinations"]) >= 1
     top = d["top_combinations"][0]
-    flt3i = {"Quizartinib (AC220)", "Gilteritinib", "Midostaurin"}
+    # FLT3 inhibitors — expanded to include ChEMBL-derived multi-kinase
+    # drugs (Sunitinib, Sorafenib, etc.) that also have high FLT3 coverage.
+    flt3i = {"Quizartinib (AC220)", "Gilteritinib", "Midostaurin",
+             "Sunitinib", "Sorafenib", "Crenolanib",
+             "Cabozantinib", "Linifanib (ABT-869)", "Tandutinib (MLN518)",
+             "AST-487", "Dovitinib (CHIR-258)"}
     assert any(d in flt3i for d in top["drug_ids"]), \
-        f"Top combo {top['drug_ids']} has no FLT3i"
+        f"Top combo {top['drug_ids']} has no FLT3i (any class)"
     assert top["feasible"] is True
 
 

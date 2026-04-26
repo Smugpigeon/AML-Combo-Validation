@@ -677,12 +677,17 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
     """Run the Palmer-Sorger IDA solver for this patient and return a
     serializable dict for the report renderer.
 
+    Uses the 3-tier merged drug pool (Expert ∪ ChEMBL ∪ GIN-novel) so
+    the candidate set includes all drugs where coverage data exists,
+    not just the 31 expert-curated ones.
+
     Returns empty dict on any failure (taxonomy missing, no active
     targets, solver crash) — caller must handle the empty state."""
     try:
         import pandas as pd
         from combo_val.coverage.set_cover import find_top_combinations
-        from combo_val.coverage.taxonomy import build_coverage_matrix, load_taxonomy
+        from combo_val.coverage.taxonomy import load_taxonomy
+        from combo_val.coverage.merged_pool import MergedDrugPool
         from combo_val.coverage.patient_targets import infer_active_targets
     except ImportError:
         return {}
@@ -720,14 +725,13 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
     if not active:
         return {"active_targets": {}, "top_combinations": []}
 
-    # Drug pool: union of all drugs explicitly listed in any target's
-    # covered_by_drug_examples. (Phase B will expand this via GIN +
-    # arbitrary SMILES.)
-    pool_drugs = set()
-    for t in tx.targets:
-        pool_drugs.update(t.covered_by_drug_examples.keys())
-    pool = sorted(pool_drugs)
-    cm = build_coverage_matrix(tx, pool)
+    # 3-tier drug pool: Expert taxonomy ∪ ChEMBL bioactivity ∪ GIN-novel.
+    # Per Phase B.4: ChEMBL adds ~70 multi-kinase drugs beyond the
+    # 31 expert-curated, surfacing polypharmacology (e.g. Sunitinib =
+    # FLT3+KIT dual inhibitor) the expert taxonomy missed.
+    pool = MergedDrugPool(taxonomy=tx)
+    drug_pool_ids = pool.known_drugs
+    cm = pool.build_coverage_matrix(drug_pool_ids)
 
     # Constraints — start with the taxonomy defaults; could be patient-
     # specific in the future (e.g., loosen QT ceiling if no FLT3 active)
@@ -760,7 +764,7 @@ def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
 
     return {
         "active_targets": active,
-        "drug_pool_size": len(pool),
+        "drug_pool_size": len(drug_pool_ids),
         "constraints": constraints,
         "top_combinations": serialized,
         "framework": "Palmer-Sorger IDA (Cell 2017, PMID 29245013)",
