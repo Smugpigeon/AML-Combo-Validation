@@ -1088,6 +1088,263 @@ def _clonal_coverage_narrative(kit_out: KitOutput) -> str:
     return narrative + "\n".join(triplet_lines)
 
 
+# ---------------------------------------------------------------------------
+# §7.3 Multi-Target Coverage — Palmer-Sorger IDA framework
+# ---------------------------------------------------------------------------
+
+# Curated combo-pharmacology rationale: when this exact set of drug classes
+# co-appears in a recommended combo, surface the relevant published synergy
+# / antagonism / sequential-administration evidence. Keys are sorted-tuple
+# of canonical class names so order doesn't matter.
+_COMBO_PHARMACOLOGY_NOTES: dict[tuple, str] = {
+    ("BCL2i", "FLT3i"): (
+        "**BCL2i + FLT3i 协同**已确立 (Daver Cancer Discov 2022 PMID 36070394; "
+        "Short JCO 2024 PMID 38277619)。机制: FLT3 抑制下调 MCL-1 → 解除 BCL-2 "
+        "依赖性细胞的 apoptotic priming；Ven 与 Gilt/Quiz 同时给可显著降低骨髓 "
+        "blast 负荷。建议同步给药 (D1-D14)。"
+    ),
+    ("BCL2i", "HMA"): (
+        "**BCL2i + HMA 协同 (VIALE-A) 已 FDA 标准化** (PMID 32813947, NEJM 2020)。"
+        "机制: HMA 诱导 NOXA → 抑制 MCL-1 → 解除 BCL-2 依赖。Ven D1-D28 + Aza "
+        "D1-D7,标准 28 天循环。是 unfit AML 一线 SOC。"
+    ),
+    ("HMA", "IDH1i"): (
+        "**HMA + IDH1i 协同 (AGILE) FDA 批准** (PMID 35443108, NEJM 2022)。"
+        "机制: IDH1i 解除分化阻滞 + HMA 维持 hypomethylation。Ivo D1-D28 + Aza "
+        "D1-D7。"
+    ),
+    ("HMA", "IDH2i"): (
+        "**HMA + IDH2i** 类似 IDH1i (Venugopal Blood Adv 2023, PMID 37285559)。"
+    ),
+    ("HMA", "MENINi"): (
+        "**HMA + MENINi 序贯协同**: HMA 先诱导分化, MENINi 解除 HOX/MEIS1 "
+        "维持 — Aza+Revumenib 在 NPM1mut/KMT2A-r 早期 trial 显示 CR > 70% "
+        "(Issa Nature 2023, PMID 36922593)。"
+    ),
+    ("BCL2i", "MENINi"): (
+        "**BCL2i + MENINi**: 多个 Phase I/II trial 在 KMT2A-r AML 测试 (NCT05153330, "
+        "NCT05761171)。机制理论: MENINi 解除分化 → 暴露 BCL-2 依赖 LSC 给 Ven。"
+    ),
+    ("BCL2i", "FLT3i", "HMA"): (
+        "**三联 BCL2i+FLT3i+HMA** (Aza+Ven+Gilt, LACEWING JCO 2022 / Short JCO 2024) — "
+        "三药互不重叠靶点 + 各自 active 在不同 sub-clone。Phase 2 CR 95% 在 R/R, "
+        "CR 70% 在 newly-Dx,但毒性 (myelosuppression + DDI) 显著。**剂量需 Aza D1-D7, "
+        "Ven D1-D28, Gilt D1-D28**,Ven 在 azole prophylaxis 下 reduce 至 100mg。"
+    ),
+    ("BCL2i", "FLT3i", "MENINi"): (
+        "**Theoretical novel triplet** (FLT3-ITD + NPM1 双驱动): FLT3i 打 FLT3 "
+        "kinase + MENINi 打 NPM1-MENIN-HOX axis + Ven 打 BCL-2 — 三个非冗余 "
+        "mechanism, 单 clone 难逃。无 trial 数据,临床试验 only。"
+    ),
+}
+
+# Drug → canonical mechanism class for the combo-pharmacology lookup
+_DRUG_TO_CLASS: dict[str, str] = {
+    # FLT3 inhibitors
+    "Quizartinib (AC220)": "FLT3i", "Gilteritinib": "FLT3i",
+    "Midostaurin": "FLT3i", "Crenolanib": "FLT3i", "Sorafenib": "FLT3i",
+    # IDH inhibitors
+    "Ivosidenib": "IDH1i", "Olutasidenib": "IDH1i", "Enasidenib": "IDH2i",
+    # BCL2/MCL1
+    "Venetoclax": "BCL2i", "Navitoclax": "BCL2i",
+    "AMG-176": "MCL1i", "AT-101": "MCL1i",
+    # MENIN
+    "Revumenib": "MENINi", "Ziftomenib": "MENINi",
+    # HMA
+    "Azacytidine": "HMA", "Decitabine": "HMA",
+    # Other
+    "Cytarabine": "cytotoxic", "Daunorubicin": "anthracycline",
+    "Idasanutlin": "MDM2i", "Eprenetapopt": "TP53_modulator",
+    "Trametinib": "MEKi", "Selumetinib": "MEKi",
+    "Ruxolitinib (INCB018424)": "JAKi", "Pacritinib": "JAKi",
+    "Dasatinib": "KITi", "Avapritinib": "KITi",
+    "Idelalisib": "PI3Ki", "Rapamycin": "mTORi", "AKT Inhibitor IV": "AKTi",
+    "IACS-010759": "OXPHOSi", "Etomoxir": "CPT1i",
+    "H3B-8800": "SF3B1_modulator", "E7107": "SF3B1_modulator",
+}
+
+
+def _combo_pharmacology_note(drug_ids: list[str]) -> str | None:
+    """Look up published combo-pharmacology evidence for this drug set."""
+    classes = sorted({_DRUG_TO_CLASS.get(d, "?") for d in drug_ids
+                       if _DRUG_TO_CLASS.get(d, "?") != "?"})
+    return _COMBO_PHARMACOLOGY_NOTES.get(tuple(classes))
+
+
+def _multi_target_coverage_section(kit, kit_out) -> str:
+    """Render §7.3 Multi-Target Coverage block."""
+    mtc = kit_out.multi_target_coverage or {}
+    if not mtc or not mtc.get("active_targets"):
+        return (
+            "*未推断出活跃 vulnerability 靶点 — 患者突变 panel 可能较少, "
+            "或 driver 不在 18-target taxonomy 中。* "
+            "Multi-Target Coverage 框架未触发推荐。"
+        )
+
+    active = mtc["active_targets"]
+    combos = mtc.get("top_combinations") or []
+    constraints = mtc.get("constraints") or {}
+    framework = mtc.get("framework", "Palmer-Sorger IDA")
+    tax_v = mtc.get("taxonomy_version", "?")
+
+    lines = [
+        f"> 🎯 **多靶点覆盖优化** (framework: {framework}, taxonomy v{tax_v})",
+        "> ",
+        "> 这一节用 Palmer-Sorger Independent Drug Action 框架在 18 个 vulnerability ",
+        "> target 上对患者做 set-cover 优化 — 推荐能"
+        "**覆盖最多患者关键靶点的最小药数组合**, 同时遵守 toxicity 上限。",
+        "> ",
+        "> **理论假设**: combo 临床获益主要来自 patient-level "
+        "*靶点异质性覆盖* (IDA), 而非 molecular synergy。多个非冗余机制组合 "
+        "意味着任何 sub-clone 的逃逸路径都被堵住。",
+        "",
+        "**当前患者激活的 vulnerability 靶点 (top-8)**:",
+        "",
+        "| Target | Tier | 权重 | 说明 |",
+        "|--------|:----:|----:|------|",
+    ]
+    # Load taxonomy lazily to enrich descriptions
+    try:
+        from combo_val.coverage.taxonomy import load_taxonomy
+        tx = load_taxonomy()
+        tx_lookup = {t.id: t for t in tx.targets}
+    except Exception:
+        tx_lookup = {}
+
+    sorted_targets = sorted(active.items(), key=lambda x: -x[1])[:8]
+    for tid, w in sorted_targets:
+        spec = tx_lookup.get(tid)
+        tier = spec.tier if spec else "?"
+        desc = (spec.description[:55] + "…") if spec and len(spec.description) > 55 \
+            else (spec.description if spec else "")
+        lines.append(f"| `{tid}` | {tier} | {w:.2f} | {desc} |")
+    lines.append("")
+
+    if not combos:
+        lines.append("*在当前 drug pool + 约束条件下, 求解器没有找到可行组合。*")
+        return "\n".join(lines)
+
+    lines.append(
+        f"**推荐 top-{min(3, len(combos))} 组合** "
+        f"(constraints: max {constraints.get('max_arity', '?')} 药, "
+        f"coverage 阈值 ≥ {constraints.get('coverage_threshold', '?')}):"
+    )
+    lines.append("")
+
+    for i, combo in enumerate(combos[:3], 1):
+        flag = "✅ feasible" if combo["feasible"] else "⚠ " + (
+            "; ".join(combo.get("constraint_violations", [])[:2])
+            or "未达 coverage 阈值"
+        )
+        lines.append(
+            f"#### #{i}  {' + '.join(combo['drug_ids'])}  (arity={combo['arity']}, "
+            f"weighted coverage = **{combo['weighted_coverage']:.3f}**, {flag})"
+        )
+        lines.append("")
+        # Mechanism diversity check
+        classes_used = sorted({_DRUG_TO_CLASS.get(d, "其他") for d in combo['drug_ids']})
+        n_distinct = len(set(classes_used) - {"其他"})
+        lines.append(
+            f"**Mechanism diversity**: {n_distinct} 个非冗余机制类 — "
+            f"`{' / '.join(classes_used)}`"
+        )
+        lines.append("")
+
+        # Coverage breakdown
+        lines.append("**Per-target coverage (Bliss-IDA 聚合)**:")
+        lines.append("")
+        lines.append("| Target | Patient weight | Coverage | 主要由 |")
+        lines.append("|--------|---------------:|---------:|--------|")
+        cov = combo.get("coverage_per_target", {})
+        # Sort by patient weight (most important first)
+        for tid in sorted(cov, key=lambda t: -active.get(t, 0)):
+            cv = cov[tid]
+            w = active.get(tid, 0)
+            # Find the dominating drug
+            dom_drug = "—"
+            try:
+                from combo_val.coverage.taxonomy import load_taxonomy
+                tx_local = load_taxonomy()
+                spec = tx_local.get(tid) if hasattr(tx_local, 'get') else None
+                if spec:
+                    examples = spec.covered_by_drug_examples
+                    in_combo = [(d, examples.get(d, 0))
+                                 for d in combo['drug_ids'] if d in examples]
+                    if in_combo:
+                        dom_drug = max(in_combo, key=lambda x: x[1])[0]
+            except Exception:
+                pass
+            cov_emoji = "🟢" if cv >= 0.7 else ("🟡" if cv >= 0.4 else "🔴")
+            lines.append(f"| `{tid}` | {w:.2f} | {cov_emoji} {cv:.2f} | {dom_drug} |")
+        lines.append("")
+
+        # Toxicity stacking
+        tox = combo.get("toxicity_per_axis", {})
+        nonzero_tox = {k: v for k, v in tox.items() if v > 0.1}
+        if nonzero_tox:
+            tox_lines = ", ".join(
+                f"{k}={v:.2f}" for k, v in
+                sorted(nonzero_tox.items(), key=lambda x: -x[1])[:5]
+            )
+            lines.append(f"**Toxicity stacking**: {tox_lines}")
+            lines.append("")
+
+        # Combo pharmacology evidence (from curated literature)
+        pharm_note = _combo_pharmacology_note(combo['drug_ids'])
+        if pharm_note:
+            lines.append("**临床证据 (combo pharmacology)**:")
+            lines.append("")
+            lines.append(f"> {pharm_note}")
+            lines.append("")
+        else:
+            # Try sub-pair evidence
+            from itertools import combinations as _comb
+            sub_notes = []
+            for pair in _comb(combo['drug_ids'], 2):
+                p_note = _combo_pharmacology_note(list(pair))
+                if p_note:
+                    sub_notes.append(p_note)
+            if sub_notes:
+                lines.append("**Sub-pair 协同证据**:")
+                lines.append("")
+                for n in sub_notes[:2]:
+                    lines.append(f"> {n}")
+                    lines.append("")
+            else:
+                lines.append(
+                    "**Combo pharmacology**: 此组合无直接 published synergy "
+                    "evidence — 推荐基于 IDA 覆盖原理 + 各药单独 SOC 地位, "
+                    "属 *theoretical novel combination*, 临床使用必须经 MDT "
+                    "审议 + 临床试验入组。"
+                )
+                lines.append("")
+
+        lines.append("---")
+        lines.append("")
+
+    # Critical caveats
+    lines.append("**⚠ 框架局限**:")
+    lines.append("")
+    lines.append(
+        "- IDA 框架假设 drugs 在不同 sub-clone 上 *独立* 起效, "
+        "**不直接建模 PD synergy/antagonism** — 上面 \"Sub-pair 协同证据\" "
+        "块对此做了 published-evidence 加注"
+    )
+    lines.append(
+        "- Drug coverage values (0..1) 是 **专家手动标注**, 非 wet-lab IC50 "
+        "归一化 — 详见 `src/combo_val/knowledge/target_taxonomy_v2.yaml`"
+    )
+    lines.append(
+        "- 不替代 §5 (循证 NCCN regimen) 或 §3.9 (Allo-SCT 推荐); 此节用作 "
+        "**hypothesis-generation + drug discovery rationale**"
+    )
+    lines.append(
+        "- *Theoretical novel combinations* 只能在 **IRB-approved trial** 内使用, "
+        "不是 standard of care"
+    )
+    return "\n".join(lines)
+
+
 def _confidence_narrative(kit_out: KitOutput) -> str:
     """Sample QC + confidence caveats in prose."""
     dna = kit_out.dna_summary or {}
@@ -1445,10 +1702,14 @@ def build_clinical_report_markdown(
         "",
         _clonal_coverage_narrative(kit_out),
         "",
+        "### 7.3 多靶点覆盖优化 (Multi-Target Coverage — Palmer-Sorger IDA)",
+        "",
+        _multi_target_coverage_section(kit, kit_out),
+        "",
     ])
     if audit_mode:
         sections.extend([
-            "### 7.3 Engineering audit (multi-backbone comparison)",
+            "### 7.4 Engineering audit (multi-backbone comparison)",
             "",
             "> Engineering view — backbone label + Mahalanobis QC + checkpoint hash. ",
             "> This pane is for kit developers comparing MLP / Set-Transformer / "

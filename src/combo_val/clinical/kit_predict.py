@@ -646,6 +646,13 @@ def predict_for_patient(
             "layer3_backbone": layer3_backbone,
         }]
 
+    # Multi-Target Coverage (Palmer-Sorger IDA framework, 18-target taxonomy).
+    # Computes vulnerability targets active in this patient + finds top-K
+    # minimal-arity drug combinations covering them under toxicity ceilings.
+    # Lives at §7.3 of the patient report. Failure here is non-fatal —
+    # we surface a stub dict so the report can render an empty-state.
+    multi_target_coverage = _compute_multi_target_coverage(kit, driver_flags)
+
     return KitOutput(
         patient_id=kit.patient_id,
         predicted_eln2017=diag["eln_predicted"],
@@ -662,7 +669,103 @@ def predict_for_patient(
         # Issue #4 — pass both ELN versions through to the report renderer.
         eln_2017=diag.get("eln2017", {}),
         eln_2022=diag.get("eln2022", {}),
+        multi_target_coverage=multi_target_coverage,
     )
+
+
+def _compute_multi_target_coverage(kit: KitInput, driver_flags: dict) -> dict:
+    """Run the Palmer-Sorger IDA solver for this patient and return a
+    serializable dict for the report renderer.
+
+    Returns empty dict on any failure (taxonomy missing, no active
+    targets, solver crash) — caller must handle the empty state."""
+    try:
+        import pandas as pd
+        from combo_val.coverage.set_cover import find_top_combinations
+        from combo_val.coverage.taxonomy import build_coverage_matrix, load_taxonomy
+        from combo_val.coverage.patient_targets import infer_active_targets
+    except ImportError:
+        return {}
+
+    try:
+        tx = load_taxonomy()
+    except Exception:
+        return {}
+
+    # Build a patient feature dict from the KitInput. The taxonomy expects
+    # mut_<GENE>, fusion_<X>, clin_*, tp53_multihit fields.
+    pf = {}
+    for m in kit.mutations or []:
+        pf[f"mut_{m.gene.upper()}"] = 1
+        if getattr(m, "is_ITD", False):
+            pf["clin_flt3_itd"] = 1
+        if getattr(m, "is_TKD", False):
+            pf["clin_flt3_tkd"] = 1
+        if m.gene.upper() == "TP53" and getattr(m, "is_multi_hit", False):
+            pf["tp53_multihit"] = True
+    for fus in kit.fusions or []:
+        pf[f"fusion_{fus.upper().replace('-', '_')}"] = 1
+    if kit.age is not None:
+        pf["clin_age"] = float(kit.age)
+    if kit.is_relapse:
+        pf["clin_is_relapse"] = 1
+    # Derive TP53 multi-hit from karyotype del(17p) + TP53 mut even when not flagged
+    karyo_del17p = bool(kit.karyotype_text and "del(17)" in (kit.karyotype_text or ""))
+    if karyo_del17p:
+        pf["karyo_del_17p"] = 1
+        if pf.get("mut_TP53"):
+            pf["tp53_multihit"] = True
+
+    active = infer_active_targets(pd.Series(pf), tx)
+    if not active:
+        return {"active_targets": {}, "top_combinations": []}
+
+    # Drug pool: union of all drugs explicitly listed in any target's
+    # covered_by_drug_examples. (Phase B will expand this via GIN +
+    # arbitrary SMILES.)
+    pool_drugs = set()
+    for t in tx.targets:
+        pool_drugs.update(t.covered_by_drug_examples.keys())
+    pool = sorted(pool_drugs)
+    cm = build_coverage_matrix(tx, pool)
+
+    # Constraints — start with the taxonomy defaults; could be patient-
+    # specific in the future (e.g., loosen QT ceiling if no FLT3 active)
+    constraints = dict(tx.constraints_default)
+    # If patient is unfit, prefer arity ≤ 3 to limit toxicity stacking
+    is_unfit = (kit.age is not None and kit.age >= 75) or \
+                (driver_flags.get("TP53") is True)
+    if is_unfit:
+        constraints["max_arity"] = min(constraints.get("max_arity", 4), 3)
+
+    try:
+        results = find_top_combinations(active, cm, constraints,
+                                          n_solutions=5, multistart=8)
+    except Exception:
+        return {"active_targets": active, "top_combinations": []}
+
+    # Serialize results to plain dicts
+    serialized = []
+    for r in results:
+        serialized.append({
+            "drug_ids": list(r.drug_ids),
+            "arity": int(r.arity),
+            "weighted_coverage": float(r.total_weighted_coverage),
+            "coverage_per_target": dict(r.coverage_per_target),
+            "toxicity_per_axis": dict(r.toxicity_per_axis),
+            "feasible": bool(r.feasible),
+            "constraint_violations": list(r.constraint_violations),
+            "rationale": list(r.rationale),
+        })
+
+    return {
+        "active_targets": active,
+        "drug_pool_size": len(pool),
+        "constraints": constraints,
+        "top_combinations": serialized,
+        "framework": "Palmer-Sorger IDA (Cell 2017, PMID 29245013)",
+        "taxonomy_version": tx.version,
+    }
 
 
 def pretty_print_kit_output(out: KitOutput) -> str:

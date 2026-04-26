@@ -108,3 +108,20 @@ class KitOutput:
     # kept for label compatibility with the BeatAML-trained MLP.
     eln_2017: dict = field(default_factory=dict)   # {"category": str, "rationale": list[str]}
     eln_2022: dict = field(default_factory=dict)   # {"category": str, "rationale": list[str]}
+    # Multi-target IDA coverage (Palmer-Sorger framework, 18-target taxonomy):
+    # {
+    #   "active_targets": {target_id: weight},      # patient's active vulnerabilities
+    #   "drug_pool_size": int,
+    #   "constraints": dict,
+    #   "top_combinations": [                       # ranked feasible combos
+    #     {"drug_ids": [...], "arity": int,
+    #      "weighted_coverage": float,
+    #      "coverage_per_target": {target_id: float},
+    #      "toxicity_per_axis": {axis: float},
+    #      "feasible": bool,
+    #      "constraint_violations": [...],
+    #      "rationale": [...]},
+    #     ...
+    #   ]
+    # }
+    multi_target_coverage: dict = field(default_factory=dict)
