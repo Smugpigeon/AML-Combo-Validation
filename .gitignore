@@ -35,3 +35,7 @@ build/
 # Exception: the BeatAML RNA preprocessor bundle IS the kit artifact —
 # it must ship with the canonical data so new patients can be featurized.
 !data/canonical/beataml_rna_preprocessor.joblib
+
+# v0.6 Phase 0 transient files (kept locally, not in git)
+data/canonical/_drug_smiles_cache.json
+data/canonical/*.csv.bak
