@@ -42,20 +42,42 @@ def flt3_patient_inputs():
     return rna, kit
 
 
-def test_registry_has_expected_6_backbones():
-    """The registry should list all 6 documented backbones."""
+def test_registry_has_expected_backbones():
+    """6 production backbones + 1 v0.6 candidate (pre-validation)."""
     expected = {"mlp", "st-v2", "st-v3-bliss", "st-v3-distill",
-                "st-v3-186pair", "mlp+synergy"}
+                "st-v3-186pair", "mlp+synergy", "gnn-v6"}
     assert set(BACKBONE_REGISTRY.keys()) == expected
+
+
+def test_gnn_v6_registered_but_dispatch_blocked():
+    """v0.6 GNN candidate is registered but predict_for_patient must
+    refuse to dispatch to it until Phase 5 ablation passes the GO
+    threshold (per Path C)."""
+    spec = BACKBONE_REGISTRY["gnn-v6"]
+    assert spec["kind"] == "gnn-v6"
+    assert spec.get("status") == "candidate-pre-validation"
+    # Try to actually invoke and verify it raises NotImplementedError
+    from combo_val.clinical.kit_predict import predict_for_patient
+    from combo_val.clinical.kit_schema import KitInput, MutationCall
+    import pandas as pd
+    # Empty RNA frame is fine — should reject before reaching feature builder
+    rna = pd.Series([0.0], index=["FAKE_GENE"], name="counts")
+    kit = KitInput(patient_id="X",
+                    mutations=[MutationCall(gene="FLT3", is_ITD=True)],
+                    age=50)
+    import pytest as _pt
+    with _pt.raises(NotImplementedError, match="pre-validation"):
+        predict_for_patient(rna, kit, backbone="gnn-v6")
 
 
 def test_registry_entries_well_formed():
     """Each backbone entry must have kind, checkpoint, label, description."""
     required = {"kind", "checkpoint", "label", "description"}
+    valid_kinds = {"mlp", "st", "mlp+synergy", "gnn-v6"}
     for name, spec in BACKBONE_REGISTRY.items():
         missing = required - set(spec.keys())
         assert not missing, f"'{name}' missing fields: {missing}"
-        assert spec["kind"] in {"mlp", "st", "mlp+synergy"}, f"'{name}' bad kind"
+        assert spec["kind"] in valid_kinds, f"'{name}' bad kind"
 
 
 def test_unknown_backbone_raises(flt3_patient_inputs):

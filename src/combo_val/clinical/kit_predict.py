@@ -104,6 +104,22 @@ BACKBONE_REGISTRY: dict[str, dict] = {
         "label": "BaselineA-MLP + Route4-SynergyHead",
         "description": "MLP singles + learned synergy residual from 186 ALMANAC pairs",
     },
+    # v0.6 candidate — registered but NOT YET DISPATCHED. Activation gated
+    # on Phase 5 ablation passing internal Pearson r ≥ 0.20 vs the v0.5
+    # baseline. See docs/V6_MIGRATION_PLAN.md and the Path C plan from the
+    # v0.5 reviewer dialog. Until activation, requesting this backbone
+    # raises NotImplementedError with a pointer to the migration doc.
+    "gnn-v6": {
+        "kind": "gnn-v6",
+        "checkpoint": "runs/v6_endtoend/final_model.pt",
+        "smiles_table": "data/canonical/drug_smiles.csv",
+        "ppi_subgraph": "data/canonical/gene_ppi_subgraph.json",
+        "label": "v0.6-GNN (DrugGIN + GeneGAT + Set-Transformer)",
+        "description": ("Phase 5 candidate: GIN over molecular graphs + GAT "
+                         "over STRING PPI + Set-Transformer combo head. "
+                         "Drop-in for nn.Embedding(165,64). Pre-validation."),
+        "status": "candidate-pre-validation",
+    },
 }
 
 
@@ -240,6 +256,19 @@ def predict_for_patient(
             f"Unknown backbone '{backbone}'. Available: {available}"
         )
     spec = BACKBONE_REGISTRY[backbone]
+    # v0.6 candidate not yet wired into the dispatch — Phase 6 will activate
+    # after Phase 5 ablation passes the GO threshold (internal r ≥ 0.20).
+    # Until then, requesting it raises a clear error pointing at the plan
+    # rather than silently falling back to MLP.
+    if spec.get("kind") == "gnn-v6":
+        raise NotImplementedError(
+            f"Backbone '{backbone}' is registered but pre-validation "
+            f"(status={spec.get('status', 'unknown')!r}). Activation gated "
+            f"on Phase 5 ablation per Path C plan; see commit history + "
+            f"docs/V6_MIGRATION_PLAN.md (when written). For now use one of: "
+            f"mlp, st-v2, st-v3-bliss, st-v3-distill, st-v3-186pair, "
+            f"mlp+synergy."
+        )
     if not Path(spec["checkpoint"]).exists():
         warnings.warn(
             f"Backbone '{backbone}' checkpoint missing at {spec['checkpoint']}; "
