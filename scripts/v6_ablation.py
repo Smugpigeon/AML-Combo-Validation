@@ -251,12 +251,13 @@ def train_one_fold(model, train_loader, val_loader, device, epochs, lr,
                f"train_mse={train_loss:.3f}  val_mse={val_mse:.3f}  "
                f"val_pear={pear:.3f}  val_sp={spr:.3f}  ({elapsed:.1f}s)")
         print(msg, flush=True)
-        history.append({"epoch": epoch, "train_loss": train_loss,
-                         "val_mse": val_mse, "val_pearson": pear,
-                         "val_spearman": spr, "elapsed_sec": elapsed})
+        history.append({"epoch": int(epoch), "train_loss": float(train_loss),
+                         "val_mse": float(val_mse), "val_pearson": float(pear),
+                         "val_spearman": float(spr),
+                         "elapsed_sec": float(elapsed)})
         if pear > best["pearson"]:
-            best = {"epoch": epoch, "pearson": pear, "spearman": spr,
-                     "val_mse": val_mse}
+            best = {"epoch": int(epoch), "pearson": float(pear),
+                     "spearman": float(spr), "val_mse": float(val_mse)}
     return history, best
 
 
@@ -394,6 +395,9 @@ def main():
         )
         print(f"  dataset rows: {len(dataset)}")
         collate = make_collate(arm.use_gin_drug)
+        # Pre-cache patient_id-as-string per row to avoid the int-vs-str
+        # mismatch with the (str-keyed) kfold split sets.
+        pid_str_per_row = dataset.rows["patient_id"].astype(str).values
 
         fold_perfs = []
         for k, (train_pids, val_pids) in enumerate(folds):
@@ -401,9 +405,9 @@ def main():
                 break
             print(f"\n--- {arm.name} fold {k+1}/{args.n_folds} ---")
             train_idx = [i for i in range(len(dataset))
-                          if dataset.rows.iloc[i]["patient_id"] in train_pids]
+                          if pid_str_per_row[i] in train_pids]
             val_idx = [i for i in range(len(dataset))
-                        if dataset.rows.iloc[i]["patient_id"] in val_pids]
+                        if pid_str_per_row[i] in val_pids]
             print(f"  train={len(train_idx)} val={len(val_idx)}")
 
             train_loader = DataLoader(Subset(dataset, train_idx),
