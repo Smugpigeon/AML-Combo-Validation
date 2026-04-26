@@ -215,12 +215,13 @@ def train_one_fold(model, train_loader, val_loader, device, epochs, lr,
                f"val_pear={pear:.3f}  val_sp={spr:.3f}  ({elapsed:.1f}s)")
         print(msg, flush=True)
         history.append({
-            "epoch": epoch, "train_loss": train_loss, "val_mse": val_mse,
-            "val_pearson": pear, "val_spearman": spr, "elapsed_sec": elapsed,
+            "epoch": int(epoch), "train_loss": float(train_loss),
+            "val_mse": float(val_mse), "val_pearson": float(pear),
+            "val_spearman": float(spr), "elapsed_sec": float(elapsed),
         })
         if pear > best_val["pearson"]:
-            best_val = {"epoch": epoch, "pearson": pear, "spearman": spr,
-                        "val_mse": val_mse}
+            best_val = {"epoch": int(epoch), "pearson": float(pear),
+                        "spearman": float(spr), "val_mse": float(val_mse)}
 
     return history, best_val
 

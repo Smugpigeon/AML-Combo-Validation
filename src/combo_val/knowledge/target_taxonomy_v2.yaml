@@ -1,0 +1,277 @@
+# Multi-Target Coverage Vocabulary v2.0
+#
+# 18 molecular / cell-state targets that drive AML pathology.
+# Each target has:
+#   - id: stable identifier
+#   - tier: 1 (actionable mut) | 2 (protein dependency) | 3 (pathway) | 4 (cell-state)
+#   - patient_evidence: how to detect this target is "active" in a given patient
+#                       (mutation flag / RNA program / clinical feature)
+#   - default_weight: importance in the coverage objective (0..1)
+#                     can be overridden per-patient via clinical context
+#   - covered_by_drug_classes: which drug classes hit this target
+#
+# Used by:
+#   - patient_target_inference.py: patient features → active_targets dict
+#   - drug_target_matrix.py: drugs × targets coverage matrix
+#   - set_cover_solver.py: minimal-arity combination that covers ≥ threshold
+#
+# References:
+#   - Palmer & Sorger Cell 2017 PMID 29245013 (IDA framework)
+#   - Bottomly et al. Cancer Cell 2022 PMID 36055237 (BeatAML 2.0 dependencies)
+#   - Döhner Blood 2022 PMID 35797463 (ELN 2022 actionable mutations)
+
+meta:
+  version: "2.0"
+  created: "2026-04-27"
+  ida_aggregation: bliss   # covers(G, c) = 1 - prod(1 - covers(d, c))
+
+targets:
+
+  # ===== TIER 1: ACTIONABLE MUTATIONS (FDA-approved targeted therapy) =====
+
+  - id: FLT3
+    tier: 1
+    description: "FLT3 receptor tyrosine kinase (ITD or TKD)"
+    patient_evidence:
+      mut: [FLT3]
+      flag: [clin_flt3_itd, clin_flt3_tkd]
+    default_weight: 1.0
+    covered_by_drug_classes: [FLT3i_type1, FLT3i_type2]
+    covered_by_drug_examples:
+      Quizartinib (AC220): 0.95   # type 2, very FLT3-specific
+      Gilteritinib: 0.90           # type 1, broader (also AXL)
+      Midostaurin: 0.65            # type 1, multi-kinase
+      Crenolanib: 0.85             # type 1, F691L gatekeeper-active
+      Sorafenib: 0.50              # multi-kinase, FLT3 secondary
+
+  - id: IDH1
+    tier: 1
+    description: "Isocitrate dehydrogenase 1 (R132 hotspot — neomorphic 2-HG)"
+    patient_evidence:
+      mut: [IDH1]
+      flag: [mut_IDH1]
+    default_weight: 1.0
+    covered_by_drug_classes: [IDH1i]
+    covered_by_drug_examples:
+      Ivosidenib: 0.95
+      Olutasidenib: 0.90
+
+  - id: IDH2
+    tier: 1
+    description: "Isocitrate dehydrogenase 2 (R140Q / R172K hotspots)"
+    patient_evidence:
+      mut: [IDH2]
+    default_weight: 1.0
+    covered_by_drug_classes: [IDH2i]
+    covered_by_drug_examples:
+      Enasidenib: 0.92
+
+  - id: TP53_multihit
+    tier: 1
+    description: "TP53 multi-hit (≥2 mut OR VAF≥0.5 OR + del17p)"
+    patient_evidence:
+      mut: [TP53]
+      flag: [karyo_del_17p]
+      tp53_multihit: true
+    default_weight: 0.9       # actionable but no truly effective targeted drug yet
+    covered_by_drug_classes: [TP53_pathway_modulator, MDM2i]
+    covered_by_drug_examples:
+      Idasanutlin: 0.50       # MDM2i, modest activity in TP53wt
+      Eprenetapopt: 0.40      # APR-246 / TP53 reactivator (Phase 3 failed but used)
+
+  # ===== TIER 2: PROTEIN-LEVEL DEPENDENCIES =====
+
+  - id: BCL2
+    tier: 2
+    description: "BCL-2 anti-apoptotic dependence"
+    patient_evidence:
+      # Active in nearly all AML; weight modulated by RNA expression of BCL2 family
+      always_active_baseline: 0.6
+      rna_modifier: BCL2_high
+    default_weight: 0.7
+    covered_by_drug_classes: [BCL2i]
+    covered_by_drug_examples:
+      Venetoclax: 0.90
+      Navitoclax: 0.70
+
+  - id: MCL1
+    tier: 2
+    description: "MCL-1 anti-apoptotic dependence (Ven-resistance escape)"
+    patient_evidence:
+      always_active_baseline: 0.4    # latent unless Ven pressure or RNA high
+      rna_modifier: MCL1_high
+    default_weight: 0.5
+    covered_by_drug_classes: [MCL1i]
+    covered_by_drug_examples:
+      AMG-176: 0.80
+      AT-101: 0.45
+
+  - id: MENIN_KMT2A
+    tier: 2
+    description: "MENIN-KMT2A complex (KMT2A-rearranged AML)"
+    patient_evidence:
+      mut: [KMT2A]
+      fusion: [KMT2A_r]
+    default_weight: 1.0
+    covered_by_drug_classes: [MENINi]
+    covered_by_drug_examples:
+      Revumenib: 0.90      # FDA 2024
+      Ziftomenib: 0.85     # in trials
+
+  - id: MENIN_NPM1
+    tier: 2
+    description: "MENIN-NPM1 axis (NPM1mut → HOX/MEIS1 program → MENIN dependent)"
+    patient_evidence:
+      mut: [NPM1]
+    default_weight: 0.8    # NPM1mut is MENIN-dependent biology
+    covered_by_drug_classes: [MENINi]
+    covered_by_drug_examples:
+      Revumenib: 0.85     # off-label NPM1mut activity in trials
+      Ziftomenib: 0.80
+
+  - id: DNMT
+    tier: 2
+    description: "DNMT1/3A hypomethylation dependence (driver-negative AML, TET2/IDH context)"
+    patient_evidence:
+      mut: [DNMT3A, TET2]
+      always_active_baseline: 0.5
+    default_weight: 0.6
+    covered_by_drug_classes: [HMA]
+    covered_by_drug_examples:
+      Azacytidine: 0.85
+      Decitabine: 0.80
+
+  - id: KIT_RTK
+    tier: 2
+    description: "KIT receptor (CBF-AML modifier; D816V hotspot)"
+    patient_evidence:
+      mut: [KIT]
+    default_weight: 0.7    # only relevant in CBF context
+    covered_by_drug_classes: [KITi]
+    covered_by_drug_examples:
+      Dasatinib: 0.85
+      Avapritinib: 0.90    # D816V specific
+      Midostaurin: 0.50
+
+  # ===== TIER 3: PATHWAY DEPENDENCIES (RNA / cell-state derived) =====
+
+  - id: RAS_MAPK
+    tier: 3
+    description: "RAS-RAF-MEK-ERK pathway activation"
+    patient_evidence:
+      mut: [NRAS, KRAS, PTPN11]
+      rna_modifier: MAPK_signature_high
+    default_weight: 0.6
+    covered_by_drug_classes: [MEKi, RAFi]
+    covered_by_drug_examples:
+      Trametinib: 0.85
+      Selumetinib: 0.80
+
+  - id: JAK_STAT
+    tier: 3
+    description: "JAK-STAT signaling (cytokine-driven; sAML / MPN-AML)"
+    patient_evidence:
+      always_active_baseline: 0.3
+      rna_modifier: STAT5_signature_high
+    default_weight: 0.4
+    covered_by_drug_classes: [JAKi]
+    covered_by_drug_examples:
+      Ruxolitinib (INCB018424): 0.85
+      Pacritinib: 0.80
+
+  - id: SPLICEOSOME
+    tier: 3
+    description: "Spliceosome dysregulation (SF3B1/SRSF2/U2AF1 mut)"
+    patient_evidence:
+      mut: [SF3B1, SRSF2, U2AF1, ZRSR2]
+    default_weight: 0.7
+    covered_by_drug_classes: [SF3B1_modulator]
+    covered_by_drug_examples:
+      H3B-8800: 0.60       # in trials
+      E7107: 0.55
+
+  - id: PI3K_AKT_mTOR
+    tier: 3
+    description: "PI3K-AKT-mTOR signaling (FLT3-ITD downstream, RAS amplifier)"
+    patient_evidence:
+      mut: [FLT3]
+      always_active_baseline: 0.3
+    default_weight: 0.4
+    covered_by_drug_classes: [PI3Ki, mTORi, AKTi]
+    covered_by_drug_examples:
+      Idelalisib: 0.70
+      Rapamycin: 0.65
+      AKT Inhibitor IV: 0.60
+
+  # ===== TIER 4: CELL-STATE VULNERABILITIES =====
+
+  - id: differentiation_block
+    tier: 4
+    description: "Myeloid differentiation arrest (HOX/MEIS1, RARA fusion, CEBPA loss)"
+    patient_evidence:
+      mut: [NPM1, KMT2A, CEBPA]
+      fusion: [PML_RARA, KMT2A_r]
+      always_active_baseline: 0.5
+    default_weight: 0.5
+    covered_by_drug_classes: [HMA, ATRA, MENINi]
+    covered_by_drug_examples:
+      Azacytidine: 0.60
+      Decitabine: 0.55
+      Revumenib: 0.50
+
+  - id: stem_cell_program
+    tier: 4
+    description: "LSC self-renewal program (CD34+CD38- LSC compartment)"
+    patient_evidence:
+      always_active_baseline: 0.5
+      rna_modifier: LSC17_high
+    default_weight: 0.6
+    covered_by_drug_classes: [HMA, BCL2i, MENINi]
+    covered_by_drug_examples:
+      Azacytidine: 0.50
+      Venetoclax: 0.40
+      Revumenib: 0.55
+
+  - id: OXPHOS
+    tier: 4
+    description: "Oxidative phosphorylation dependence (Ven-Aza synergy mechanism)"
+    patient_evidence:
+      always_active_baseline: 0.4
+    default_weight: 0.4
+    covered_by_drug_classes: [OXPHOSi, BCL2i]
+    covered_by_drug_examples:
+      Venetoclax: 0.40         # via secondary OXPHOS suppression
+      IACS-010759: 0.85        # OXPHOSi
+
+  - id: fatty_acid_oxidation
+    tier: 4
+    description: "FAO dependence (LSC metabolic vulnerability)"
+    patient_evidence:
+      always_active_baseline: 0.3
+    default_weight: 0.3
+    covered_by_drug_classes: [CPT1i]
+    covered_by_drug_examples:
+      Etomoxir: 0.70
+
+# ===== TOXICITY AXES (used in constraints, not in coverage) =====
+# Each drug's toxicity vector lives in drug_mechanism_v2.csv
+# Constraint: combo cannot stack > toxicity_ceiling on any single axis
+toxicity_axes:
+  - myelosuppression          # neutropenia / thrombocytopenia
+  - hepatotoxicity            # ALT/AST elevation
+  - cardiotoxicity            # HF, arrhythmia
+  - QT_prolongation           # FLT3i (Quiz black box) + others
+  - differentiation_syndrome  # IDHi / ATRA / MENINi
+  - TLS_risk                  # Ven, especially with high WBC
+  - GI_toxicity               # Cyt, HMA
+  - infection_neutropenic     # downstream of myelosuppression
+
+# ===== CONSTRAINT DEFAULTS =====
+constraints_default:
+  max_arity: 4               # clinical reality: rarely > 4 drugs concurrent
+  toxicity_ceiling:
+    myelosuppression: 2.5    # sum of toxicity scores
+    QT_prolongation: 1.8     # be conservative on QT
+    cardiotoxicity: 1.5
+    differentiation_syndrome: 1.5  # IDHi + ATRA both DS-risk
+  coverage_threshold: 0.70   # min weighted coverage required for a "valid" combo
