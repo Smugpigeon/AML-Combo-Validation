@@ -299,6 +299,8 @@ def parse_clinical_text(
     model: Optional[str] = None,
     max_tokens: int = 2000,
     focus_patient: Optional[str] = None,
+    phi_policy: str = "redact",
+    acknowledge_phi: bool = False,
 ) -> ParsedClinicalText:
     """Use the user's LLM to extract structured AML patient data.
 
@@ -307,19 +309,60 @@ def parse_clinical_text(
         patients in rows).
       api_key / provider / model: BYOK LLM config.
       focus_patient: optional "MRN 12345" / "patient A-001" / "row 3" /
-        "姓名: 张三" hint. If the paste contains multiple patients,
-        tells the LLM which one to extract; otherwise ignored.
+        "姓名: 张三" hint.
+      phi_policy: how to handle detected PHI before LLM dispatch.
+        - "redact" (default): auto-replace detected PHI with [REDACTED-X]
+          markers. Safe default — text reaching the LLM contains no PHI.
+        - "reject": raise PHIDetected if high-severity PHI is present.
+          Forces user to clean their input.
+        - "passthrough": send original text unchanged. ONLY allowed when
+          acknowledge_phi=True (institutional waiver scenario).
+      acknowledge_phi: explicit user acknowledgment that they understand
+        PHI may leave their network when phi_policy="passthrough". Required
+        if phi_policy="passthrough" with detected PHI.
 
     The LLM is instructed to return a JSON object with {parsed, confidence,
     warnings}. We robustly extract the first JSON object from its response
-    and validate minimally — heavy validation happens on the FastAPI endpoint
-    via Pydantic.
+    and validate minimally.
     """
     if not raw_text or len(raw_text.strip()) < 10:
         raise ValueError("raw_text is empty or too short to parse")
     # Basic safety cap to keep prompt costs predictable
     if len(raw_text) > 20000:
         raw_text = raw_text[:20000] + "\n\n[... truncated at 20k chars ...]"
+
+    # Per concern #4 — PHI detection BEFORE the text leaves our server.
+    from amlcombo_web.app.phi_detector import (
+        PHIDetected, detect_phi,
+    )
+    phi_result = detect_phi(raw_text)
+    phi_warnings: list[str] = []
+    if phi_result.has_phi:
+        cats = phi_result.categories_found()
+        phi_msg = (
+            f"PHI detected before LLM dispatch: {phi_result.high_severity_count} "
+            f"high-severity match(es) across categories: {', '.join(cats)}. "
+            f"Policy={phi_policy!r}."
+        )
+        phi_warnings.append(phi_msg)
+        if phi_policy == "reject" and phi_result.high_severity_count > 0:
+            raise PHIDetected(phi_result)
+        if phi_policy == "passthrough":
+            if not acknowledge_phi:
+                raise ValueError(
+                    "phi_policy='passthrough' requires acknowledge_phi=True "
+                    "when PHI is present. This is a deliberate friction step — "
+                    "please confirm institutional authorization to send "
+                    f"{phi_result.high_severity_count} PHI element(s) to a "
+                    "third-party LLM."
+                )
+            # acknowledged passthrough: leave raw_text unchanged
+        else:
+            # default: redact before dispatch — LLM never sees the PHI
+            raw_text = phi_result.redacted_text
+            phi_warnings.append(
+                "Text was auto-redacted before LLM dispatch (phi_policy=redact)."
+            )
 
     provider = provider.lower()
     if provider not in _DEFAULT_MODEL_BY_PROVIDER:
@@ -367,6 +410,9 @@ def parse_clinical_text(
         warnings = [str(warnings)]
     # Coerce non-string warnings to string
     warnings = [str(w) for w in warnings if w][:20]
+    # Surface PHI-detector warnings AT THE TOP of the warnings list so users
+    # see them first and understand what got redacted/passed through.
+    warnings = phi_warnings + warnings
 
     return ParsedClinicalText(
         parsed=parsed if isinstance(parsed, dict) else {},
@@ -376,3 +422,49 @@ def parse_clinical_text(
         tokens_in=resp.tokens_in, tokens_out=resp.tokens_out,
         raw_response_excerpt=resp.text[:500],
     )
+
+
+def build_llm_audit_event_metadata(
+    feature: str,
+    provider: str,
+    model: str,
+    input_chars: int,
+    tokens_in: Optional[int],
+    tokens_out: Optional[int],
+    phi_categories_detected: list[str],
+    phi_high_severity_count: int,
+    phi_policy: str,
+    success: bool,
+    error: Optional[str] = None,
+) -> dict:
+    """Construct the JSON payload for a UsageEvent of type 'llm_audit'.
+
+    Per concern #4b — we record METADATA ONLY:
+      - which feature was invoked (parse_clinical_text / summarize_report)
+      - provider, model, char/token counts (cost tracking)
+      - PHI categories detected + severity + policy (audit of safety gates)
+      - success / error class
+
+    We never record:
+      - the raw prompt text
+      - the raw LLM response
+      - any PHI value itself (only categories like 'NAME_CN')
+      - the user's API key (already encrypted in LLMKey table)
+
+    The audit event is the only thing kept long-term; raw prompt content
+    is held in process memory for the duration of the request only and
+    never written to disk.
+    """
+    return {
+        "feature": feature,
+        "provider": provider,
+        "model": model,
+        "input_chars": input_chars,
+        "tokens_in": tokens_in,
+        "tokens_out": tokens_out,
+        "phi_categories_detected": phi_categories_detected,
+        "phi_high_severity_count": phi_high_severity_count,
+        "phi_policy": phi_policy,
+        "success": success,
+        "error_class": error,
+    }

@@ -1226,6 +1226,7 @@ def build_clinical_report_markdown(
     kit: KitInput,
     kit_out: KitOutput,
     dna_figure_rel_path: str | None = "dna_profile.png",
+    audit_mode: bool = False,
 ) -> str:
     """Build a complete clinical-grade Markdown report for one patient.
 
@@ -1236,6 +1237,12 @@ def build_clinical_report_markdown(
         time, the image link simply renders as a broken image — we also
         include a short paragraph explaining what the figure depicts.
         Set to None to omit the figure entirely.
+      audit_mode: when False (default), Layer-3 ML predictions are NOT
+        rendered in the main flow — only a one-line audit pointer. This
+        is per the post-deployment clinical-reviewer concern that a model
+        with Pearson r ≈ 0.05 vs clinical CR is anchoring even with
+        caveat banners. Set audit_mode=True for engineering/research use
+        only when the full Layer-3 output is needed for backbone audit.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     dna = kit_out.dna_summary or {}
@@ -1245,8 +1252,19 @@ def build_clinical_report_markdown(
         f"# AML 精准用药评估报告",
         f"**Patient ID**: `{kit.patient_id}`  ",
         f"**报告时间**: {timestamp}  ",
-        f"**Kit 版本**: v0.2 — research use only, not for clinical diagnosis  ",
-        f"**报告性质**: 辅助决策，不替代主治医师判断",
+        f"**Kit 版本**: v0.3 — research use only, not for clinical diagnosis  ",
+        f"**报告性质**: 辅助决策，不替代主治医师判断  ",
+        f"**Audit mode**: {'ON (Layer-3 visible)' if audit_mode else 'OFF (Layer-3 default-suppressed per clinical reviewer)'}",
+        "",
+        # Population-validation banner — per concern #2: model has not been
+        # validated on Chinese / Asian AML cohorts, training distribution is
+        # ~80% North American Caucasian (BeatAML 2.0).
+        "> 🚩 **未在中国 / 亚洲 AML 队列上验证 (NOT VALIDATED ON CHINESE / ASIAN AML COHORTS)**",
+        ">",
+        "> 模型训练数据 BeatAML 2.0 (n=613) 主要来自 OHSU + Vizome (北美高加索人群 ≥80%)。",
+        "> 中国 AML 在 t(8;21) 比例 (~15-20% vs 西方 ~7%)、APL 比例、NPM1 突变频率",
+        "> 上与西方队列存在系统性差异。**本工具的 calibration 在亚裔队列上未知**，",
+        "> 临床医师必须将所有推荐结果与本中心既往真实世界经验对照,不可直接采纳。",
         "",
         "---",
         "",
@@ -1386,39 +1404,61 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 7: Model Prediction (Research-grade) ----
-    # Issue #10 — prominent caveat banner BEFORE the AUC predictions, so
-    # clinicians can't miss that this section has not been clinically
-    # validated. The Pearson correlation between AUC predictions and
-    # clinical CR rates was ≈ 0.05 in our Route B test, i.e. effectively
-    # uncorrelated. This section is for hypothesis generation only.
-    sections.extend([
-        "## 七、模型辅助预测 (Research-grade)",
-        "",
-        "> ⚠ **Research-grade prediction — DO NOT base treatment decisions on "
-        "this section alone.**",
-        ">",
-        "> Layer-3 AUC 预测**未经前瞻性临床验证**，"
-        "Route B (BeatAML 内部留出验证集) 中预测 AUC 与临床 CR 率的相关性"
-        "**Pearson r ≈ 0.05** (即统计上无显著相关)。"
-        "本节仅用于**机制假设生成 (hypothesis generation)** + "
-        "不同 backbone 的横向对照, **不可单独驱动治疗决策**。"
-        ">",
-        "> **临床决策请参考第五节** (循证试验方案, Layer 1, 含 PMID + n + median OS) "
-        "或第三节 §3.6 (克隆生物学 + ELN 2022 分层)。这两层不依赖 AUC 预测，"
-        "对临床更有指导性。",
-        "",
-        "### 7.1 组合 AUC 预测 (Layer 3)",
-        "",
-        _combo_prediction_narrative(kit_out),
-        "",
-        "### 7.2 克隆生物学 rationale (Layer 2)",
-        "",
-        _clonal_coverage_narrative(kit_out),
-        "",
-        "---",
-        "",
-    ])
+    # ---- Section 7: Model Prediction ----
+    # Per clinical-reviewer concern #1 (post-v0.3): a model with Pearson
+    # r ≈ 0.05 vs clinical CR creates anchoring bias even with caveat
+    # banners. Default behavior: collapse Layer-3 to a one-line audit
+    # pointer; only render full output in audit_mode=True. Layer-2 (clonal
+    # coverage) does NOT depend on AUC prediction and stays visible.
+    if audit_mode:
+        sections.extend([
+            "## 七、模型辅助预测 (Research-grade — AUDIT MODE)",
+            "",
+            "> ⚠ **Research-grade prediction — DO NOT base treatment decisions on "
+            "this section alone.**",
+            ">",
+            "> Layer-3 AUC 预测**未经前瞻性临床验证**，"
+            "Route B (BeatAML 内部留出验证集) 中预测 AUC 与临床 CR 率的相关性"
+            "**Pearson r ≈ 0.05** (即统计上无显著相关)。"
+            "本节仅用于**机制假设生成 (hypothesis generation)** + "
+            "不同 backbone 的横向对照, **不可单独驱动治疗决策**。"
+            ">",
+            "> **临床决策请参考第五节** (循证试验方案, Layer 1, 含 PMID + n + median OS) "
+            "或第三节 §3.6 (克隆生物学 + ELN 2022 分层)。这两层不依赖 AUC 预测，"
+            "对临床更有指导性。",
+            "",
+            "### 7.1 组合 AUC 预测 (Layer 3)",
+            "",
+            _combo_prediction_narrative(kit_out),
+            "",
+            "### 7.2 克隆生物学 rationale (Layer 2)",
+            "",
+            _clonal_coverage_narrative(kit_out),
+            "",
+            "---",
+            "",
+        ])
+    else:
+        # Default: Layer-3 hidden from main report; Layer-2 (biology, no
+        # AUC dependency) still useful — keep it visible.
+        sections.extend([
+            "## 七、克隆生物学 rationale (Layer 2)",
+            "",
+            "> ℹ️ **Layer-3 ML AUC 预测在默认报告中已折叠**",
+            "> 原因: 内部 Route B 验证显示 AUC 预测与临床 CR 率 Pearson r ≈ 0.05",
+            "> (统计上无显著相关)。展示数值会产生 anchoring bias,即使附 caveat。",
+            "> ",
+            "> Layer-3 输出仅在 `audit_mode=True` 时显示, 用于工程审计 / 模型对照, ",
+            "> **不参与临床决策路径**。临床决策请以第五节 (循证方案) + 本节 ",
+            "> (Layer-2 克隆覆盖) 为准。",
+            "",
+            "### 7.1 克隆生物学 (Layer 2 — biology, no AUC dependency)",
+            "",
+            _clonal_coverage_narrative(kit_out),
+            "",
+            "---",
+            "",
+        ])
 
     # ---- Section 8: Cautions ----
     sections.extend([
@@ -1739,8 +1779,15 @@ def export_clinical_report(
     out_dir: Path | str,
     also_render_pdf: bool = True,
     also_render_html: bool = True,
+    audit_mode: bool = False,
 ) -> dict[str, str]:
     """One-shot: generate Markdown + HTML + (optional) PDF + return paths.
+
+    Args:
+      audit_mode: pass-through to build_clinical_report_markdown — when
+        True, Layer-3 ML predictions appear in the report (engineering
+        audit only). Default False — Layer-3 collapsed per clinical
+        reviewer concern (Pearson r ≈ 0.05 vs CR creates anchoring).
 
     Returns:
       {"markdown": ..., "html": ... or None, "pdf": ... or None,
@@ -1752,7 +1799,7 @@ def export_clinical_report(
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    md = build_clinical_report_markdown(kit, kit_out)
+    md = build_clinical_report_markdown(kit, kit_out, audit_mode=audit_mode)
     md_path = out_dir / "clinical_report.md"
     md_path.write_text(md, encoding="utf-8")
 

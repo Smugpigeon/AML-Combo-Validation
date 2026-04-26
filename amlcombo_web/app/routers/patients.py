@@ -615,6 +615,22 @@ async def parse_patient_file(
                                  detail=f"LLM provider error: {msg}.{hint}")
 
         llm_key.last_used_at = datetime.now(tz=timezone.utc)
+        # Per concern #4b — emit dedicated LLM audit event with PHI metadata
+        # (no prompt content). Parse the PHI summary out of the warnings list
+        # the LLM module surfaced.
+        phi_warning_lines = [w for w in result.warnings
+                              if "PHI detected" in w or "auto-redacted" in w]
+        phi_categories: list[str] = []
+        phi_high_count = 0
+        for line in phi_warning_lines:
+            # Extract count + categories from the standard message format
+            import re
+            m = re.search(r"(\d+) high-severity match", line)
+            if m:
+                phi_high_count = int(m.group(1))
+            m = re.search(r"categories: ([^.]+)", line)
+            if m:
+                phi_categories = [c.strip() for c in m.group(1).split(",")]
         db.add(UsageEvent(
             user_id=user.id, event_type="llm_parse_zip_combined",
             meta={
@@ -623,6 +639,19 @@ async def parse_patient_file(
                 "members": len(members),
                 "rna_seq_in_zip": rna_seq_member is not None,
                 "warnings_count": len(result.warnings),
+            },
+        ))
+        db.add(UsageEvent(
+            user_id=user.id, event_type="llm_audit",
+            meta={
+                "feature": "parse_clinical_text_zip",
+                "provider": llm_key.provider, "model": result.model,
+                "input_chars": len(combined_text),
+                "tokens_in": result.tokens_in, "tokens_out": result.tokens_out,
+                "phi_categories_detected": phi_categories,
+                "phi_high_severity_count": phi_high_count,
+                "phi_policy": "redact",
+                "success": True,
             },
         ))
         db.commit()

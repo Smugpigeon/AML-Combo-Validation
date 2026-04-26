@@ -109,9 +109,14 @@ def test_quiz_ven_dec_triplet_is_NOT_first_line():
 # ---------------------------------------------------------------------------
 
 
-def test_layer3_caveat_renders_in_report():
-    """Generate a synthetic report and verify the Layer-3 caveat banner
-    appears BEFORE §7.1, not buried in §9.1."""
+def test_layer3_caveat_renders_in_audit_mode():
+    """In audit_mode=True, the Layer-3 caveat banner must appear BEFORE
+    §7.1 — not buried in §9.1.
+
+    Per post-v0.3 reviewer concern #1, the default report does NOT show
+    Layer-3 at all (Pearson r ≈ 0.05 vs CR is anchoring even with caveats).
+    Audit mode is the only path that shows the prediction + its caveat,
+    so the caveat-prominence check belongs there."""
     from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
     from combo_val.clinical.patient_report import build_clinical_report_markdown
 
@@ -147,16 +152,14 @@ def test_layer3_caveat_renders_in_report():
         eln_2017={"category": "Favorable", "rationale": []},
         eln_2022={"category": "Favorable", "rationale": []},
     )
-    md = build_clinical_report_markdown(kit, out)
+    md = build_clinical_report_markdown(kit, out, audit_mode=True)
 
-    # Caveat must be in the markdown
+    # Caveat must be in the audit-mode markdown
     assert "Research-grade prediction" in md
-    # Pearson correlation must be quoted — gives clinician quantitative basis
     assert "0.05" in md
-    # Caveat must point user to Layer 1 / 2 as substitute
     assert "第五节" in md or "Section 4" in md or "Layer 1" in md
 
-    # Crucially: caveat must appear BEFORE §7.1, not buried later
+    # Caveat must appear BEFORE §7.1
     caveat_pos = md.find("Research-grade prediction")
     sec_71_pos = md.find("### 7.1 组合 AUC 预测")
     assert caveat_pos > 0 and sec_71_pos > 0
@@ -166,8 +169,40 @@ def test_layer3_caveat_renders_in_report():
     )
 
 
-def test_layer3_caveat_uses_warning_emoji():
-    """Banner uses ⚠ to make it visually distinct from regular text."""
+def test_default_report_omits_layer3_section():
+    """Per post-v0.3 reviewer concern #1: default report must NOT contain
+    the Layer-3 AUC predictions at all (anchoring bias even with caveats).
+    The default §7 heading is now Layer-2 (clonal biology) only."""
+    from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
+    from combo_val.clinical.patient_report import build_clinical_report_markdown
+
+    kit = KitInput(patient_id="T", age=50, mutations=[MutationCall(gene="NPM1")])
+    out = KitOutput(
+        patient_id="T", predicted_eln2017="Favorable",
+        top_combinations=[{
+            "rank": 1, "drug1": "Venetoclax", "drug2": "Azacitidine",
+            "predicted_combo_auc": 88.2, "single_auc_d1": 92.0,
+            "single_auc_d2": 105.3, "mech_score": 0.42,
+            "both_mech_annotated": True, "layer3_backbone": "MLP",
+        }],
+        top_single_drugs=[], top_regimens=[],
+        clonal_coverage={}, dna_summary={}, rna_outlier={},
+        driver_flags={}, fitness_flag="fit_for_intensive",
+        cautions=[], confidence_notes=[],
+        eln_2017={"category": "Favorable", "rationale": []},
+        eln_2022={"category": "Favorable", "rationale": []},
+    )
+    md = build_clinical_report_markdown(kit, out)  # default: audit_mode=False
+    # The default heading is Layer-2 only
+    assert "七、克隆生物学" in md
+    # The Layer-3 predicted-AUC line "Venetoclax + Azacitidine — 预测 AUC 88.2" must NOT appear
+    assert "预测 AUC 88.2" not in md
+    assert "Layer-3" in md  # the explanation banner mentions it
+    assert "默认报告中已折叠" in md  # explicit note that Layer-3 was hidden
+
+
+def test_audit_mode_caveat_uses_warning_emoji():
+    """In audit_mode the warning emoji ⚠ must surround the caveat."""
     from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
     from combo_val.clinical.patient_report import build_clinical_report_markdown
 
@@ -181,8 +216,7 @@ def test_layer3_caveat_uses_warning_emoji():
         eln_2017={"category": "Favorable", "rationale": []},
         eln_2022={"category": "Favorable", "rationale": []},
     )
-    md = build_clinical_report_markdown(kit, out)
-    # Must contain the warning emoji near "Research-grade prediction"
+    md = build_clinical_report_markdown(kit, out, audit_mode=True)
     caveat_idx = md.find("Research-grade prediction")
     assert caveat_idx > 0
     nearby = md[max(0, caveat_idx - 50): caveat_idx + 50]
