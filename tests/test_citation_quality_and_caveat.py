@@ -109,14 +109,10 @@ def test_quiz_ven_dec_triplet_is_NOT_first_line():
 # ---------------------------------------------------------------------------
 
 
-def test_layer3_caveat_renders_in_audit_mode():
-    """In audit_mode=True, the Layer-3 caveat banner must appear BEFORE
-    §7.1 — not buried in §9.1.
-
-    Per post-v0.3 reviewer concern #1, the default report does NOT show
-    Layer-3 at all (Pearson r ≈ 0.05 vs CR is anchoring even with caveats).
-    Audit mode is the only path that shows the prediction + its caveat,
-    so the caveat-prominence check belongs there."""
+def test_layer3_prospective_banner_renders_above_section_7_1():
+    """v0.5 Prospective Validation Phase banner must appear BEFORE §7.1
+    so a clinician reading top-to-bottom hits the research-only framing
+    before the predicted AUC numbers."""
     from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
     from combo_val.clinical.patient_report import build_clinical_report_markdown
 
@@ -152,27 +148,27 @@ def test_layer3_caveat_renders_in_audit_mode():
         eln_2017={"category": "Favorable", "rationale": []},
         eln_2022={"category": "Favorable", "rationale": []},
     )
-    md = build_clinical_report_markdown(kit, out, audit_mode=True)
+    md = build_clinical_report_markdown(kit, out)
 
-    # Caveat must be in the audit-mode markdown
-    assert "Research-grade prediction" in md
+    assert "前瞻性验证" in md or "Prospective Validation" in md
     assert "0.05" in md
     assert "第五节" in md or "Section 4" in md or "Layer 1" in md
 
-    # Caveat must appear BEFORE §7.1
-    caveat_pos = md.find("Research-grade prediction")
+    banner_pos = md.find("前瞻性验证")
+    if banner_pos < 0:
+        banner_pos = md.find("Prospective Validation")
     sec_71_pos = md.find("### 7.1 组合 AUC 预测")
-    assert caveat_pos > 0 and sec_71_pos > 0
-    assert caveat_pos < sec_71_pos, (
-        "Caveat banner must appear ABOVE §7.1, not after it. "
-        f"caveat_pos={caveat_pos}, sec_71_pos={sec_71_pos}"
+    assert banner_pos > 0 and sec_71_pos > 0
+    assert banner_pos < sec_71_pos, (
+        f"Prospective banner must appear ABOVE §7.1. "
+        f"banner_pos={banner_pos}, sec_71_pos={sec_71_pos}"
     )
 
 
-def test_default_report_omits_layer3_section():
-    """Per post-v0.3 reviewer concern #1: default report must NOT contain
-    the Layer-3 AUC predictions at all (anchoring bias even with caveats).
-    The default §7 heading is now Layer-2 (clonal biology) only."""
+def test_default_report_includes_layer3_with_prospective_banner():
+    """v0.5 Prospective Validation Phase: Layer-3 IS visible by default
+    but explicitly framed as research output requiring prospective
+    outcome capture (not clinical decision)."""
     from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
     from combo_val.clinical.patient_report import build_clinical_report_markdown
 
@@ -192,17 +188,19 @@ def test_default_report_omits_layer3_section():
         eln_2017={"category": "Favorable", "rationale": []},
         eln_2022={"category": "Favorable", "rationale": []},
     )
-    md = build_clinical_report_markdown(kit, out)  # default: audit_mode=False
-    # The default heading is Layer-2 only
-    assert "七、克隆生物学" in md
-    # The Layer-3 predicted-AUC line "Venetoclax + Azacitidine — 预测 AUC 88.2" must NOT appear
-    assert "预测 AUC 88.2" not in md
-    assert "Layer-3" in md  # the explanation banner mentions it
-    assert "默认报告中已折叠" in md  # explicit note that Layer-3 was hidden
+    md = build_clinical_report_markdown(kit, out)
+    # Layer-3 heading IS present
+    assert "七、Layer-3 ML 组合预测" in md
+    # Prospective Validation banner explicitly flags this as research
+    assert "Prospective Validation" in md or "前瞻性验证" in md
+    # The Pearson r ≈ 0.05 caveat is still surfaced
+    assert "0.05" in md
+    # The clinical-decision pointer to §5 is preserved
+    assert "第五节" in md or "Layer 1" in md
 
 
-def test_audit_mode_caveat_uses_warning_emoji():
-    """In audit_mode the warning emoji ⚠ must surround the caveat."""
+def test_prospective_phase_banner_uses_research_emoji():
+    """v0.5: the banner uses 🔬 to flag research-only framing."""
     from combo_val.clinical.kit_schema import KitInput, KitOutput, MutationCall
     from combo_val.clinical.patient_report import build_clinical_report_markdown
 
@@ -216,8 +214,7 @@ def test_audit_mode_caveat_uses_warning_emoji():
         eln_2017={"category": "Favorable", "rationale": []},
         eln_2022={"category": "Favorable", "rationale": []},
     )
-    md = build_clinical_report_markdown(kit, out, audit_mode=True)
-    caveat_idx = md.find("Research-grade prediction")
-    assert caveat_idx > 0
-    nearby = md[max(0, caveat_idx - 50): caveat_idx + 50]
-    assert "⚠" in nearby or "warning" in nearby.lower()
+    md = build_clinical_report_markdown(kit, out)
+    # Either the header banner or the §7 banner uses the research emoji
+    assert "🔬" in md
+    assert "RESEARCH ONLY" in md or "research" in md.lower() or "研究" in md

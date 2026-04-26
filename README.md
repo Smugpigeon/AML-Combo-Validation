@@ -1,5 +1,26 @@
 # AML Combination Pharmacology Validation
 
+> **Project status (2026-04-26)**: 🔬 **v0.5 — Prospective Validation Phase**
+
+The kit's Layer-3 ML combo predictor has internal Pearson r ≈ 0.05 vs
+clinical CR (BeatAML 2.0 hold-out). Before deciding GO / NO-GO on
+Layer-3, we are running a multi-center prospective validation study
+(N=200 with 12-month follow-up). See:
+
+- 📋 [Prospective Validation Protocol](docs/PROSPECTIVE_VALIDATION_PROTOCOL.md) — primary endpoint, sample size, decision rule
+- 🏥 [IRB Submission Packet](docs/templates/IRB_SUBMISSION_PACKET.md) — CN/EN consent forms + risk-benefit
+- ✉ [PI Outreach Letter](docs/templates/PI_OUTREACH_LETTER.md) — short + long versions to reach a hematology PI
+- 🔒 [Locked Prediction infra](src/combo_val/prospective/locked_prediction.py) — hash-chained immutable predictions
+
+**Looking for sites**: 2-3 hematology centers (target ~80-100 patients each over 12-18 months). PI outreach welcome at ericktom94720@gmail.com.
+
+The Layer-3 GO/NO-GO decision rule is pre-committed:
+- `r ≥ 0.30` → Layer-3 promoted to clinical use (kit v0.6)
+- `0.15 ≤ r < 0.30` → extend recruitment to N=400 or pivot
+- `r < 0.15` → Layer-3 deleted; project pivots to clinical decision support only
+
+---
+
 > **Core thesis**: For AML patients, do mechanism-aware drug combinations achieve better predicted response than the best single-drug recommendation?
 
 This is a clean, focused rebuild of the question asked in the earlier `AML-CRAFT` work. The previous project accumulated a lot of supporting infrastructure (HyGReM-NC multimodal encoder, region classifier, pseudotime, purpose-driven K selection) — useful as supplementary findings, but not required to test the central hypothesis. This repo strips down to that hypothesis.

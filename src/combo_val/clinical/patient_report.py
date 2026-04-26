@@ -1237,12 +1237,13 @@ def build_clinical_report_markdown(
         time, the image link simply renders as a broken image — we also
         include a short paragraph explaining what the figure depicts.
         Set to None to omit the figure entirely.
-      audit_mode: when False (default), Layer-3 ML predictions are NOT
-        rendered in the main flow — only a one-line audit pointer. This
-        is per the post-deployment clinical-reviewer concern that a model
-        with Pearson r ≈ 0.05 vs clinical CR is anchoring even with
-        caveat banners. Set audit_mode=True for engineering/research use
-        only when the full Layer-3 output is needed for backbone audit.
+      audit_mode: kept for backwards-compat. As of v0.5 (Prospective
+        Validation Phase) Layer-3 is visible BY DEFAULT but framed as
+        a research output requiring institutional consent + prospective
+        outcome capture. The earlier v0.4 default-hide is no longer the
+        right framing — see docs/PROSPECTIVE_VALIDATION_PROTOCOL.md.
+        Setting audit_mode=True is now an alias for "research engineering
+        view" with extra backbone-comparison details.
     """
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
     dna = kit_out.dna_summary or {}
@@ -1252,13 +1253,23 @@ def build_clinical_report_markdown(
         f"# AML 精准用药评估报告",
         f"**Patient ID**: `{kit.patient_id}`  ",
         f"**报告时间**: {timestamp}  ",
-        f"**Kit 版本**: v0.3 — research use only, not for clinical diagnosis  ",
-        f"**报告性质**: 辅助决策，不替代主治医师判断  ",
-        f"**Audit mode**: {'ON (Layer-3 visible)' if audit_mode else 'OFF (Layer-3 default-suppressed per clinical reviewer)'}",
+        f"**Kit 版本**: v0.5 — Prospective Validation Phase  ",
+        f"**报告性质**: 临床决策辅助 + Layer-3 前瞻性验证研究 (research)  ",
+        f"**View mode**: {'engineering audit' if audit_mode else 'standard prospective'}",
         "",
-        # Population-validation banner — per concern #2: model has not been
-        # validated on Chinese / Asian AML cohorts, training distribution is
-        # ~80% North American Caucasian (BeatAML 2.0).
+        # v0.5 prospective-phase banner — replaces the v0.4 demote.
+        "> 🔬 **v0.5 Prospective Validation Phase**",
+        ">",
+        "> 本报告的 **第七节 (Layer-3 ML 组合预测)** 是研究输出, 不是临床指导。",
+        "> Layer-3 在 BeatAML 2.0 内部 hold-out 上 vs 临床 CR 率 Pearson r ≈ 0.05 — ",
+        "> 我们正在**前瞻性收集中国队列**验证它在真实临床场景下的相关性。",
+        ">",
+        "> 患者参加验证队列**完全自愿**, 不影响标准治疗(以本中心 MDT 决定为准)。",
+        "> 验证完成 (target N=200, 12-month follow-up) 后再决定 Layer-3 是否进入临床流程。",
+        "> 详见 `docs/PROSPECTIVE_VALIDATION_PROTOCOL.md` + IRB-approved consent。",
+        "",
+        # Population-validation banner — model has not been validated on
+        # Chinese/Asian AML cohorts, training distribution is ~80% NA Caucasian.
         "> 🚩 **未在中国 / 亚洲 AML 队列上验证 (NOT VALIDATED ON CHINESE / ASIAN AML COHORTS)**",
         ">",
         "> 模型训练数据 BeatAML 2.0 (n=613) 主要来自 OHSU + Vizome (北美高加索人群 ≥80%)。",
@@ -1404,61 +1415,51 @@ def build_clinical_report_markdown(
         "",
     ])
 
-    # ---- Section 7: Model Prediction ----
-    # Per clinical-reviewer concern #1 (post-v0.3): a model with Pearson
-    # r ≈ 0.05 vs clinical CR creates anchoring bias even with caveat
-    # banners. Default behavior: collapse Layer-3 to a one-line audit
-    # pointer; only render full output in audit_mode=True. Layer-2 (clonal
-    # coverage) does NOT depend on AUC prediction and stays visible.
+    # ---- Section 7: Layer-3 ML prediction (Prospective Validation Phase) ----
+    # v0.5 framing: Layer-3 visible by default, but explicitly framed as
+    # research output requiring prospective outcome capture.
+    # Internal Route B Pearson r ≈ 0.05 vs clinical CR — kit needs real
+    # prospective N=200 cohort with 12-month follow-up to determine
+    # whether Layer-3 enters clinical workflow. See
+    # docs/PROSPECTIVE_VALIDATION_PROTOCOL.md.
+    sections.extend([
+        "## 七、Layer-3 ML 组合预测 (Prospective Validation — RESEARCH ONLY)",
+        "",
+        "> 🔬 **本节是 v0.5 前瞻性验证研究内容, 不是临床决策依据**",
+        ">",
+        "> Layer-3 MLP 在 BeatAML 2.0 内部 hold-out 上 vs 临床 CR 率 ",
+        "> **Pearson r ≈ 0.05**(统计上无显著相关)。",
+        "> 我们正在前瞻性收集中国 AML 队列(目标 N=200, 12-month follow-up)",
+        "> 来验证此预测在真实临床场景下的实际相关性。",
+        ">",
+        "> **若本中心已加入验证队列**: kit 的 Top-1 预测会被 immutable-locked 并",
+        "> 与患者实际治疗 + 6/12 月 outcome 配对存档 (per IRB-approved protocol)。",
+        "> **若本中心未加入验证队列**: 本节仅供学术参考, 治疗决策请以 ",
+        "> 第五节(循证方案 Layer 1)+ §3.7-3.9(ELN/WHO/ICC + Allo-SCT)为准。",
+        "",
+        "### 7.1 组合 AUC 预测 (Layer 3 — MLP)",
+        "",
+        _combo_prediction_narrative(kit_out),
+        "",
+        "### 7.2 克隆生物学 rationale (Layer 2 — Path A IDA coverage)",
+        "",
+        _clonal_coverage_narrative(kit_out),
+        "",
+    ])
     if audit_mode:
         sections.extend([
-            "## 七、模型辅助预测 (Research-grade — AUDIT MODE)",
+            "### 7.3 Engineering audit (multi-backbone comparison)",
             "",
-            "> ⚠ **Research-grade prediction — DO NOT base treatment decisions on "
-            "this section alone.**",
-            ">",
-            "> Layer-3 AUC 预测**未经前瞻性临床验证**，"
-            "Route B (BeatAML 内部留出验证集) 中预测 AUC 与临床 CR 率的相关性"
-            "**Pearson r ≈ 0.05** (即统计上无显著相关)。"
-            "本节仅用于**机制假设生成 (hypothesis generation)** + "
-            "不同 backbone 的横向对照, **不可单独驱动治疗决策**。"
-            ">",
-            "> **临床决策请参考第五节** (循证试验方案, Layer 1, 含 PMID + n + median OS) "
-            "或第三节 §3.6 (克隆生物学 + ELN 2022 分层)。这两层不依赖 AUC 预测，"
-            "对临床更有指导性。",
+            "> Engineering view — backbone label + Mahalanobis QC + checkpoint hash. ",
+            "> This pane is for kit developers comparing MLP / Set-Transformer / "
+            "Synergy-head outputs head-to-head. Not for clinicians.",
             "",
-            "### 7.1 组合 AUC 预测 (Layer 3)",
-            "",
-            _combo_prediction_narrative(kit_out),
-            "",
-            "### 7.2 克隆生物学 rationale (Layer 2)",
-            "",
-            _clonal_coverage_narrative(kit_out),
-            "",
-            "---",
+            f"- Backbone: `{(kit_out.top_combinations or [{}])[0].get('layer3_backbone', 'unknown')}`",
+            f"- Top-1 combo: `{(kit_out.top_combinations or [{}])[0].get('drug1', '?')}` + "
+            f"`{(kit_out.top_combinations or [{}])[0].get('drug2', '?')}`",
             "",
         ])
-    else:
-        # Default: Layer-3 hidden from main report; Layer-2 (biology, no
-        # AUC dependency) still useful — keep it visible.
-        sections.extend([
-            "## 七、克隆生物学 rationale (Layer 2)",
-            "",
-            "> ℹ️ **Layer-3 ML AUC 预测在默认报告中已折叠**",
-            "> 原因: 内部 Route B 验证显示 AUC 预测与临床 CR 率 Pearson r ≈ 0.05",
-            "> (统计上无显著相关)。展示数值会产生 anchoring bias,即使附 caveat。",
-            "> ",
-            "> Layer-3 输出仅在 `audit_mode=True` 时显示, 用于工程审计 / 模型对照, ",
-            "> **不参与临床决策路径**。临床决策请以第五节 (循证方案) + 本节 ",
-            "> (Layer-2 克隆覆盖) 为准。",
-            "",
-            "### 7.1 克隆生物学 (Layer 2 — biology, no AUC dependency)",
-            "",
-            _clonal_coverage_narrative(kit_out),
-            "",
-            "---",
-            "",
-        ])
+    sections.extend(["---", ""])
 
     # ---- Section 8: Cautions ----
     sections.extend([

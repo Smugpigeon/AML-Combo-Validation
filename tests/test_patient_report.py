@@ -253,26 +253,25 @@ def test_build_markdown_has_all_nine_sections():
     kit = _flt3_npm1_kit()
     out = _mk_output(kit, eln="Intermediate")
     md = build_clinical_report_markdown(kit, out)
-    # All 11 top-level sections present. Per post-v0.3 clinical-reviewer
-    # concern #1: §7 default heading is now "克隆生物学" (Layer-2 only),
-    # because Layer-3 ML predictions (Pearson r ≈ 0.05 vs CR) are
-    # default-collapsed to avoid anchoring bias. Audit-mode shows the
-    # original "模型辅助预测" heading.
+    # v0.5 — Layer-3 visible by default with Prospective Validation
+    # Phase banner. Reverted v0.4's default-hide.
     for header in ("一、临床快报", "二、患者基本信息", "三、分子特征",
                    "四、Pre-induction Workup",
                    "五、治疗方案推荐",
                    "六、MRD 监测计划",
-                   "七、克隆生物学",          # was "七、模型辅助预测" pre-v0.4
+                   "七、Layer-3 ML 组合预测",
                    "八、用药警告",
                    "九、质量控制",
                    "十、方法学背景",
                    "十一、关键参考文献"):
         assert header in md, f"Missing section: {header}"
+    # Prospective phase banner present
+    assert "Prospective Validation" in md or "前瞻性验证" in md
 
-    # Audit-mode reinstates the original Layer-3 heading
+    # audit_mode adds engineering subsection
     md_audit = build_clinical_report_markdown(kit, out, audit_mode=True)
-    assert "七、模型辅助预测" in md_audit
-    assert "AUDIT MODE" in md_audit
+    assert "Engineering audit" in md_audit
+    assert "七、Layer-3 ML 组合预测" in md_audit  # heading still present
 
 
 def test_build_markdown_section_numbering_is_consistent():
