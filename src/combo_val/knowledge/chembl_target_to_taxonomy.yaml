@@ -1,0 +1,148 @@
+# Map ChEMBL/UniProt target IDs → our 18-target_taxonomy_v2 axes
+#
+# Used by Phase B's drug → 18-dim coverage vector pipeline.
+# For each drug, we pull all (target_uniprot, pIC50) records from ChEMBL,
+# then aggregate per axis using max(normalize(pIC50)) over UniProts in that axis.
+#
+# Sources:
+#   - UniProt IDs from uniprot.org / chembl
+#   - Target↔axis assignments curated from textbook pharmacology + DrugBank
+#
+# pIC50 normalization:
+#   pIC50 ≥ 9.0 (IC50 ≤ 1 nM)         → coverage 1.0  (very high affinity, "primary target")
+#   pIC50 ∈ [8.0, 9.0]  (1-10 nM)     → coverage 0.85
+#   pIC50 ∈ [7.0, 8.0]  (10-100 nM)   → coverage 0.65
+#   pIC50 ∈ [6.0, 7.0]  (100-1000 nM) → coverage 0.40
+#   pIC50 < 6.0         (>1 μM)        → coverage 0.10  ("off-target" weak binding)
+
+normalization:
+  bins:
+    - {min_pIC50: 9.0, coverage: 1.00}
+    - {min_pIC50: 8.0, coverage: 0.85}
+    - {min_pIC50: 7.0, coverage: 0.65}
+    - {min_pIC50: 6.0, coverage: 0.40}
+    - {min_pIC50: 0.0, coverage: 0.10}
+
+# Each taxonomy axis lists UniProt IDs that count toward it.
+# A drug's coverage[axis] = max over (UniProts in axis) of normalize(pIC50).
+axis_to_uniprots:
+
+  FLT3:
+    description: "FLT3 receptor tyrosine kinase + variants"
+    uniprots:
+      - P36888         # FLT3 human canonical
+
+  IDH1:
+    description: "Isocitrate dehydrogenase 1 (cytoplasmic, NADP+)"
+    uniprots:
+      - O75874         # IDH1 human
+
+  IDH2:
+    description: "Isocitrate dehydrogenase 2 (mitochondrial, NADP+)"
+    uniprots:
+      - P48735         # IDH2 human
+
+  TP53_multihit:
+    description: "TP53 pathway modulators (MDM2 inhibitors, TP53 reactivators)"
+    uniprots:
+      - Q00987         # MDM2 (target of nutlin/idasanutlin)
+      - O15151         # MDM4
+
+  BCL2:
+    description: "BCL-2 family anti-apoptotic"
+    uniprots:
+      - P10415         # BCL2
+
+  MCL1:
+    description: "MCL-1 anti-apoptotic"
+    uniprots:
+      - Q07820         # MCL1
+
+  MENIN_KMT2A:
+    description: "Menin (MEN1) — disrupts MENIN-KMT2A interaction"
+    uniprots:
+      - O00255         # MEN1 (menin)
+      - Q03164         # KMT2A
+
+  MENIN_NPM1:
+    description: "Menin (MEN1) — same drug class as KMT2A; here for NPM1mut indication"
+    uniprots:
+      - O00255         # MEN1
+
+  DNMT:
+    description: "DNA methyltransferases (HMA target)"
+    uniprots:
+      - P26358         # DNMT1
+      - Q9Y6K1         # DNMT3A
+      - Q9UBC3         # DNMT3B
+
+  KIT_RTK:
+    description: "KIT receptor tyrosine kinase"
+    uniprots:
+      - P10721         # KIT
+
+  RAS_MAPK:
+    description: "RAS-RAF-MEK-ERK pathway components"
+    uniprots:
+      - Q02750         # MAP2K1 (MEK1)
+      - P36507         # MAP2K2 (MEK2)
+      - P15056         # BRAF
+      - P04049         # RAF1
+      - P01112         # HRAS
+      - P01116         # KRAS
+      - P01111         # NRAS
+
+  JAK_STAT:
+    description: "JAK1/2/3 + TYK2"
+    uniprots:
+      - P23458         # JAK1
+      - O60674         # JAK2
+      - P52333         # JAK3
+      - P29597         # TYK2
+
+  SPLICEOSOME:
+    description: "Spliceosome modulators (SF3B1 / U2AF1)"
+    uniprots:
+      - O75533         # SF3B1
+      - Q01081         # U2AF1
+      - Q16629         # SRSF2
+
+  PI3K_AKT_mTOR:
+    description: "PI3K-AKT-mTOR pathway"
+    uniprots:
+      - P42336         # PIK3CA (PI3K p110α)
+      - P42338         # PIK3CB
+      - O00329         # PIK3CD (idelalisib target)
+      - P31749         # AKT1
+      - P31751         # AKT2
+      - P42345         # MTOR
+
+  differentiation_block:
+    description: "ATRA receptor (RARA), retinoid pathway, FAB-like differentiation drivers"
+    uniprots:
+      - P10276         # RARA
+      - P28702         # RXRB
+      # Note: HMA (DNMT, above) and MENINi (MEN1, above) are also
+      # differentiation-related; they get coverage via their primary axes
+      # AND the patient_target_inference adds differentiation_block as a
+      # separate axis when relevant patient features fire.
+
+  stem_cell_program:
+    description: "Stem-cell self-renewal regulators (BMI1, EZH2, etc)"
+    uniprots:
+      - P35226         # BMI1 (PRC1)
+      - Q15910         # EZH2 (PRC2)
+
+  OXPHOS:
+    description: "Mitochondrial Complex I (electron transport chain)"
+    uniprots:
+      - P56556         # NDUFA6 (complex I subunit)
+      # IACS-010759 mechanism is broadly Complex I inhibition; ChEMBL
+      # mapping is sparse — we may need to manual-assign coverage for
+      # OXPHOSi from drug_taxonomy_v2.yaml fallback.
+
+  fatty_acid_oxidation:
+    description: "Carnitine palmitoyltransferase (CPT1) inhibitors"
+    uniprots:
+      - P50416         # CPT1A
+      - P23786         # CPT2
