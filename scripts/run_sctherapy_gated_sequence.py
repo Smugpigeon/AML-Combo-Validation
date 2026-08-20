@@ -93,12 +93,21 @@ def main() -> int:
     identity_path = identity_dir / "retrospective_identity_gate_summary.json"
     identity = _read_json(identity_path)
     _write_review(args.out_dir, "identity", identity)
+    readiness_path = args.out_dir / "stage3_combination_readiness.json"
+    _run(
+        "audit_sctherapy_combination_readiness.py",
+        "--combo-matrix",
+        args.combo_matrix,
+        "--out",
+        readiness_path,
+    )
+    readiness = _read_json(readiness_path)
     if not identity.get("retrospective_drug_validation_stage_unlocked", False):
         monotherapy = {
             "viability_direction_gate_pass": False,
             "blockers": ["not run because the identity reproduction gate failed"],
         }
-        decision = combination_unlock_decision(identity, monotherapy)
+        decision = combination_unlock_decision(identity, monotherapy, readiness)
         _write_json(args.out_dir / "combination_unlock_decision.json", decision)
         _write_review(args.out_dir, "combination", decision)
         _write_json(
@@ -177,15 +186,6 @@ def main() -> int:
     monotherapy_path = evaluation_dir / "monotherapy_gate_summary.json"
     monotherapy = _read_json(monotherapy_path)
     _write_review(args.out_dir, "monotherapy", monotherapy)
-    readiness_path = args.out_dir / "stage3_combination_readiness.json"
-    _run(
-        "audit_sctherapy_combination_readiness.py",
-        "--combo-matrix",
-        args.combo_matrix,
-        "--out",
-        readiness_path,
-    )
-    readiness = _read_json(readiness_path)
     decision = combination_unlock_decision(identity, monotherapy, readiness)
     _write_json(args.out_dir / "combination_unlock_decision.json", decision)
     _write_review(args.out_dir, "combination", decision)
