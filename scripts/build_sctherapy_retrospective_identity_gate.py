@@ -106,9 +106,10 @@ def main() -> int:
         how="left",
         validate="one_to_one",
     )
-    unmatched = int(
-        (~merged["identity_call_record_present"].fillna(False).astype(bool)).sum()
-    )
+    missing_record = ~merged["identity_call_record_present"].fillna(False).astype(bool)
+    missing_file = merged["sample_id"].astype(str).isin(missing_patients)
+    missing_record_count = int(missing_record.sum())
+    barcode_unmatched = int((missing_record & ~missing_file).sum())
     unresolved = int(merged["ensemble_output"].isna().sum())
 
     patient_summary = pd.read_csv(args.patient_summary)
@@ -116,7 +117,44 @@ def main() -> int:
         merged,
         patient_summary,
     )
-    summary["barcode_unmatched_cells"] = unmatched
+    patient_gate["identity_run_status"] = patient_gate["patient_id"].map(
+        lambda patient: str(run_status.get(str(patient), {}).get("status", "unknown"))
+    )
+    patient_gate["identity_run_error"] = patient_gate["patient_id"].map(
+        lambda patient: str(run_status.get(str(patient), {}).get("error", ""))
+    )
+    for patient in missing_patients:
+        patient_mask = patient_gate["patient_id"].astype(str).eq(patient)
+        state_mask = state_gate["patient_id"].astype(str).eq(patient)
+        unavailable_patient_fields = [
+            "rna_ensemble_call_coverage",
+            "rna_ensemble_malignant_fraction",
+            "known_normal_reference_cells",
+            "major_states_passing",
+            "ensemble_vs_scrna_blast_gap_pct",
+        ]
+        patient_gate.loc[patient_mask, unavailable_patient_fields] = float("nan")
+        patient_gate.loc[patient_mask, "retrospective_identity_gate_pass"] = False
+        status = str(run_status.get(patient, {}).get("status", "missing"))
+        error = str(
+            run_status.get(patient, {}).get(
+                "error", "official identity call file was not produced"
+            )
+        )
+        patient_gate.loc[patient_mask, "blockers"] = (
+            f"official identity workflow {status}: {error}"
+        )
+        state_gate.loc[
+            state_mask,
+            [
+                "rna_ensemble_call_coverage",
+                "dominant_identity_call",
+                "dominant_identity_purity",
+            ],
+        ] = float("nan")
+        state_gate.loc[state_mask, "retrospective_state_identity_pass"] = False
+    summary["missing_identity_call_record_cells"] = missing_record_count
+    summary["barcode_unmatched_cells"] = barcode_unmatched
     summary["algorithm_unresolved_cells"] = unresolved
     summary["missing_identity_call_patients"] = missing_patients
     summary["official_identity_run_status"] = run_status

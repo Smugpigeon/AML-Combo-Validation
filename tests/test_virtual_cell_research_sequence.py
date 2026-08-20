@@ -144,8 +144,15 @@ def test_identity_gate_records_failed_official_patient_instead_of_crashing(
         (out_dir / "retrospective_identity_gate_summary.json").read_text()
     )
     assert summary["missing_identity_call_patients"] == ["p2"]
-    assert summary["barcode_unmatched_cells"] == 100
+    assert summary["missing_identity_call_record_cells"] == 100
+    assert summary["barcode_unmatched_cells"] == 0
     assert not summary["retrospective_drug_validation_stage_unlocked"]
+    patient_gate = pd.read_csv(out_dir / "retrospective_patient_identity_gate.csv")
+    failed = patient_gate.loc[patient_gate["patient_id"].eq("p2")].iloc[0]
+    assert failed["identity_run_status"] == "failed"
+    assert failed["identity_run_error"] == "upstream failure"
+    assert pd.isna(failed["rna_ensemble_call_coverage"])
+    assert failed["blockers"] == "official identity workflow failed: upstream failure"
 
 
 def test_zero_dose_edges_are_real_monotherapy_only() -> None:
