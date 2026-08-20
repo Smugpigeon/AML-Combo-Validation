@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -19,6 +20,9 @@ from combo_val.virtual_cell.beataml_pilot import (  # noqa: E402
     load_checkpoint,
     normalize_identifier,
     predict_all_drugs,
+)
+from combo_val.virtual_cell.retrospective_validation import (  # noqa: E402
+    audit_external_feature_support,
 )
 
 
@@ -73,6 +77,11 @@ def main() -> int:
     scaled = ((numeric.to_numpy(dtype=np.float32) - feature_mean) / feature_scale).astype(
         np.float32
     )
+    support_metrics, support_summary = audit_external_feature_support(
+        patient_frame["patient_id"].astype(str).tolist(),
+        feature_columns,
+        scaled,
+    )
 
     standardized_members = []
     latent_members = []
@@ -122,6 +131,11 @@ def main() -> int:
     ).to_csv(args.out_dir / "drug_predictions.csv", index=False)
     pd.DataFrame(latent_output).to_csv(
         args.out_dir / "patient_latent_states.csv", index=False
+    )
+    support_metrics.to_csv(args.out_dir / "patient_feature_support.csv", index=False)
+    (args.out_dir / "feature_support_summary.json").write_text(
+        json.dumps(support_summary, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
     )
     print(f"patients={len(patient_frame)}")
     print(f"drugs={len(drug_ids)}")

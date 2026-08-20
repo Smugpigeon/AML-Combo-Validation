@@ -54,6 +54,15 @@ class CombinationTrainingPolicy:
     minimum_response_standard_deviation: float = 5.0
 
 
+@dataclass(frozen=True)
+class ExternalFeatureSupportPolicy:
+    """Guard against severe cross-platform displacement in model feature space."""
+
+    extreme_z_threshold: float = 5.0
+    maximum_absolute_rna_pc_z: float = 25.0
+    maximum_extreme_rna_pc_fraction: float = 0.20
+
+
 def normalize_drug_name(value: object) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value).strip().lower())
 
@@ -66,6 +75,112 @@ def normalize_patient_id(value: object) -> str:
     text = re.sub(r"\s+", "", str(value).strip().lower())
     match = re.search(r"(\d+)$", text)
     return f"patient{int(match.group(1))}" if match else text
+
+
+def project_split_safe_rna(
+    rna_counts: pd.Series,
+    *,
+    kept_genes: np.ndarray,
+    expression_mean: np.ndarray,
+    components: np.ndarray,
+) -> tuple[np.ndarray, dict[str, object]]:
+    """Apply the frozen training-only BeatAML log2-PCA transform exactly."""
+
+    genes = np.asarray(kept_genes, dtype=str)
+    mean = np.asarray(expression_mean, dtype=np.float64)
+    loadings = np.asarray(components, dtype=np.float64)
+    if mean.shape != (len(genes),):
+        raise ValueError("split-safe expression_mean does not match kept_genes")
+    if loadings.ndim != 2 or loadings.shape[1] != len(genes):
+        raise ValueError("split-safe PCA components do not match kept_genes")
+    if rna_counts.index.has_duplicates:
+        rna_counts = rna_counts.groupby(level=0, sort=False).sum()
+    matched = int(rna_counts.index.astype(str).isin(genes).sum())
+    aligned = rna_counts.reindex(genes).fillna(0.0).to_numpy(dtype=np.float64)
+    aligned = np.nan_to_num(aligned, nan=0.0, posinf=0.0, neginf=0.0)
+    aligned = np.clip(aligned, 0.0, None)
+    log_expression = np.log2(aligned + 1.0)
+    projected = (log_expression - mean) @ loadings.T
+    diagnostics: dict[str, object] = {
+        "transform": "log2(count_plus_1)_then_training_only_pca",
+        "n_genes_in_split_safe_panel": int(len(genes)),
+        "n_genes_present": matched,
+        "gene_coverage_pct": float(100.0 * matched / max(len(genes), 1)),
+        "log_expression_mean": float(log_expression.mean()),
+        "log_expression_std": float(log_expression.std()),
+        "pc_l2_norm": float(np.linalg.norm(projected)),
+        "quantile_normalization_used_for_model_features": False,
+    }
+    return projected.astype(np.float32), diagnostics
+
+
+def audit_external_feature_support(
+    patient_ids: list[str],
+    feature_columns: list[str],
+    standardized_features: np.ndarray,
+    *,
+    policy: ExternalFeatureSupportPolicy | None = None,
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Audit external inputs after applying the frozen model scaler."""
+
+    policy = policy or ExternalFeatureSupportPolicy()
+    values = np.asarray(standardized_features, dtype=np.float64)
+    if values.shape != (len(patient_ids), len(feature_columns)):
+        raise ValueError("standardized feature matrix shape does not match schema")
+    rna_mask = np.asarray(
+        [str(column).startswith("rna_pc") for column in feature_columns], dtype=bool
+    )
+    if not rna_mask.any():
+        raise ValueError("model schema contains no RNA PC features")
+
+    rows: list[dict[str, object]] = []
+    for patient_id, row in zip(patient_ids, values, strict=True):
+        rna = row[rna_mask]
+        finite = bool(np.isfinite(row).all())
+        maximum = float(np.max(np.abs(rna))) if len(rna) else float("inf")
+        extreme_fraction = float(
+            np.mean(np.abs(rna) > policy.extreme_z_threshold)
+        )
+        passes = (
+            finite
+            and maximum <= policy.maximum_absolute_rna_pc_z
+            and extreme_fraction <= policy.maximum_extreme_rna_pc_fraction
+        )
+        rows.append(
+            {
+                "patient_id": patient_id,
+                "all_model_features_finite": finite,
+                "maximum_absolute_rna_pc_z": maximum,
+                "extreme_rna_pc_fraction": extreme_fraction,
+                "external_feature_support_pass": passes,
+            }
+        )
+    patient_metrics = pd.DataFrame(rows)
+    all_pass = bool(
+        not patient_metrics.empty
+        and patient_metrics["external_feature_support_pass"].all()
+    )
+    summary: dict[str, object] = {
+        "stage": "external_feature_support",
+        "research_use_only": True,
+        "n_patients": len(patient_metrics),
+        "policy": asdict(policy),
+        "all_patients_external_feature_support_pass": all_pass,
+        "external_feature_support_gate_pass": all_pass,
+        "blockers": (
+            []
+            if all_pass
+            else [
+                "one or more scTherapy pseudobulk inputs are outside the frozen "
+                "BeatAML RNA-PC support envelope"
+            ]
+        ),
+        "boundary": (
+            "This is a model support-domain check, not proof that bulk and single-cell "
+            "RNA measurements are biologically interchangeable."
+        ),
+    }
+    return patient_metrics, summary
 
 
 def extract_monotherapy_edges(combo: pd.DataFrame) -> pd.DataFrame:
@@ -210,6 +325,7 @@ def evaluate_monotherapy_predictions(
     outcomes: pd.DataFrame,
     *,
     policy: MonotherapyGatePolicy | None = None,
+    feature_support_summary: Mapping[str, object] | None = None,
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     """Evaluate frozen patient-specific scores against sealed drug summaries."""
 
@@ -278,6 +394,10 @@ def evaluate_monotherapy_predictions(
         blockers.append("median patient-specific Spearman is below threshold")
     if not np.isfinite(median_increment) or median_increment < policy.minimum_median_increment_over_drug_mean:
         blockers.append("patient-specific model does not improve on the drug-mean baseline")
+    if feature_support_summary is not None and not bool(
+        feature_support_summary.get("external_feature_support_gate_pass", False)
+    ):
+        blockers.append("external patient features are outside the model support envelope")
 
     summary: dict[str, object] = {
         "stage": "real_single_drug_viability_direction",
@@ -291,6 +411,11 @@ def evaluate_monotherapy_predictions(
         ),
         "median_increment_over_drug_mean": median_increment,
         "policy": asdict(policy),
+        "external_feature_support_gate_pass": (
+            bool(feature_support_summary.get("external_feature_support_gate_pass", False))
+            if feature_support_summary is not None
+            else "not_supplied"
+        ),
         "viability_direction_gate_pass": not blockers,
         "post_treatment_transcriptome_gate": "not_testable_from_public_data",
         "blockers": blockers,

@@ -106,6 +106,7 @@ def _monotherapy_review(summary: Mapping[str, object]) -> dict[str, object]:
 
 def _combination_review(summary: Mapping[str, object]) -> dict[str, object]:
     passed = bool(summary.get("combination_training_unlocked", False))
+    benchmark_unlocked = bool(summary.get("combination_benchmark_unlocked", False))
     blockers = summary.get("blockers", [])
     return {
         "stage": "patient_specific_combination",
@@ -135,13 +136,23 @@ def _combination_review(summary: Mapping[str, object]) -> dict[str, object]:
         "strongest_supporting_evidence": (
             "Both prerequisite research gates passed."
             if passed
-            else f"No supporting unlock; active blockers: {blockers}."
+            else (
+                "The identity and single-drug gates support combination benchmarking, "
+                "but the training-data gate remains locked."
+                if benchmark_unlocked
+                else f"No supporting unlock; active blockers: {blockers}."
+            )
         ),
         "neutral_verdict": (
             "Allow versioned research benchmarking against pair-mean and Bliss/Loewe "
             "baselines; keep treatment selection and dosing locked."
             if passed
-            else "Do not train or publish patient-specific combination predictions yet."
+            else (
+                "Allow descriptive combination baselines only; do not train or publish "
+                "patient-specific combination predictions."
+                if benchmark_unlocked
+                else "Do not train or publish patient-specific combination predictions yet."
+            )
         ),
         "current_stronger_side": "conditional_support" if passed else "opposition",
         "largest_unknown": (

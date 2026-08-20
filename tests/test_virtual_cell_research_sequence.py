@@ -12,10 +12,12 @@ from combo_val.virtual_cell.challenge_firewall import assert_label_free
 from combo_val.virtual_cell.retrospective_validation import (
     CombinationTrainingPolicy,
     audit_combination_training_readiness,
+    audit_external_feature_support,
     combination_unlock_decision,
     evaluate_monotherapy_predictions,
     extract_monotherapy_edges,
     model_drug_name,
+    project_split_safe_rna,
     summarize_monotherapy_edges,
 )
 from combo_val.virtual_cell.stage_review import build_stage_review
@@ -84,6 +86,28 @@ def test_zero_dose_edges_are_real_monotherapy_only() -> None:
     assert model_drug_name("Trametinib") == "Trametinib (GSK1120212)"
 
 
+def test_split_safe_rna_projection_uses_frozen_training_transform() -> None:
+    pcs, diagnostics = project_split_safe_rna(
+        pd.Series({"A": 3.0, "B": 0.0, "EXTRA": 100.0}),
+        kept_genes=np.asarray(["A", "B"]),
+        expression_mean=np.asarray([1.0, 1.0]),
+        components=np.eye(2),
+    )
+    assert pcs.tolist() == pytest.approx([1.0, -1.0])
+    assert diagnostics["n_genes_present"] == 2
+    assert not diagnostics["quantile_normalization_used_for_model_features"]
+
+
+def test_external_feature_support_rejects_severe_rna_pc_shift() -> None:
+    metrics, summary = audit_external_feature_support(
+        ["p1", "p2"],
+        ["rna_pc_01", "rna_pc_02", "mut_FLT3"],
+        np.asarray([[0.0, 1.0, 0.0], [30.0, 0.0, 1.0]]),
+    )
+    assert metrics["external_feature_support_pass"].tolist() == [True, False]
+    assert not summary["external_feature_support_gate_pass"]
+
+
 def test_monotherapy_summary_requires_a_dose_curve() -> None:
     edges = pd.DataFrame(
         {
@@ -135,6 +159,12 @@ def test_patient_specific_monotherapy_gate_beats_drug_mean_baseline() -> None:
     assert len(metrics) == 3
     assert summary["viability_direction_gate_pass"]
     assert summary["median_patient_specific_spearman"] == pytest.approx(1.0)
+    _, unsupported = evaluate_monotherapy_predictions(
+        pd.DataFrame(prediction_rows),
+        pd.DataFrame(outcome_rows),
+        feature_support_summary={"external_feature_support_gate_pass": False},
+    )
+    assert not unsupported["viability_direction_gate_pass"]
     decision = combination_unlock_decision(
         {"retrospective_drug_validation_stage_unlocked": True}, summary
     )

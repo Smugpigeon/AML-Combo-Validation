@@ -65,6 +65,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--patient-manifest", type=Path, required=True)
     parser.add_argument("--h5ad", type=Path, required=True)
     parser.add_argument("--preprocessor", type=Path, required=True)
+    parser.add_argument("--split-safe-rna-preprocessor", type=Path, required=True)
     parser.add_argument("--model-dir", type=Path, required=True)
     parser.add_argument("--combo-matrix", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
@@ -125,6 +126,8 @@ def main() -> int:
         identity_path,
         "--preprocessor",
         args.preprocessor,
+        "--split-safe-rna-preprocessor",
+        args.split_safe_rna_preprocessor,
         "--out-features",
         features_dir / "patient_features.csv",
         "--out-diagnostics",
@@ -166,6 +169,8 @@ def main() -> int:
         frozen_path.with_suffix(".csv.manifest.json"),
         "--sealed-outcomes",
         challenge_dir / "sealed" / "monotherapy_outcomes.csv",
+        "--feature-support-summary",
+        inference_dir / "feature_support_summary.json",
         "--out-dir",
         evaluation_dir,
     )

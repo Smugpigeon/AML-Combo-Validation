@@ -11,12 +11,21 @@ value_after <- function(flag) {
   args[[index + 1]]
 }
 
+optional_value_after <- function(flag) {
+  index <- match(flag, args)
+  if (is.na(index)) return(NULL)
+  if (index == length(args)) stop(paste("missing", flag))
+  args[[index + 1]]
+}
+
 input_dir <- value_after("--input-dir")
 output_dir <- value_after("--output-dir")
 upstream_script <- value_after("--upstream-script")
 custom_marker <- value_after("--custom-marker")
 patients <- strsplit(value_after("--patients"), ",", fixed = TRUE)[[1]]
 ncores <- as.integer(value_after("--ncores"))
+sctype_dir <- optional_value_after("--sctype-dir")
+scevan_script <- optional_value_after("--scevan-script")
 
 dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
 required_packages <- c(
@@ -28,6 +37,20 @@ suppressPackageStartupMessages(
   invisible(lapply(required_packages, library, character.only = TRUE))
 )
 source(upstream_script)
+
+if (!is.null(sctype_dir)) {
+  sctype_source <- function() {
+    source(file.path(sctype_dir, "auto_detect_tissue_type.R"))
+    source(file.path(sctype_dir, "gene_sets_prepare.R"))
+    source(file.path(sctype_dir, "sctype_score_.R"))
+    file.path(sctype_dir, "ScTypeDB_full.xlsx")
+  }
+}
+if (!is.null(scevan_script)) {
+  scevan_source <- function() {
+    source(scevan_script)
+  }
+}
 
 normalize_call <- function(values) {
   values <- tolower(trimws(as.character(values)))

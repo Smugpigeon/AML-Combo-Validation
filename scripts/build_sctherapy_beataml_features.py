@@ -10,6 +10,7 @@ run unless the public retrospective RNA-ensemble identity gate has passed.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -30,6 +31,9 @@ from combo_val.clinical.feature_builder import (  # noqa: E402
 from combo_val.clinical.kit_schema import KitInput, MutationCall  # noqa: E402
 from combo_val.virtual_cell.cell_identity import (  # noqa: E402
     require_retrospective_identity_gate_summary,
+)
+from combo_val.virtual_cell.retrospective_validation import (  # noqa: E402
+    project_split_safe_rna,
 )
 
 
@@ -85,12 +89,21 @@ def _pseudobulk_counts(adata: ad.AnnData, patient_id: str) -> pd.Series:
     return counts
 
 
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--h5ad", type=Path, required=True)
     parser.add_argument("--patient-manifest", type=Path, required=True)
     parser.add_argument("--identity-gate-summary", type=Path, required=True)
     parser.add_argument("--preprocessor", type=Path, required=True)
+    parser.add_argument("--split-safe-rna-preprocessor", type=Path, required=True)
     parser.add_argument("--out-features", type=Path, required=True)
     parser.add_argument("--out-diagnostics", type=Path, required=True)
     parser.add_argument(
@@ -115,7 +128,13 @@ def main() -> None:
         raise ValueError(f"patients absent from manifest: {missing}")
 
     bundle = joblib.load(args.preprocessor)
-    feature_columns = list(bundle["feature_columns"])
+    bundle_feature_columns = list(bundle["feature_columns"])
+    non_rna_columns = [
+        column for column in bundle_feature_columns if not column.startswith("rna_pc")
+    ]
+    split_safe = np.load(args.split_safe_rna_preprocessor, allow_pickle=False)
+    split_pcs = int(np.asarray(split_safe["components"]).shape[0])
+    rna_columns = [f"rna_pc_{index + 1:02d}" for index in range(split_pcs)]
     adata = ad.read_h5ad(args.h5ad)
     if "sample_id" not in adata.obs:
         raise KeyError("H5AD obs is missing sample_id")
@@ -125,7 +144,17 @@ def main() -> None:
         "research_use_only": True,
         "aggregation": "sum_raw_counts_per_patient_pseudobulk",
         "identity_gate_summary": str(args.identity_gate_summary),
-        "preprocessor": str(args.preprocessor),
+        "non_rna_schema_and_qc_preprocessor": str(args.preprocessor),
+        "non_rna_schema_and_qc_preprocessor_sha256": _sha256(args.preprocessor),
+        "split_safe_rna_preprocessor": str(args.split_safe_rna_preprocessor),
+        "split_safe_rna_preprocessor_sha256": _sha256(
+            args.split_safe_rna_preprocessor
+        ),
+        "model_rna_projection": "training-only BeatAML PCA without quantile normalization",
+        "qc_projection_note": (
+            "The canonical joblib projection is retained only as a cross-platform QC "
+            "diagnostic. Its RNA PCs are not supplied to the split-safe model."
+        ),
         "patients": {},
     }
     for patient_id in patient_ids:
@@ -138,16 +167,28 @@ def main() -> None:
             apply_quantile_normalization=True,
             strict_ood=False,
         )
-        if len(features) != len(feature_columns):
+        if len(features) != len(bundle_feature_columns):
             raise RuntimeError(
                 f"feature width mismatch for {patient_id}: "
-                f"{len(features)} != {len(feature_columns)}"
+                f"{len(features)} != {len(bundle_feature_columns)}"
             )
+        base = dict(zip(bundle_feature_columns, features, strict=True))
+        patient_pcs, split_safe_diag = project_split_safe_rna(
+            counts,
+            kept_genes=split_safe["kept_genes"],
+            expression_mean=split_safe["expression_mean"],
+            components=split_safe["components"],
+        )
+        model_features = {
+            **dict(zip(rna_columns, patient_pcs, strict=True)),
+            **{column: base[column] for column in non_rna_columns},
+        }
         feature_rows.append(
-            {"patient_id": patient_id, **dict(zip(feature_columns, features, strict=True))}
+            {"patient_id": patient_id, **model_features}
         )
         diagnostics["patients"][patient_id] = {
             **diag,
+            "split_safe_rna_projection": split_safe_diag,
             "n_cells": int((adata.obs["sample_id"].astype(str) == patient_id).sum()),
             "pseudobulk_library_size": float(counts.sum()),
             "reported_disease_stage": str(manifest.loc[patient_id, "disease_stage"]),

@@ -26,6 +26,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--predictions", type=Path, required=True)
     parser.add_argument("--prediction-manifest", type=Path, required=True)
     parser.add_argument("--sealed-outcomes", type=Path, required=True)
+    parser.add_argument("--feature-support-summary", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
     return parser.parse_args()
 
@@ -47,9 +48,19 @@ def main() -> int:
 
     predictions = pd.read_csv(args.predictions)
     outcomes = pd.read_csv(args.sealed_outcomes)
-    patient_metrics, summary = evaluate_monotherapy_predictions(predictions, outcomes)
+    feature_support = json.loads(
+        args.feature_support_summary.read_text(encoding="utf-8")
+    )
+    patient_metrics, summary = evaluate_monotherapy_predictions(
+        predictions,
+        outcomes,
+        feature_support_summary=feature_support,
+    )
     summary["prediction_sha256"] = observed_hash
     summary["sealed_outcomes_sha256"] = sha256_file(args.sealed_outcomes)
+    summary["feature_support_summary_sha256"] = sha256_file(
+        args.feature_support_summary
+    )
     args.out_dir.mkdir(parents=True, exist_ok=True)
     patient_metrics.to_csv(args.out_dir / "patient_monotherapy_metrics.csv", index=False)
     (args.out_dir / "monotherapy_gate_summary.json").write_text(
