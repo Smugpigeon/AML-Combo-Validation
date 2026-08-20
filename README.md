@@ -136,6 +136,21 @@ Validation:
 python -m combo_val.validation.head_to_head --config configs/week4_validation.yaml
 ```
 
+
+## Virtual-cell extension
+
+The optional virtual-cell research layer converts public AML single-cell RNA
+profiles into observed baseline expression states, then attaches guarded
+BeatAML single-drug AUC anchors. It is intentionally separate from the clinical
+kit and does not generate prescriptions or causal post-treatment cells.
+
+- [v1.5 baseline state atlas](docs/virtual_cell/VIRTUAL_CELL_V15.md)
+- [v1.6 defensive perturbation layer](docs/virtual_cell/VIRTUAL_CELL_V16.md)
+- [machine-readable v1.6 audit](docs/virtual_cell/V16_AUDIT.json)
+
+Pair synergy is disabled in v1.6 because the current checkpoint fails
+representation-discriminability and grouped-pair validation gates.
+
 ## Lineage
 
 This repo replaces the combination-pharmacology-related portions of `AML-CRAFT`. The earlier work provided three artifacts that are preserved here:

@@ -1,0 +1,59 @@
+{
+  "audit_date": "2026-08-20",
+  "research_use_only": true,
+  "outcome_labels_used_for_prediction": false,
+  "virtual_cell_v15": {
+    "samples": 12,
+    "cells": 48100,
+    "selected_rr_patients": [
+      "patient5",
+      "patient6",
+      "patient12"
+    ],
+    "selected_cells": 11652,
+    "programs": 14,
+    "states": 12,
+    "explained_variance_ratio_sum": 0.6320719123,
+    "mean_assignment_confidence": 0.1915604323,
+    "mean_initialization_ami": 0.6003441391,
+    "artifact_manifest_entries_verified": 32,
+    "artifact_manifest_failures": 0,
+    "package_sha256": "52186fab14aa1f69440a1daf8f0723bf577e1de860a60e5eb213376394e9a788"
+  },
+  "cross_platform_bridge": {
+    "beataml_gene_panel_overlap_fraction": 0.667,
+    "weighted_pca_loading_energy_fraction": 0.724,
+    "qn_mahalanobis": {
+      "patient5": 5.12,
+      "patient6": 5.2,
+      "patient12": 5.1,
+      "training_threshold_95pct": 8.68,
+      "training_threshold_99pct": 9.75
+    },
+    "interpretation": "directional_external_single_drug_anchor"
+  },
+  "candidate_drug_coverage": {
+    "total_drugs": 37,
+    "beataml_exact_vocabulary": 11,
+    "hematologic_ic50_prior": 32,
+    "aml_line_ic50_prior": 23,
+    "candidate_pairs": 72,
+    "supported_pairs": 13,
+    "extrapolative_pairs": 4,
+    "rejected_pairs": 55
+  },
+  "synergy_checkpoint": {
+    "enabled": false,
+    "distinct_embeddings_among_11_drugs": 2,
+    "zero_distance_pairs_among_55": 45,
+    "repeated_pair_fraction_in_random_validation": 0.8435,
+    "neural_validation_pearson": 0.4976,
+    "memorization_baseline_pearson": 0.487,
+    "decision": "disable_until_grouped_pair_and_leave_cell_line_validation_pass"
+  },
+  "provisional_outcome_blind_hashes": {
+    "patient_single_drug_anchor_csv_sha256": "e73c0c069e9be6d8ff78909c4bca1cb6e8b067cf9c6589adcb7afdd69b9d3f51",
+    "state_aware_anchor_csv_sha256": "b446aca9c7845370370ebc62f1578ee05907ad8f556c671d47c643036e8debec",
+    "invalid_synergy_diagnostic_csv_sha256": "a56cc156bdc2404e9e1a0d2781092858c4f5a56a8afcff1ee3aa918a9c4b3c60"
+  }
+}
