@@ -286,7 +286,17 @@ def _nullable_call(value: object) -> float:
     text = str(value).strip().lower()
     if text in {"1", "true", "yes", "positive", "malignant", "leukemic"}:
         return 1.0
-    if text in {"0", "false", "no", "negative", "normal", "non_malignant"}:
+    if text in {
+        "0",
+        "false",
+        "no",
+        "negative",
+        "healthy",
+        "normal",
+        "non_malignant",
+        "non-malignant",
+        "non malignant",
+    }:
         return 0.0
     return np.nan
 

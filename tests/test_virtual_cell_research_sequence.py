@@ -49,6 +49,8 @@ def test_rna_ensemble_can_unlock_only_retrospective_validation() -> None:
         pd.DataFrame({"patient_id": ["p1"], "scrna_blast_pct": [80.0]}),
     )
     assert patients.loc[0, "retrospective_identity_gate_pass"]
+    assert patients.loc[0, "rna_ensemble_call_coverage"] == pytest.approx(1.0)
+    assert patients.loc[0, "rna_ensemble_malignant_fraction"] == pytest.approx(0.8)
     assert states.loc[0, "retrospective_state_identity_pass"]
     assert summary["retrospective_drug_validation_stage_unlocked"]
     assert not summary["strict_orthogonal_identity_gate_pass"]
