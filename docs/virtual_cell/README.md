@@ -1,5 +1,11 @@
 # BeatAML Virtual Patient-State Pilot
 
+> **Current gated sequence:** prove cell identity, then validate real
+> single-drug perturbation direction, then unlock patient-specific combination
+> modeling. Start with [`VIRTUAL_CELL_RESEARCH_SEQUENCE.md`](VIRTUAL_CELL_RESEARCH_SEQUENCE.md)
+> and [`CELL_IDENTITY_GATE.md`](CELL_IDENTITY_GATE.md). The current three-patient
+> identity audit does not unlock perturbation inference.
+
 > The reusable single-cell upgrade is documented in
 > [`VIRTUAL_CELL_V15.md`](VIRTUAL_CELL_V15.md). It adds a 12-patient baseline
 > state atlas, frozen marker scales, uncertainty/stability outputs, and a strict
@@ -206,4 +212,3 @@ challenge workflow, state-aware single-drug aggregation, support-domain gates,
 and the criteria required before pair synergy can be re-enabled.
 
 Machine-readable audit values are in [V16_AUDIT.json](V16_AUDIT.json).
-

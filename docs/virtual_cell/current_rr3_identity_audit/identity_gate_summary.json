@@ -1,0 +1,41 @@
+{
+  "all_patients_pass_identity_gate": false,
+  "combination_prediction_stage_unlocked": false,
+  "drug_perturbation_stage_unlocked": false,
+  "independence_rule": "blast priors, expression clusters, bulk mutations, and bulk cytogenetics do not independently validate cell identity",
+  "input_sha256": {
+    "cell_annotations": "37faf53209d70a161593e4543b9b5b577b1335600f72835a3a056169598dbbdc",
+    "evidence_manifest": "7424f51572567ba8d0165f64cb88313dbfae53726f0e7db0b18f0d186177ba8b",
+    "patient_summary": "a19ec7bd06e2fba76e60cdf38da28c5d3acd35958e50ffbe38956bf1a96f1649"
+  },
+  "inputs": {
+    "cell_annotations": "selected_rr3_cell_state_annotations.parquet",
+    "cell_table_written": false,
+    "evidence_manifest": "CELL_IDENTITY_EVIDENCE_TEMPLATE.csv",
+    "paths_redacted_to_basenames": true,
+    "patient_summary": "patient_state_summary.csv",
+    "patients": [
+      "patient12",
+      "patient5",
+      "patient6"
+    ]
+  },
+  "n_cells": 11652,
+  "n_patients": 3,
+  "patient_gate_counts": {
+    "blocked": 2,
+    "provisional_not_proven": 1
+  },
+  "policy": {
+    "high_transcriptomic_suspicion": 0.6,
+    "major_state_fraction": 0.05,
+    "maximum_conflict_fraction": 0.05,
+    "maximum_unreconciled_blast_gap_pct": 15.0,
+    "maximum_unresolved_fraction": 0.3,
+    "minimum_normal_lineage_confidence": 0.5,
+    "minimum_validated_fraction_per_major_state": 0.1,
+    "minimum_validated_patient_fraction": 0.2
+  },
+  "research_use_only": true,
+  "scope": "cell_identity_before_drug_perturbation"
+}

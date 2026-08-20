@@ -5,18 +5,18 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
-
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 if str(SRC) not in sys.path:
     sys.path.insert(0, str(SRC))
 
+from combo_val.virtual_cell.cell_identity import require_identity_gate_summary  # noqa: E402
 from combo_val.virtual_cell.challenge_firewall import (  # noqa: E402
     assert_label_free,
     verify_public_directory,
@@ -38,6 +38,7 @@ def parse_args() -> argparse.Namespace:
         )
     )
     parser.add_argument("--public-dir", type=Path, required=True)
+    parser.add_argument("--identity-gate-summary", type=Path, required=True)
     parser.add_argument("--state-predictions", type=Path, required=True)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--pair-candidates", type=Path)
@@ -162,9 +163,9 @@ def build_pair_support(
     levels: list[str] = []
     reasons: list[str] = []
     for row in out.itertuples(index=False):
-        patient_id = str(getattr(row, "patient_id"))
-        drug1 = str(getattr(row, "drug1")).strip()
-        drug2 = str(getattr(row, "drug2")).strip()
+        patient_id = str(row.patient_id)
+        drug1 = str(row.drug1).strip()
+        drug2 = str(row.drug2).strip()
         support_a_row = lookup.get((patient_id, drug1))
         support_b_row = lookup.get((patient_id, drug2))
         if support_a_row is None or support_b_row is None:
@@ -199,6 +200,11 @@ def main() -> int:
     states = pd.read_csv(args.state_predictions)
     assert_label_free(states, allow_predicted=True, context="state predictions")
     states["patient_id"] = states["patient_id"].map(normalize_patient_id)
+    identity_summary = json.loads(args.identity_gate_summary.read_text(encoding="utf-8"))
+    require_identity_gate_summary(
+        identity_summary,
+        patient_ids=states["patient_id"].dropna().unique(),
+    )
 
     aggregate = state_aware_aggregate(states)
     support = support_table(states)
@@ -221,6 +227,7 @@ def main() -> int:
             "lower_predicted_auc_is_more_sensitive": True,
             "synergy_head_enabled": False,
             "post_treatment_transcriptome_generated": False,
+            "identity_gate_summary": args.identity_gate_summary.name,
         },
     )
 

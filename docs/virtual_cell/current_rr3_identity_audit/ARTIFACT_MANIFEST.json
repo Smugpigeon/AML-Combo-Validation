@@ -1,0 +1,24 @@
+{
+  "artifacts": [
+    {
+      "path": "patient_identity_gate.csv",
+      "sha256": "849b92b497c661ca625f38c87f599388036bc984c9b9d21f6a0eb363fca1a804",
+      "size_bytes": 1714
+    },
+    {
+      "path": "state_identity_gate.csv",
+      "sha256": "b78cb15df712cd9dc9fe00ea3f66bbb637c00ffec413a5f4e498ca77eb55d886",
+      "size_bytes": 3073
+    },
+    {
+      "path": "next_identity_evidence_plan.csv",
+      "sha256": "cbdb551c516845ab0e8b9fe2d798c48d995b08dbf2da5b6b58e1eefde2412dab",
+      "size_bytes": 953
+    },
+    {
+      "path": "identity_gate_summary.json",
+      "sha256": "a6f14e9364115b965d4e9b419519337970cb911eea7077a38a0f354e0500bcd3",
+      "size_bytes": 1515
+    }
+  ]
+}

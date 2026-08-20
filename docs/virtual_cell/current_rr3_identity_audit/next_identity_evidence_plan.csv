@@ -1,0 +1,4 @@
+patient_id,priority,required_evidence,drug_perturbation_stage_unlocked
+patient12,identity_before_perturbation,cell-level CNV or targeted single-cell genotype mapped to barcodes | AML-specific malignant/normal reference mapping | matched flow or CITE-seq phenotype for orthogonal identity | refine low-confidence state assignment before perturbation,False
+patient5,identity_before_perturbation,"cell-level CNV or targeted single-cell genotype mapped to barcodes | AML-specific malignant/normal reference mapping | matched flow or CITE-seq phenotype for orthogonal identity | reconcile sample source, sampling time, denominator, and flow blast gate",False
+patient6,identity_before_perturbation,"cell-level CNV or targeted single-cell genotype mapped to barcodes | AML-specific malignant/normal reference mapping | matched flow or CITE-seq phenotype for orthogonal identity | reconcile sample source, sampling time, denominator, and flow blast gate",False

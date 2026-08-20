@@ -1,0 +1,4 @@
+patient_id,blast_discrepancy_reconciled,matched_normal_reference_available,single_cell_cnv_available,single_cell_genotype_available,orthogonal_flow_identity_available,aml_reference_mapping_available,notes
+patient5,false,false,false,false,false,false,Populate only after barcode-linked evidence is available
+patient6,false,false,false,false,false,false,Populate only after barcode-linked evidence is available
+patient12,false,false,false,false,false,false,Populate only after barcode-linked evidence is available

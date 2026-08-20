@@ -22,6 +22,14 @@ The bridge is deliberately conservative:
 Lower predicted AUC means greater ex-vivo sensitivity. These values are external
 BeatAML-derived priors, not measured inhibition percentages.
 
+## Required identity gate
+
+Drug perturbation is now downstream of `CELL_IDENTITY_GATE.md`. Expression
+clusters, blast priors, and bulk variants do not independently prove which
+cells are malignant. Generate `identity_gate_summary.json` with
+`scripts/audit_rraml_cell_identity.py`. The prediction command refuses to run
+unless the audited patients pass that gate.
+
 ## Physical label firewall
 
 The original scTherapy candidate package placed candidate inputs and response
@@ -83,6 +91,7 @@ Freeze predictions with:
 ```bash
 python scripts/build_rraml_virtual_cell_v16_predictions.py \
   --public-dir challenge_v1/public \
+  --identity-gate-summary identity_audit/identity_gate_summary.json \
   --state-predictions state_drug_anchors.csv \
   --pair-candidates challenge_v1/public/combo_candidates.csv \
   --out-dir predictions_v16
