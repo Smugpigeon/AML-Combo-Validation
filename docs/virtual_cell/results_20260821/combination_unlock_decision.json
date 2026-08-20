@@ -1,0 +1,32 @@
+{
+  "blockers": [
+    "retrospective cell-identity replication gate did not pass",
+    "real single-drug viability-direction gate did not pass",
+    "combination data-readiness gate did not pass or was not supplied",
+    "held-out patient/pair validation has not beaten strong baselines"
+  ],
+  "boundary": "Passing identity and monotherapy permits combination benchmarking. Training additionally requires adequate combination data, and predictions additionally require held-out gains over strong baselines. None permits automatic treatment selection or clinical dosing.",
+  "clinical_combination_use_unlocked": false,
+  "combination_benchmark_unlocked": false,
+  "combination_data_readiness_gate_pass": false,
+  "combination_training_unlocked": false,
+  "identity_gate_pass": false,
+  "patient_specific_combination_prediction_unlocked": false,
+  "prediction_blockers": [
+    "retrospective cell-identity replication gate did not pass",
+    "real single-drug viability-direction gate did not pass",
+    "combination data-readiness gate did not pass or was not supplied",
+    "held-out patient/pair validation has not beaten strong baselines"
+  ],
+  "prerequisite_blockers": [
+    "retrospective cell-identity replication gate did not pass",
+    "real single-drug viability-direction gate did not pass"
+  ],
+  "research_use_only": true,
+  "single_drug_gate_pass": false,
+  "training_blockers": [
+    "retrospective cell-identity replication gate did not pass",
+    "real single-drug viability-direction gate did not pass",
+    "combination data-readiness gate did not pass or was not supplied"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "code_branch": "codex/virtual-cell-identity-gate",
+  "code_commit": "561bc40",
+  "date": "2026-08-21",
+  "decision": {
+    "clinical_combination_use_unlocked": false,
+    "combination_benchmark_unlocked": false,
+    "combination_training_unlocked": false,
+    "patient_specific_combination_prediction_unlocked": false,
+    "pipeline_status": "blocked_at_identity",
+    "single_drug_evaluation_run": false
+  },
+  "identity": {
+    "barcode_unmatched_cells": 0,
+    "clinical_identity_stage_unlocked": false,
+    "missing_identity_call_patients": [
+      "patient6"
+    ],
+    "missing_identity_call_record_cells": 5677,
+    "n_cells": 11652,
+    "patients": {
+      "patient12": {
+        "call_coverage": 0.989751,
+        "gate_pass": true,
+        "malignant_fraction_among_called": 0.738875,
+        "official_run_status": "complete",
+        "reported_scrna_blast_pct": 65.3
+      },
+      "patient5": {
+        "call_coverage": 0.850317,
+        "gate_pass": false,
+        "malignant_fraction_among_called": 0.803083,
+        "official_run_status": "complete",
+        "reported_scrna_blast_pct": 54.4,
+        "unresolved_sensitivity": {
+          "malignant_fraction_lower_pct": 68.287526,
+          "malignant_fraction_upper_pct": 83.255814,
+          "minimum_possible_gap_pct": 13.887526,
+          "point_estimate_gap_pct": 25.908304
+        }
+      },
+      "patient6": {
+        "gate_pass": false,
+        "official_run_error": "arguments imply differing number of rows: 6773, 3386",
+        "official_run_status": "failed"
+      }
+    },
+    "retrospective_drug_validation_stage_unlocked": false,
+    "strict_orthogonal_identity_gate_pass": false
+  },
+  "combination_readiness": {
+    "combination_training_data_ready": false,
+    "maximum_single_patient_well_fraction": 0.3333333333333333,
+    "median_patients_per_pair": 1.0,
+    "n_patients": 3,
+    "n_positive_dose_combination_wells": 648,
+    "n_unique_unordered_pairs": 63,
+    "response_standard_deviation": 35.97628005507807
+  },
+  "research_use_only": true
+}

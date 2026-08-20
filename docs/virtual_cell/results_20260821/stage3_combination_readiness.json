@@ -1,0 +1,27 @@
+{
+  "blockers": [
+    "too few patients for a held-out-patient training design",
+    "pairs are not replicated across enough patients",
+    "one patient contributes too much of the combination matrix"
+  ],
+  "boundary": "Data readiness permits model fitting only. Patient-specific predictions remain locked until held-out validation beats additive and pair-mean baselines.",
+  "combination_training_data_ready": false,
+  "grouped_patient_split_feasible": false,
+  "maximum_single_patient_well_fraction": 0.3333333333333333,
+  "median_patients_per_pair": 1.0,
+  "n_patients": 3,
+  "n_positive_dose_combination_wells": 648,
+  "n_unique_unordered_pairs": 63,
+  "policy": {
+    "maximum_single_patient_well_fraction": 0.25,
+    "minimum_combination_wells": 500,
+    "minimum_median_patients_per_pair": 3.0,
+    "minimum_patients": 20,
+    "minimum_response_standard_deviation": 5.0,
+    "minimum_unique_unordered_pairs": 30
+  },
+  "research_use_only": true,
+  "response_standard_deviation": 35.97628005507807,
+  "stage": "combination_training_data_readiness",
+  "zero_pair_overlap_split_feasible": true
+}

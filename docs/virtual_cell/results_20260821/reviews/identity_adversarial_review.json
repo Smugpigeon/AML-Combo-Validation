@@ -1,0 +1,23 @@
+{
+  "current_stronger_side": "opposition",
+  "evidence_that_would_reverse_the_verdict": "Prospectively barcoded scDNA+scRNA, genotype-linked TARGET-seq, or cell-matched CITE/flow evidence with predeclared concordance thresholds.",
+  "irreversible_or_opportunity_cost": "Training a response model on incorrectly labelled cells would propagate identity error into every downstream drug and combination score.",
+  "largest_unknown": "Whether RNA-ensemble malignant calls agree with an orthogonal, same-cell genomic or immunophenotypic label.",
+  "neutral_verdict": "Stop before drug-response validation because identity reproduction failed.",
+  "omitted_or_weak_facts": [
+    "No same-cell DNA barcode or genotype-to-cell linkage is available.",
+    "No CITE-seq or flow label is paired to each sequenced cell.",
+    "Reported blast percentages are patient-level priors, not cell labels."
+  ],
+  "optimistic_assumptions": [
+    "T-cell references are uncontaminated and representative.",
+    "RNA-derived copy-number calls remain stable in low-CNA AML clones.",
+    "Major virtual states are not dominated by doublets or stressed normal cells."
+  ],
+  "review_method": "strongest opposition, omitted facts, optimistic assumptions, irreversible cost, worst consequence, strongest support, then neutral verdict",
+  "source_gate_pass": false,
+  "stage": "cell_identity",
+  "strongest_opposing_case": "ScType, CopyKAT and SCEVAN all derive evidence from the same scRNA-seq matrix. Agreement can reproduce a published annotation workflow but cannot establish genotype-linked malignant identity.",
+  "strongest_supporting_evidence": "The pinned published RNA ensemble was evaluated on 11652 cells across 3 selected patients.",
+  "worst_consequence": "A normal or reactive state could be presented as a leukemic vulnerability."
+}
