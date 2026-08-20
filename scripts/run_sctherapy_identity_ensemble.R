@@ -78,7 +78,20 @@ for (patient in patients) {
       name = "sctype_classification"
     )
     general_labels <- as.character(object@meta.data$sctype_classification)
-    t_cell <- grepl("(^|[^A-Za-z])T[- ]?cells?", general_labels, ignore.case = TRUE)
+    label_counts <- as.data.frame(table(general_labels, useNA = "ifany"))
+    colnames(label_counts) <- c("sctype_classification", "n_cells")
+    write.csv(
+      label_counts,
+      file.path(output_dir, paste0(patient, "_general_sctype_label_counts.csv")),
+      row.names = FALSE,
+      quote = TRUE
+    )
+    t_cell <- grepl(
+      "T[- _]?cells?|NKT|CD4|CD8",
+      general_labels,
+      ignore.case = TRUE,
+      perl = TRUE
+    )
     known_normal_cells <- rownames(object@meta.data)[t_cell]
     if (length(known_normal_cells) < 20) {
       stop(paste("fewer than 20 ScType T-cell normal references:", length(known_normal_cells)))
@@ -139,6 +152,16 @@ for (patient in patients) {
   statuses[[patient]] <- status
   writeLines(jsonlite::toJSON(statuses, auto_unbox = TRUE, pretty = TRUE),
              file.path(output_dir, "run_status.json"))
+  transient_names <- c(
+    "object", "general_labels", "t_cell", "known_normal_cells", "meta",
+    "sctype_call", "copykat_call", "scevan_call", "ensemble", "output"
+  )
+  for (name in transient_names) {
+    if (exists(name, envir = .GlobalEnv, inherits = FALSE)) {
+      rm(list = name, envir = .GlobalEnv)
+    }
+  }
+  invisible(gc(verbose = FALSE))
 }
 
 writeLines(capture.output(sessionInfo()), file.path(output_dir, "R_SESSION_INFO.txt"))
