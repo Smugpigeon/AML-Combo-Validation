@@ -17,6 +17,11 @@ import pandas as pd
 GENOMIC_CALL_COLUMNS = ("scdna_malignant_call", "cnv_malignant_call")
 ORTHOGONAL_CALL_COLUMNS = ("flow_malignant_call", "cite_malignant_call")
 AML_REFERENCE_CALL_COLUMNS = ("aml_reference_malignant_call",)
+TRANSCRIPTOMIC_ENSEMBLE_CALL_COLUMNS = (
+    "sctype_malignant_healthy",
+    "copyKat_output",
+    "SCEVAN_output",
+)
 
 PATIENT_CONTEXT_COLUMNS = (
     "patient_id",
@@ -43,6 +48,24 @@ class IdentityGatePolicy:
     maximum_unreconciled_blast_gap_pct: float = 15.0
 
 
+@dataclass(frozen=True)
+class RetrospectiveIdentityPolicy:
+    """Thresholds for reproducing the published scTherapy RNA ensemble.
+
+    This gate never upgrades RNA-derived CNA calls to independent genomic
+    evidence. It only permits a public retrospective perturbation challenge.
+    """
+
+    major_state_fraction: float = 0.05
+    minimum_algorithms_per_cell: int = 2
+    minimum_algorithm_agreement: float = 2.0 / 3.0
+    minimum_patient_call_coverage: float = 0.80
+    minimum_major_state_call_coverage: float = 0.70
+    minimum_major_state_identity_purity: float = 0.60
+    minimum_known_normal_reference_cells: int = 20
+    maximum_scrna_blast_disagreement_pct: float = 20.0
+
+
 def require_identity_gate_summary(
     summary: Mapping[str, object],
     *,
@@ -66,6 +89,191 @@ def require_identity_gate_summary(
             "drug perturbation requested patients absent from identity audit: "
             + ", ".join(missing)
         )
+
+
+def require_retrospective_identity_gate_summary(
+    summary: Mapping[str, object],
+    *,
+    patient_ids: Iterable[object] = (),
+) -> None:
+    """Allow only the explicitly scoped public retrospective challenge."""
+
+    if not bool(summary.get("retrospective_drug_validation_stage_unlocked", False)):
+        raise RuntimeError(
+            "retrospective drug validation is locked because the published "
+            "RNA identity ensemble was not reproduced"
+        )
+    audited = {str(value).strip() for value in summary.get("patients", [])}
+    requested = {str(value).strip() for value in patient_ids}
+    missing = sorted(requested - audited)
+    if missing:
+        raise RuntimeError(
+            "retrospective validation patients absent from identity audit: "
+            + ", ".join(missing)
+        )
+
+
+def build_retrospective_identity_gate(
+    annotations: pd.DataFrame,
+    patient_summary: pd.DataFrame,
+    *,
+    policy: RetrospectiveIdentityPolicy | None = None,
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, dict[str, object]]:
+    """Audit a reproduction of the published ScType/CopyKAT/SCEVAN ensemble."""
+
+    policy = policy or RetrospectiveIdentityPolicy()
+    required = {
+        "sample_id",
+        "virtual_state_id",
+        "known_normal_reference",
+        *TRANSCRIPTOMIC_ENSEMBLE_CALL_COLUMNS,
+    }
+    missing = sorted(required - set(annotations.columns))
+    if missing:
+        raise KeyError(f"retrospective identity columns missing: {missing}")
+
+    cells = annotations.copy()
+    calls = _collect_calls(cells, TRANSCRIPTOMIC_ENSEMBLE_CALL_COLUMNS)
+    known = _known_call_count(calls)
+    positive = np.sum(calls == 1.0, axis=1)
+    negative = np.sum(calls == 0.0, axis=1)
+    majority_count = np.maximum(positive, negative)
+    agreement = np.divide(
+        majority_count,
+        known,
+        out=np.zeros(len(cells), dtype=float),
+        where=known > 0,
+    )
+    majority_call = np.full(len(cells), np.nan, dtype=float)
+    majority_call[positive > negative] = 1.0
+    majority_call[negative > positive] = 0.0
+    valid = (
+        (known >= policy.minimum_algorithms_per_cell)
+        & (agreement >= policy.minimum_algorithm_agreement)
+        & np.isfinite(majority_call)
+    )
+    cells["rna_ensemble_algorithms_available"] = known
+    cells["rna_ensemble_agreement_fraction"] = agreement
+    cells["rna_ensemble_majority_call"] = majority_call
+    cells["rna_ensemble_identity_replicated"] = valid
+
+    state_rows: list[dict[str, object]] = []
+    for (patient_id, state_id), group in cells.groupby(
+        ["sample_id", "virtual_state_id"], sort=True
+    ):
+        patient_total = int((cells["sample_id"] == patient_id).sum())
+        state_fraction = len(group) / max(patient_total, 1)
+        coverage = float(group["rna_ensemble_identity_replicated"].mean())
+        valid_group = group.loc[group["rna_ensemble_identity_replicated"]]
+        if valid_group.empty:
+            purity = 0.0
+            dominant_call = np.nan
+        else:
+            frequencies = valid_group["rna_ensemble_majority_call"].value_counts(
+                normalize=True
+            )
+            dominant_call = float(frequencies.index[0])
+            purity = float(frequencies.iloc[0])
+        is_major = state_fraction >= policy.major_state_fraction
+        passes = (
+            not is_major
+            or (
+                coverage >= policy.minimum_major_state_call_coverage
+                and purity >= policy.minimum_major_state_identity_purity
+            )
+        )
+        state_rows.append(
+            {
+                "patient_id": patient_id,
+                "virtual_state_id": state_id,
+                "n_cells": len(group),
+                "state_fraction": state_fraction,
+                "is_major_state": is_major,
+                "rna_ensemble_call_coverage": coverage,
+                "dominant_identity_call": dominant_call,
+                "dominant_identity_purity": purity,
+                "retrospective_state_identity_pass": passes,
+            }
+        )
+    state_gate = pd.DataFrame(state_rows)
+
+    context = _context_frame(patient_summary)
+    patient_rows: list[dict[str, object]] = []
+    for patient_id, group in cells.groupby("sample_id", sort=True):
+        patient_context = context.loc[context["patient_id"] == patient_id]
+        row = patient_context.iloc[0] if not patient_context.empty else pd.Series(dtype=object)
+        call_coverage = float(group["rna_ensemble_identity_replicated"].mean())
+        valid_group = group.loc[group["rna_ensemble_identity_replicated"]]
+        malignant_fraction = (
+            float(valid_group["rna_ensemble_majority_call"].mean())
+            if not valid_group.empty
+            else float("nan")
+        )
+        normal_reference_count = int(
+            group["known_normal_reference"].fillna(False).astype(bool).sum()
+        )
+        patient_states = state_gate.loc[state_gate["patient_id"] == patient_id]
+        major_states = patient_states.loc[patient_states["is_major_state"]]
+        all_major_states_pass = bool(
+            not major_states.empty
+            and major_states["retrospective_state_identity_pass"].all()
+        )
+        scrna_blast = pd.to_numeric(row.get("scrna_blast_pct"), errors="coerce")
+        blast_gap = (
+            float(abs(100.0 * malignant_fraction - scrna_blast))
+            if np.isfinite(malignant_fraction) and pd.notna(scrna_blast)
+            else float("nan")
+        )
+        blockers: list[str] = []
+        if call_coverage < policy.minimum_patient_call_coverage:
+            blockers.append("published RNA ensemble call coverage is below threshold")
+        if not all_major_states_pass:
+            blockers.append("one or more major virtual states lack a stable identity call")
+        if normal_reference_count < policy.minimum_known_normal_reference_cells:
+            blockers.append("too few known-normal T-cell reference cells")
+        if (
+            np.isfinite(blast_gap)
+            and blast_gap > policy.maximum_scrna_blast_disagreement_pct
+        ):
+            blockers.append("RNA ensemble malignant fraction disagrees with reported scRNA blast fraction")
+        patient_rows.append(
+            {
+                "patient_id": patient_id,
+                "n_cells": len(group),
+                "rna_ensemble_call_coverage": call_coverage,
+                "rna_ensemble_malignant_fraction": malignant_fraction,
+                "known_normal_reference_cells": normal_reference_count,
+                "major_state_count": len(major_states),
+                "major_states_passing": int(
+                    major_states["retrospective_state_identity_pass"].sum()
+                ),
+                "reported_scrna_blast_pct": scrna_blast,
+                "ensemble_vs_scrna_blast_gap_pct": blast_gap,
+                "retrospective_identity_gate_pass": not blockers,
+                "blockers": " | ".join(blockers),
+            }
+        )
+    patient_gate = pd.DataFrame(patient_rows)
+    all_pass = bool(
+        not patient_gate.empty and patient_gate["retrospective_identity_gate_pass"].all()
+    )
+    summary: dict[str, object] = {
+        "stage": "published_rna_identity_ensemble_reproduction",
+        "research_use_only": True,
+        "patients": patient_gate["patient_id"].tolist(),
+        "n_cells": int(len(cells)),
+        "policy": asdict(policy),
+        "all_patients_pass_retrospective_identity_gate": all_pass,
+        "retrospective_drug_validation_stage_unlocked": all_pass,
+        "strict_orthogonal_identity_gate_pass": False,
+        "clinical_identity_stage_unlocked": False,
+        "evidence_level": "rna_derived_cna_ensemble_reproduction_not_scdna",
+        "boundary": (
+            "ScType, CopyKAT, and SCEVAN share the same scRNA input. Agreement "
+            "supports method reproduction but is not independent genomic proof."
+        ),
+    }
+    return cells, patient_gate, state_gate, summary
 
 
 def _nullable_call(value: object) -> float:

@@ -7,15 +7,14 @@ only after a prediction artifact has been frozen.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import re
-from typing import Iterable, Sequence
+from collections.abc import Iterable, Sequence
+from dataclasses import dataclass
+from pathlib import Path
 
 import pandas as pd
-
 
 EXACT_OUTCOME_COLUMNS = frozenset(
     {
@@ -32,6 +31,14 @@ EXACT_OUTCOME_COLUMNS = frozenset(
         "label",
         "auc",
         "ic50",
+        "dss",
+        "dss_like",
+        "effect",
+        "efficacy",
+        "inhibition",
+        "observed_dss_like",
+        "observed_effect",
+        "observed_inhibition",
         "known_treatment_response_events",
         "published_prediction_vs_later_treatment",
         "flow_evidence",
@@ -40,8 +47,12 @@ EXACT_OUTCOME_COLUMNS = frozenset(
 )
 OUTCOME_PATTERNS = (
     re.compile(r"^response\d*(?:_pct)?$"),
-    re.compile(r"(?:^|_)observed_(?:response|viability|inhibition|toxicity|auc|ic50)$"),
+    re.compile(
+        r"(?:^|_)observed_(?:response|viability|inhibition|toxicity|auc|ic50|dss|effect)"
+        r"(?:_|$)"
+    ),
     re.compile(r"(?:^|_)(?:outcome|synergy)(?:_|$)"),
+    re.compile(r"(?:^|_)(?:dss|inhibition|efficacy|effect)(?:_|$)"),
 )
 
 
@@ -131,7 +142,7 @@ def add_stable_row_ids(
         0,
         row_id_column,
         [
-            f"{prefix}_{hashlib.sha256(f'{token}|{dup}'.encode('utf-8')).hexdigest()[:20]}"
+            f"{prefix}_{hashlib.sha256(f'{token}|{dup}'.encode()).hexdigest()[:20]}"
             for token, dup in zip(tokens, duplicate_index, strict=True)
         ],
     )
