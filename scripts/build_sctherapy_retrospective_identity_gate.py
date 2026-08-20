@@ -57,13 +57,47 @@ def main() -> int:
     else:
         raise KeyError("cell annotations require cell_id as a column or index")
 
-    call_paths = [
-        args.identity_call_dir / f"{patient}_identity_calls.csv" for patient in patients
-    ]
-    missing_paths = [str(path) for path in call_paths if not path.exists()]
-    if missing_paths:
-        raise FileNotFoundError(f"identity call files missing: {missing_paths}")
-    calls = pd.concat([pd.read_csv(path) for path in call_paths], ignore_index=True)
+    call_paths = {
+        patient: args.identity_call_dir / f"{patient}_identity_calls.csv"
+        for patient in patients
+    }
+    status_path = args.identity_call_dir / "run_status.json"
+    run_status = (
+        json.loads(status_path.read_text(encoding="utf-8"))
+        if status_path.exists()
+        else {}
+    )
+    call_frames: list[pd.DataFrame] = []
+    missing_patients: list[str] = []
+    for patient, path in call_paths.items():
+        if path.exists():
+            frame = pd.read_csv(path)
+            frame["identity_call_record_present"] = True
+            frame["identity_run_status"] = "complete"
+            frame["identity_run_error"] = ""
+            call_frames.append(frame)
+            continue
+        missing_patients.append(patient)
+        patient_cells = annotations.loc[
+            annotations["sample_id"].astype(str).eq(patient),
+            ["sample_id", "cell_barcode"],
+        ].copy()
+        patient_cells["known_normal_reference"] = False
+        patient_cells["sctype_malignant_healthy"] = pd.NA
+        patient_cells["copyKat_output"] = pd.NA
+        patient_cells["SCEVAN_output"] = pd.NA
+        patient_cells["ensemble_output"] = pd.NA
+        patient_cells["identity_call_record_present"] = False
+        patient_cells["identity_run_status"] = str(
+            run_status.get(patient, {}).get("status", "missing")
+        )
+        patient_cells["identity_run_error"] = str(
+            run_status.get(patient, {}).get(
+                "error", "official identity call file was not produced"
+            )
+        )
+        call_frames.append(patient_cells)
+    calls = pd.concat(call_frames, ignore_index=True)
     if calls.duplicated(["sample_id", "cell_barcode"]).any():
         raise ValueError("official identity calls contain duplicate barcodes")
     merged = annotations.merge(
@@ -72,9 +106,10 @@ def main() -> int:
         how="left",
         validate="one_to_one",
     )
-    unmatched = int(merged["ensemble_output"].isna().sum())
-    if unmatched == len(merged):
-        raise RuntimeError("no official identity calls matched virtual-cell barcodes")
+    unmatched = int(
+        (~merged["identity_call_record_present"].fillna(False).astype(bool)).sum()
+    )
+    unresolved = int(merged["ensemble_output"].isna().sum())
 
     patient_summary = pd.read_csv(args.patient_summary)
     cells, patient_gate, state_gate, summary = build_retrospective_identity_gate(
@@ -82,12 +117,21 @@ def main() -> int:
         patient_summary,
     )
     summary["barcode_unmatched_cells"] = unmatched
+    summary["algorithm_unresolved_cells"] = unresolved
+    summary["missing_identity_call_patients"] = missing_patients
+    summary["official_identity_run_status"] = run_status
+    if missing_patients:
+        summary["all_patients_pass_retrospective_identity_gate"] = False
+        summary["retrospective_drug_validation_stage_unlocked"] = False
     summary["input_sha256"] = {
         "cell_annotations": sha256_file(args.cell_annotations),
         "patient_summary": sha256_file(args.patient_summary),
         "official_identity_calls": {
-            path.name: sha256_file(path) for path in call_paths
+            path.name: sha256_file(path)
+            for path in call_paths.values()
+            if path.exists()
         },
+        "run_status": sha256_file(status_path) if status_path.exists() else None,
     }
     args.out_dir.mkdir(parents=True, exist_ok=True)
     cells.to_parquet(args.out_dir / "retrospective_cell_identity.parquet", index=False)

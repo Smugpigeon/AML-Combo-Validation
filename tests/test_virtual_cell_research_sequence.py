@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+import json
+import subprocess
+import sys
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -64,6 +69,81 @@ def test_rna_ensemble_disagreement_keeps_retrospective_gate_locked() -> None:
     assert not patients.loc[0, "retrospective_identity_gate_pass"]
     with pytest.raises(RuntimeError, match="RNA identity ensemble"):
         require_retrospective_identity_gate_summary(summary, patient_ids=["p1"])
+
+
+def test_identity_gate_records_failed_official_patient_instead_of_crashing(
+    tmp_path: Path,
+) -> None:
+    annotations = []
+    calls = []
+    for patient_id in ("p1", "p2"):
+        for index in range(100):
+            barcode = f"b{index}"
+            annotations.append(
+                {
+                    "cell_id": f"{patient_id}:{barcode}",
+                    "sample_id": patient_id,
+                    "virtual_state_id": "VS01",
+                }
+            )
+            if patient_id == "p1":
+                call = "malignant" if index < 80 else "healthy"
+                calls.append(
+                    {
+                        "sample_id": patient_id,
+                        "cell_barcode": barcode,
+                        "known_normal_reference": index >= 80,
+                        "sctype_malignant_healthy": call,
+                        "copyKat_output": call,
+                        "SCEVAN_output": call,
+                        "ensemble_output": call,
+                    }
+                )
+    annotations_path = tmp_path / "annotations.csv"
+    pd.DataFrame(annotations).to_csv(annotations_path, index=False)
+    summary_path = tmp_path / "patients.csv"
+    pd.DataFrame(
+        {"patient_id": ["p1", "p2"], "scrna_blast_pct": [80.0, 50.0]}
+    ).to_csv(summary_path, index=False)
+    call_dir = tmp_path / "calls"
+    call_dir.mkdir()
+    pd.DataFrame(calls).to_csv(call_dir / "p1_identity_calls.csv", index=False)
+    (call_dir / "run_status.json").write_text(
+        json.dumps(
+            {
+                "p1": {"status": "complete"},
+                "p2": {"status": "failed", "error": "upstream failure"},
+            }
+        ),
+        encoding="utf-8",
+    )
+    out_dir = tmp_path / "out"
+    root = Path(__file__).resolve().parents[1]
+    subprocess.run(
+        [
+            sys.executable,
+            str(root / "scripts" / "build_sctherapy_retrospective_identity_gate.py"),
+            "--cell-annotations",
+            str(annotations_path),
+            "--identity-call-dir",
+            str(call_dir),
+            "--patient-summary",
+            str(summary_path),
+            "--patients",
+            "p1,p2",
+            "--out-dir",
+            str(out_dir),
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    summary = json.loads(
+        (out_dir / "retrospective_identity_gate_summary.json").read_text()
+    )
+    assert summary["missing_identity_call_patients"] == ["p2"]
+    assert summary["barcode_unmatched_cells"] == 100
+    assert not summary["retrospective_drug_validation_stage_unlocked"]
 
 
 def test_zero_dose_edges_are_real_monotherapy_only() -> None:
