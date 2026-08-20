@@ -172,16 +172,29 @@ def main() -> int:
     monotherapy_path = evaluation_dir / "monotherapy_gate_summary.json"
     monotherapy = _read_json(monotherapy_path)
     _write_review(args.out_dir, "monotherapy", monotherapy)
-    decision = combination_unlock_decision(identity, monotherapy)
+    readiness_path = args.out_dir / "stage3_combination_readiness.json"
+    _run(
+        "audit_sctherapy_combination_readiness.py",
+        "--combo-matrix",
+        args.combo_matrix,
+        "--out",
+        readiness_path,
+    )
+    readiness = _read_json(readiness_path)
+    decision = combination_unlock_decision(identity, monotherapy, readiness)
     _write_json(args.out_dir / "combination_unlock_decision.json", decision)
     _write_review(args.out_dir, "combination", decision)
     _write_json(
         args.out_dir / "PIPELINE_STATUS.json",
         {
             "status": (
-                "research_combination_benchmark_unlocked"
+                "combination_training_unlocked_pending_validation"
                 if decision["combination_training_unlocked"]
-                else "blocked_at_monotherapy"
+                else (
+                    "research_combination_benchmark_only"
+                    if decision["combination_benchmark_unlocked"]
+                    else "blocked_at_monotherapy"
+                )
             ),
             "research_use_only": True,
             "clinical_combination_use_unlocked": False,

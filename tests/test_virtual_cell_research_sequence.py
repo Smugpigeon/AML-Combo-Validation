@@ -10,6 +10,8 @@ from combo_val.virtual_cell.cell_identity import (
 )
 from combo_val.virtual_cell.challenge_firewall import assert_label_free
 from combo_val.virtual_cell.retrospective_validation import (
+    CombinationTrainingPolicy,
+    audit_combination_training_readiness,
     combination_unlock_decision,
     evaluate_monotherapy_predictions,
     extract_monotherapy_edges,
@@ -136,7 +138,48 @@ def test_patient_specific_monotherapy_gate_beats_drug_mean_baseline() -> None:
     decision = combination_unlock_decision(
         {"retrospective_drug_validation_stage_unlocked": True}, summary
     )
+    assert decision["combination_benchmark_unlocked"]
+    assert not decision["combination_training_unlocked"]
+    assert not decision["patient_specific_combination_prediction_unlocked"]
+    assert not decision["clinical_combination_use_unlocked"]
+
+
+def test_combination_training_requires_data_readiness_and_validation() -> None:
+    rows = []
+    for patient in range(1, 5):
+        for pair_index, (drug1, drug2) in enumerate(
+            [("A", "B"), ("A", "C")], start=1
+        ):
+            rows.append(
+                {
+                    "Patient": patient,
+                    "Drug1": drug1,
+                    "Drug2": drug2,
+                    "Dose1": 10.0,
+                    "Dose2": 20.0,
+                    "Response": float(5 * patient + pair_index),
+                }
+            )
+    readiness = audit_combination_training_readiness(
+        pd.DataFrame(rows),
+        policy=CombinationTrainingPolicy(
+            minimum_patients=4,
+            minimum_unique_unordered_pairs=2,
+            minimum_combination_wells=8,
+            minimum_median_patients_per_pair=4,
+            maximum_single_patient_well_fraction=0.25,
+            minimum_response_standard_deviation=1.0,
+        ),
+    )
+    assert readiness["combination_training_data_ready"]
+    decision = combination_unlock_decision(
+        {"retrospective_drug_validation_stage_unlocked": True},
+        {"viability_direction_gate_pass": True},
+        readiness,
+        {"patient_specific_combination_validation_pass": True},
+    )
     assert decision["combination_training_unlocked"]
+    assert decision["patient_specific_combination_prediction_unlocked"]
     assert not decision["clinical_combination_use_unlocked"]
 
 

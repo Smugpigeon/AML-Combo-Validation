@@ -1,0 +1,119 @@
+# Gated scTherapy Reproduction and Drug-Direction Challenge
+
+Research use only. This workflow does not select treatment, dose, or schedule.
+
+## Purpose
+
+This workflow implements the required evidence order:
+
+1. Reproduce cell identity calls.
+2. Freeze predictions and test real single-drug viability direction.
+3. Unlock combination benchmarking only if both earlier gates pass.
+
+No later result can compensate for a failed earlier gate.
+
+## Two different identity gates
+
+The project intentionally keeps two identity standards separate.
+
+### Strict identity gate
+
+The strict gate requires same-cell genomic evidence or concordant orthogonal
+phenotype plus AML-specific reference evidence. It can support patient-cell
+identity claims. The current three public patients do not have this evidence,
+so this gate remains locked.
+
+### Published RNA-ensemble reproduction gate
+
+The public retrospective gate reproduces the published scTherapy workflow:
+
+- general ScType annotation and T-cell normal references;
+- AML ScType malignant/healthy markers;
+- SCEVAN RNA-derived copy-number classification;
+- CopyKAT RNA-derived copy-number classification;
+- agreement audit at cell, virtual-state, and patient levels.
+
+All three methods use the same scRNA-seq matrix. This is an RNA-ensemble
+reproduction, not single-cell DNA validation. A pass unlocks only the public
+retrospective drug-direction challenge.
+
+## Frozen upstream implementation
+
+- scTherapy commit: `4366320fe81b161dc750957b1a05b39a504ecc75`
+- Docker image: `kmnader/sctherapy_v5@sha256:2ccea16a2740109279e812636a77a2245cf86061b980f8bc7aa3fc4d7f31f055`
+- `identify_healthy_mal_v5.R` SHA-256: `647d80e224298389ce52da2a265d1dd437c82b60145d45e71fd1df9d6ceba08c`
+- AML marker workbook SHA-256: `142088466aacb167913e3c4a91bd96f4b69f3fa816fb27086bed6e1cdb419f11`
+
+The local R wrapper calls the pinned upstream functions and does not vendor or
+rewrite their algorithm.
+
+## Stage 1 command
+
+Run the official RNA ensemble inside the pinned container:
+
+```bash
+docker run --rm --cpus 2 --memory 6g \
+  -v /lhcos-data/aml_virtual_cell:/work \
+  kmnader/sctherapy_v5@sha256:2ccea16a2740109279e812636a77a2245cf86061b980f8bc7aa3fc4d7f31f055 \
+  Rscript /work/code/AML-Combo-Validation-vcell-gated/scripts/run_sctherapy_identity_ensemble.R \
+  --input-dir /work/public_references/sctherapy \
+  --output-dir /work/derived/virtual_cell_gated_sequence_20260820/identity_ensemble \
+  --upstream-script /work/public_references/sctherapy_upstream_4366320/identify_healthy_mal_v5.R \
+  --custom-marker /work/public_references/sctherapy_upstream_4366320/sctype_aml_cellmarker20_cosmic.xlsx \
+  --patients patient5,patient6,patient12 \
+  --ncores 2
+```
+
+## Stages 1-3 command
+
+After the three official identity-call CSV files exist, the Python orchestrator
+runs the remaining hard-gated sequence:
+
+```bash
+python scripts/run_sctherapy_gated_sequence.py \
+  --identity-call-dir /lhcos-data/aml_virtual_cell/derived/virtual_cell_gated_sequence_20260820/identity_ensemble \
+  --cell-annotations /lhcos-data/aml_virtual_cell/derived/virtual_cell_v15_final_20260820/selected_rr3_cell_state_annotations.parquet \
+  --patient-manifest /lhcos-data/aml_virtual_cell/derived/sctherapy_selected_rr3_release/selected_rr3_patient_manifest.csv \
+  --h5ad /lhcos-data/aml_virtual_cell/derived/sctherapy_selected_rr3_h5ad/sctherapy_selected_rr3_raw.h5ad \
+  --preprocessor /path/to/beataml_rna_preprocessor.joblib \
+  --model-dir /path/to/frozen_split_safe_model \
+  --combo-matrix /lhcos-data/aml_virtual_cell/derived/sctherapy_selected_rr3_release/selected_rr3_combo_dose_matrices.csv \
+  --out-dir /lhcos-data/aml_virtual_cell/derived/virtual_cell_gated_sequence_20260820/gated_sequence
+```
+
+## Stage 2 endpoint
+
+The source combination matrices contain zero-dose edges. The workflow extracts
+only wells where exactly one drug dose is positive and collapses repeated edge
+measurements. Combination wells are never treated as monotherapy.
+
+The primary public endpoint is a fixed log-dose integrated inhibition score
+over 0.1-1000 nM. Predictions are generated from a frozen split-safe BeatAML
+ensemble, hashed, and only then joined to sealed outcomes.
+
+The gate requires:
+
+- at least 3 evaluable patients and 12 patient-drug rows;
+- positive within-patient Spearman correlation in at least 2 patients;
+- median within-patient Spearman at least 0.20;
+- non-negative median increment over the drug-mean baseline;
+- no contradictory duplicate zero-dose edges.
+
+This tests viability direction. It does not prove a post-treatment
+transcriptomic state transition because paired post-treatment scRNA-seq is not
+available in this public source.
+
+## Stage 3 boundary
+
+A pass unlocks research-only combination benchmarking against strong additive,
+drug-mean, pair-mean, Bliss, Loewe, HSA, and ZIP baselines. It does not unlock:
+
+- automatic treatment selection;
+- dose or schedule recommendations;
+- clinical efficacy claims;
+- patient-specific prescribing.
+
+Every stage writes a structured adversarial review containing the strongest
+opposing case, omitted facts, optimistic assumptions, irreversible cost, worst
+consequence, strongest supporting evidence, neutral verdict, largest unknown,
+and evidence that would reverse the verdict.

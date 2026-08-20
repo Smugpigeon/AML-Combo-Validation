@@ -18,13 +18,21 @@ Stage 3: train and unlock patient-specific combination prediction
 **Question:** Which cells are malignant, normal, or unresolved, and which
 expression states contain those cells?
 
-**Required evidence:** barcode-linked single-cell DNA/CNV, or concordant
-orthogonal phenotype and AML-specific reference evidence.
+**Required evidence for a clinical-grade identity claim:** barcode-linked
+single-cell DNA/CNV, or concordant orthogonal phenotype and AML-specific
+reference evidence.
+
+The public-data feasibility track has a separate, weaker gate: reproduce the
+published ScType/CopyKAT/SCEVAN RNA ensemble. A pass permits only retrospective
+single-drug validation. CopyKAT and SCEVAN are RNA-derived CNA methods and must
+not be relabelled as scDNA evidence.
 
 **Outputs:** cell, state, and patient identity audits with explicit blockers.
 
-**Current status:** locked. None of the three public patients passes the gate.
-See `CELL_IDENTITY_GATE.md`.
+**Current status:** the strict identity gate is locked. None of the three
+public patients passes it. The separate published RNA-ensemble reproduction is
+being executed for the public feasibility track. See `CELL_IDENTITY_GATE.md`
+and `SC_THERAPY_GATED_REPRODUCTION.md`.
 
 ## Stage 2: perturbation direction
 
@@ -42,8 +50,10 @@ This stage has two distinct tracks:
 The required baselines are no change, global drug mean, state-conditioned mean,
 regularized linear models, and nearest-neighbor/optimal-transport models.
 
-**Current status:** locked by Stage 1. BeatAML AUC anchors remain external
-directional priors, not patient-cell transition labels.
+**Current status:** locked unless the separate public RNA-ensemble gate passes.
+BeatAML AUC anchors remain external directional priors, not patient-cell
+transition labels. Public zero-dose edges can test viability direction but not
+a post-treatment transcriptomic state transition.
 
 ## Stage 3: patient-specific combinations
 
@@ -53,13 +63,19 @@ and pair/cell baselines on unseen patients and unseen unordered drug pairs?
 Unlocking requires:
 
 - A passing Stage 2 result with patient-level uncertainty.
+- At least 20 independent patients before fitting a patient-specific pair
+  model in the current predeclared feasibility policy.
 - Grouped unordered-pair splits with zero pair overlap.
 - Leave-patient and leave-center evaluation.
 - Non-collapsed drug representations.
 - Normal-cell selectivity and dose/schedule support.
 
-**Current status:** locked. The prior synergy checkpoint failed representation
-and split gates, so no synergy score is emitted.
+**Current status:** locked. Passing Stages 1 and 2 would first unlock a
+research-only combination benchmark. Training remains locked unless the
+combination data-readiness gate passes; patient-specific predictions remain
+locked until held-out patient/pair validation beats strong baselines. The prior
+synergy checkpoint failed representation and split gates, so no synergy score
+is emitted.
 
 ## Separate clinical protocol
 

@@ -42,6 +42,18 @@ class MonotherapyGatePolicy:
     maximum_duplicate_response_range: float = 1e-6
 
 
+@dataclass(frozen=True)
+class CombinationTrainingPolicy:
+    """Minimum data support before fitting a patient-specific pair model."""
+
+    minimum_patients: int = 20
+    minimum_unique_unordered_pairs: int = 30
+    minimum_combination_wells: int = 500
+    minimum_median_patients_per_pair: float = 3.0
+    maximum_single_patient_well_fraction: float = 0.25
+    minimum_response_standard_deviation: float = 5.0
+
+
 def normalize_drug_name(value: object) -> str:
     return re.sub(r"[^a-z0-9]+", "", str(value).strip().lower())
 
@@ -292,28 +304,142 @@ def evaluate_monotherapy_predictions(
     return patient_metrics, summary
 
 
+def audit_combination_training_readiness(
+    combo: pd.DataFrame,
+    *,
+    policy: CombinationTrainingPolicy | None = None,
+) -> dict[str, object]:
+    """Audit whether a matrix can support grouped patient-specific pair training."""
+
+    policy = policy or CombinationTrainingPolicy()
+    required = {"Patient", "Drug1", "Drug2", "Dose1", "Dose2", "Response"}
+    missing = sorted(required - set(combo.columns))
+    if missing:
+        raise KeyError(f"combination matrix columns missing: {missing}")
+
+    frame = combo.copy()
+    frame["Dose1"] = pd.to_numeric(frame["Dose1"], errors="coerce")
+    frame["Dose2"] = pd.to_numeric(frame["Dose2"], errors="coerce")
+    frame["Response"] = pd.to_numeric(frame["Response"], errors="coerce")
+    frame = frame.loc[
+        frame["Dose1"].gt(0)
+        & frame["Dose2"].gt(0)
+        & frame["Response"].notna()
+    ].copy()
+    frame["patient_id"] = frame["Patient"].map(normalize_patient_id)
+    normalized_drug1 = frame["Drug1"].map(normalize_drug_name)
+    normalized_drug2 = frame["Drug2"].map(normalize_drug_name)
+    frame["unordered_pair_id"] = [
+        "::".join(sorted((left, right)))
+        for left, right in zip(normalized_drug1, normalized_drug2, strict=True)
+    ]
+
+    n_patients = int(frame["patient_id"].nunique())
+    n_pairs = int(frame["unordered_pair_id"].nunique())
+    n_wells = int(len(frame))
+    patients_per_pair = frame.groupby("unordered_pair_id")["patient_id"].nunique()
+    patient_well_fraction = frame["patient_id"].value_counts(normalize=True)
+    median_patients_per_pair = (
+        float(patients_per_pair.median()) if len(patients_per_pair) else 0.0
+    )
+    maximum_patient_fraction = (
+        float(patient_well_fraction.max()) if len(patient_well_fraction) else 1.0
+    )
+    response_std = float(frame["Response"].std(ddof=1)) if n_wells > 1 else 0.0
+
+    blockers: list[str] = []
+    if n_patients < policy.minimum_patients:
+        blockers.append("too few patients for a held-out-patient training design")
+    if n_pairs < policy.minimum_unique_unordered_pairs:
+        blockers.append("too few unique unordered pairs for a pair holdout")
+    if n_wells < policy.minimum_combination_wells:
+        blockers.append("too few positive-dose combination wells")
+    if median_patients_per_pair < policy.minimum_median_patients_per_pair:
+        blockers.append("pairs are not replicated across enough patients")
+    if maximum_patient_fraction > policy.maximum_single_patient_well_fraction:
+        blockers.append("one patient contributes too much of the combination matrix")
+    if not np.isfinite(response_std) or response_std < policy.minimum_response_standard_deviation:
+        blockers.append("combination response variation is below threshold")
+
+    return {
+        "stage": "combination_training_data_readiness",
+        "research_use_only": True,
+        "n_patients": n_patients,
+        "n_unique_unordered_pairs": n_pairs,
+        "n_positive_dose_combination_wells": n_wells,
+        "median_patients_per_pair": median_patients_per_pair,
+        "maximum_single_patient_well_fraction": maximum_patient_fraction,
+        "response_standard_deviation": response_std,
+        "policy": asdict(policy),
+        "grouped_patient_split_feasible": n_patients >= policy.minimum_patients,
+        "zero_pair_overlap_split_feasible": n_pairs >= policy.minimum_unique_unordered_pairs,
+        "combination_training_data_ready": not blockers,
+        "blockers": blockers,
+        "boundary": (
+            "Data readiness permits model fitting only. Patient-specific predictions "
+            "remain locked until held-out validation beats additive and pair-mean baselines."
+        ),
+    }
+
+
 def combination_unlock_decision(
     identity_summary: Mapping[str, object],
     monotherapy_summary: Mapping[str, object],
+    readiness_summary: Mapping[str, object] | None = None,
+    validation_summary: Mapping[str, object] | None = None,
 ) -> dict[str, object]:
     identity_pass = bool(
         identity_summary.get("retrospective_drug_validation_stage_unlocked", False)
     )
     monotherapy_pass = bool(monotherapy_summary.get("viability_direction_gate_pass", False))
-    blockers: list[str] = []
+    prerequisite_blockers: list[str] = []
     if not identity_pass:
-        blockers.append("retrospective cell-identity replication gate did not pass")
+        prerequisite_blockers.append(
+            "retrospective cell-identity replication gate did not pass"
+        )
     if not monotherapy_pass:
-        blockers.append("real single-drug viability-direction gate did not pass")
+        prerequisite_blockers.append(
+            "real single-drug viability-direction gate did not pass"
+        )
+    benchmark_unlocked = not prerequisite_blockers
+    readiness_pass = bool(
+        readiness_summary
+        and readiness_summary.get("combination_training_data_ready", False)
+    )
+    training_blockers = list(prerequisite_blockers)
+    if not readiness_pass:
+        training_blockers.append(
+            "combination data-readiness gate did not pass or was not supplied"
+        )
+    training_unlocked = not training_blockers
+    validation_pass = bool(
+        validation_summary
+        and validation_summary.get("patient_specific_combination_validation_pass", False)
+    )
+    prediction_blockers = list(training_blockers)
+    if not validation_pass:
+        prediction_blockers.append(
+            "held-out patient/pair validation has not beaten strong baselines"
+        )
     return {
         "research_use_only": True,
         "identity_gate_pass": identity_pass,
         "single_drug_gate_pass": monotherapy_pass,
-        "combination_training_unlocked": not blockers,
+        "combination_benchmark_unlocked": benchmark_unlocked,
+        "combination_data_readiness_gate_pass": readiness_pass,
+        "combination_training_unlocked": training_unlocked,
+        "patient_specific_combination_prediction_unlocked": (
+            training_unlocked and validation_pass
+        ),
         "clinical_combination_use_unlocked": False,
-        "blockers": blockers,
+        "prerequisite_blockers": prerequisite_blockers,
+        "training_blockers": training_blockers,
+        "prediction_blockers": prediction_blockers,
+        "blockers": prediction_blockers,
         "boundary": (
-            "A pass permits research-only combination benchmarking. It never permits "
+            "Passing identity and monotherapy permits combination benchmarking. "
+            "Training additionally requires adequate combination data, and predictions "
+            "additionally require held-out gains over strong baselines. None permits "
             "automatic treatment selection or clinical dosing."
         ),
     }
