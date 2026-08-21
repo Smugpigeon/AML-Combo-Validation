@@ -132,6 +132,7 @@ write_json(
     normalized_cells = ncol(count_mtx_norm),
     annotation_rows = nrow(annot_mtx),
     annotation_columns = ncol(annot_mtx),
+    annotation_column_names = colnames(annot_mtx),
     duplicated_normalized_gene_names = sum(duplicated(rownames(count_mtx_norm))),
     duplicated_annotation_gene_names = sum(duplicated(annot_mtx[, 4])),
     known_normal_references = length(known_normal_cells),
@@ -150,13 +151,22 @@ invisible(gc(verbose = FALSE))
 
 original_get_breaks <- SCEVAN:::getBreaksVegaMC
 getBreaksVegaMC <- function(mtx, chr_vect, sample = "", beta_vega = 0.5) {
+  if (nrow(mtx) != length(chr_vect)) {
+    stop(paste(
+      "VegaMC input row mismatch:",
+      nrow(mtx),
+      "matrix rows versus",
+      length(chr_vect),
+      "breakpoint positions"
+    ))
+  }
   write_json(
     list(
       matrix_rows = nrow(mtx),
       matrix_columns = ncol(mtx),
-      chromosome_vector_length = length(chr_vect),
-      chromosome_levels = length(unique(chr_vect)),
-      missing_chromosomes = sum(is.na(chr_vect)),
+      breakpoint_position_vector_length = length(chr_vect),
+      unique_breakpoint_positions = length(unique(chr_vect)),
+      missing_breakpoint_positions = sum(is.na(chr_vect)),
       beta = beta_vega
     ),
     "vega_input_diagnostics.json"
