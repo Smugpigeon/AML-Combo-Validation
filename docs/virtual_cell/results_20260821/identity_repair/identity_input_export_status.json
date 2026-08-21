@@ -1,0 +1,20 @@
+{
+  "patient5": {
+    "patient_id": "patient5",
+    "status": "complete",
+    "n_cells": 2365,
+    "n_normal_references": 370
+  },
+  "patient6": {
+    "patient_id": "patient6",
+    "status": "complete",
+    "n_cells": 5677,
+    "n_normal_references": 223
+  },
+  "patient12": {
+    "patient_id": "patient12",
+    "status": "complete",
+    "n_cells": 3610,
+    "n_normal_references": 916
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "patient_id": "patient6",
+  "research_use_only": true,
+  "docker_image": "kmnader/sctherapy_v5@sha256:2ccea16a2740109279e812636a77a2245cf86061b980f8bc7aa3fc4d7f31f055",
+  "attempts": [
+    {
+      "attempt": 1,
+      "ncores": 2,
+      "memory_limit_gib": 6,
+      "status": "failed",
+      "failure": "scheduled core 2 did not deliver a result; intermediate row counts differed (12167 versus 7667)",
+      "accepted": false
+    },
+    {
+      "attempt": 2,
+      "ncores": 1,
+      "memory_limit_gib": 6,
+      "status": "oom_killed",
+      "exit_code": 137,
+      "last_completed_stage": "step 6: convert to genomic bins",
+      "failure_stage": "step 7: adjust baseline",
+      "accepted": false
+    },
+    {
+      "attempt": 3,
+      "ncores": 1,
+      "memory_limit_gib": 7,
+      "memory_plus_swap_limit_gib": 14,
+      "status": "complete",
+      "runtime_minutes_reported_by_copykat": 43.523,
+      "n_cells": 5677,
+      "n_malignant": 3087,
+      "n_healthy": 2590,
+      "n_unresolved": 0,
+      "barcode_duplicates": 0,
+      "missing_input_barcodes": 0,
+      "extra_output_barcodes": 0,
+      "accepted": true
+    }
+  ],
+  "decision": "Only attempt 3 is used. No cells were sampled or removed and no biological threshold was changed."
+}

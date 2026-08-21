@@ -4,7 +4,11 @@
 > single-drug perturbation direction, then unlock patient-specific combination
 > modeling. Start with [`VIRTUAL_CELL_RESEARCH_SEQUENCE.md`](VIRTUAL_CELL_RESEARCH_SEQUENCE.md)
 > and [`CELL_IDENTITY_GATE.md`](CELL_IDENTITY_GATE.md). The current three-patient
-> identity audit does not unlock perturbation inference.
+> identity audit does not unlock perturbation inference. The latest SCEVAN
+> repair, dual-semantics gate, and hospital evidence package are documented in
+> [`SCEVAN_IDENTITY_REPAIR_AND_DUAL_GATE_20260821.md`](SCEVAN_IDENTITY_REPAIR_AND_DUAL_GATE_20260821.md)
+> and
+> [`HOSPITAL_VIRTUAL_CELL_VALIDATION_PACKAGE.md`](HOSPITAL_VIRTUAL_CELL_VALIDATION_PACKAGE.md).
 
 > The reusable single-cell upgrade is documented in
 > [`VIRTUAL_CELL_V15.md`](VIRTUAL_CELL_V15.md). It adds a 12-patient baseline

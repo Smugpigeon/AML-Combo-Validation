@@ -1,0 +1,47 @@
+{
+  "patient12": {
+    "beta_vega": 0.5,
+    "n_analyzed": 3281,
+    "n_cells": 3610,
+    "n_filtered": 329,
+    "n_healthy": 916,
+    "n_malignant": 2365,
+    "n_normal_references": 916,
+    "normal_reference_sha256": "6c2ccf415c3a1c0faa437532d90049daa4062b662e6fe458fc04a1b7f81b0573",
+    "patient_id": "patient12",
+    "pyscevan_revision": "c7917cb47df9ab46465f9f94afbe801a71bd74e6",
+    "segmentation_class": true,
+    "status": "complete",
+    "status_reconstructed_from_completed_calls": true
+  },
+  "patient5": {
+    "beta_vega": 0.5,
+    "n_analyzed": 2179,
+    "n_cells": 2365,
+    "n_filtered": 186,
+    "n_healthy": 631,
+    "n_malignant": 1548,
+    "n_normal_references": 370,
+    "normal_reference_sha256": "79d93340224121c5fa4b4a1c85d50551a650bdfa07eb6983f03c0f36f42b6c85",
+    "patient_id": "patient5",
+    "pyscevan_revision": "c7917cb47df9ab46465f9f94afbe801a71bd74e6",
+    "segmentation_class": true,
+    "status": "complete",
+    "status_reconstructed_from_completed_calls": true
+  },
+  "patient6": {
+    "beta_vega": 0.5,
+    "n_analyzed": 5305,
+    "n_cells": 5677,
+    "n_filtered": 372,
+    "n_healthy": 2610,
+    "n_malignant": 2695,
+    "n_normal_references": 223,
+    "normal_reference_sha256": "be8d449e410ca29847f75564f1352891d68cf631397c3266a71eb785b3884716",
+    "patient_id": "patient6",
+    "pyscevan_revision": "c7917cb47df9ab46465f9f94afbe801a71bd74e6",
+    "segmentation_class": true,
+    "status": "complete",
+    "status_reconstructed_from_completed_calls": true
+  }
+}

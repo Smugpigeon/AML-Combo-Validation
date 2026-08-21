@@ -1,0 +1,3 @@
+patient_id,n_compared,n_mismatch,released_output_equals_normal_reference_rule
+patient5,2365,0,True
+patient12,3610,0,True

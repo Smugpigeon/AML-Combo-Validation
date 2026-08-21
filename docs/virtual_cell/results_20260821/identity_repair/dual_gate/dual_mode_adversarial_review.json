@@ -1,0 +1,26 @@
+{
+  "stage": "dual_semantics_identity_sensitivity_gate",
+  "decision": "blocked",
+  "research_use_only": true,
+  "strongest_opposing_case": "The released-code mode is known not to contain true SCEVAN tumour calls, so requiring agreement with it may be overly conservative and can preserve a software defect as a gatekeeper.",
+  "omitted_facts_that_could_change_the_decision": [
+    "No barcode-linked scDNA, genotype, CITE-seq, or matched flow identity label is available for these cells.",
+    "All three retrospective identity algorithms still derive from the same RNA matrix.",
+    "The corrected SCEVAN mode passes all three patients, but that result was obtained after discovering the released-code semantic defect."
+  ],
+  "optimistic_assumptions": [
+    "Exact Python-to-R parity on patient5 and patient12 transfers to patient6.",
+    "Reported scRNA blast percentages are sufficiently comparable with the ensemble malignant fraction.",
+    "RNA-derived CNA methods distinguish malignant from reactive states in these R/R AML samples."
+  ],
+  "irreversible_cost": "Unblinding drug outcomes after a disputed identity definition would contaminate the intended frozen challenge and make a clean prospective test harder.",
+  "worst_consequence": "A normal or reactive state could be treated as a leukemic state and produce a spurious patient-specific drug vulnerability claim.",
+  "strongest_supporting_evidence": "The corrected implementation matches native R SCEVAN exactly for every evaluable cell in both reference patients, completes all 11652 cells across the three patients, and reduces blast-fraction discrepancies without changing thresholds.",
+  "neutral_verdict": "Keep monotherapy unblinding locked under the preregistered dual-mode sensitivity rule. Treat the corrected result as a successful computational repair and a strong rationale for orthogonal identity collection, not as final identity proof.",
+  "largest_unknown": "Whether corrected RNA-derived malignant and normal calls agree with barcode-linked genomic or orthogonal immunophenotypic identity.",
+  "evidence_that_would_reverse_the_verdict": [
+    "Barcode-linked scDNA or genotype concordance for major virtual states.",
+    "Matched CITE-seq or flow labels plus an AML-specific reference call under the frozen strict identity thresholds.",
+    "A prospectively registered independent replication of the corrected identity and drug-direction challenge."
+  ]
+}

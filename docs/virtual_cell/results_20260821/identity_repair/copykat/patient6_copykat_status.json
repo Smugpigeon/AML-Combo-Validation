@@ -1,0 +1,11 @@
+{
+  "patient_id": "patient6",
+  "status": "complete",
+  "n_cells": 5677,
+  "n_malignant": 3087,
+  "n_healthy": 2590,
+  "n_unresolved": 0,
+  "n_normal_references": 223,
+  "ncores": 1,
+  "genome": "hg20"
+}

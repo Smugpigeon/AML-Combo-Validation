@@ -1,0 +1,15 @@
+{
+  "interpretation": "The released scTherapy SCEVAN_output is audited separately from true SCEVAN tumour classification. Python calls may be used for patient6 only if parity passes on both R-computable patients.",
+  "python_reimplementation_parity_gate_pass": true,
+  "reference_patients": [
+    "patient5",
+    "patient12"
+  ],
+  "released_code_semantics_confirmed": true,
+  "thresholds_preregistered_before_patient_results": {
+    "minimum_adjusted_rand_index": 0.95,
+    "minimum_call_agreement": 0.95,
+    "minimum_common_evaluable_fraction": 0.95,
+    "minimum_malignant_jaccard": 0.9
+  }
+}

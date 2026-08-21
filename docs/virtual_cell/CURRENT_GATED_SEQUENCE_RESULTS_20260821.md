@@ -4,6 +4,12 @@
 **Code:** `codex/virtual-cell-identity-gate` at `561bc40`  
 **Scope:** public retrospective research only; not treatment selection
 
+> Historical result. The patient6 failure and released SCEVAN writeback
+> semantics were subsequently repaired and audited. Use
+> [`SCEVAN_IDENTITY_REPAIR_AND_DUAL_GATE_20260821.md`](SCEVAN_IDENTITY_REPAIR_AND_DUAL_GATE_20260821.md)
+> for the current decision. This file is retained to preserve the original
+> blocked-run audit trail.
+
 ## Decision
 
 The pipeline stopped at the cell-identity gate with status
@@ -174,4 +180,3 @@ accurate and auditable.
 The full server result is frozen at:
 
 `/lhcos-data/aml_virtual_cell/derived/virtual_cell_gated_sequence_20260820/gated_sequence_final_20260821`
-

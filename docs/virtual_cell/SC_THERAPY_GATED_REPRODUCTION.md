@@ -54,9 +54,54 @@ retrospective drug-direction challenge.
 The local R wrapper calls the pinned upstream functions and does not vendor or
 rewrite their algorithm.
 
-## Stage 1 command
+## SCEVAN semantic audit and corrected mode
 
-Run the official RNA ensemble inside the pinned container:
+The released scTherapy helper has an important semantic distinction. With
+`all_pred=FALSE`, it executes SCEVAN but writes `SCEVAN_output=malignant` for
+every cell outside the supplied T-cell normal-reference set. That column is
+therefore a released-code effective rule, not the tumour/normal classification
+returned by SCEVAN. The audit keeps this behavior for reproduction but never
+labels it as a true SCEVAN call.
+
+Two modes are generated and evaluated separately:
+
+- `released_code_effective`: reproduces the released writeback rule exactly;
+- `true_scevan_corrected`: uses the actual SCEVAN tumour/normal classification.
+
+The corrected path uses the pinned pure-Python SCEVAN implementation at commit
+`c7917cb47df9ab46465f9f94afbe801a71bd74e6`. Before using it for the patient
+whose native R run fails, parity is required on both R-computable reference
+patients with predeclared thresholds: call agreement at least 0.95, adjusted
+Rand index at least 0.95, malignant-call Jaccard at least 0.90, and common
+evaluable-cell fraction at least 0.95. The observed values were 1.00 for every
+metric in both reference patients.
+
+This repair does not create independent genomic evidence. ScType, CopyKAT, and
+SCEVAN remain three analyses of the same RNA matrix.
+
+## Resource-safe component execution
+
+Run one patient per process. On the current 7.3 GiB server, two-worker SCEVAN
+and CopyKAT jobs can lose one forked worker and return half-length intermediate
+objects. Such results are failures, not partial classifications. The supported
+fallback is:
+
+- true SCEVAN through the parity-gated Python implementation;
+- CopyKAT as an independent component with `--ncores 1`;
+- no patient sampling, cell removal, or threshold relaxation.
+
+After all component files exist, assemble both semantic modes and compute both
+identity gates. `compare_sctherapy_identity_mode_gates.py` permits the frozen
+single-drug challenge only when both mode-level gates pass and every patient's
+gate decision agrees.
+
+## Released-wrapper reference command
+
+The command below reproduces the released all-in-one wrapper. It is retained
+for semantic auditing and is not the supported low-memory command: on the
+current server, one forked worker can disappear and invalidate the whole
+patient result. Use the component execution described above for production
+reproduction.
 
 ```bash
 docker run --rm --cpus 2 --memory 6g \

@@ -1,0 +1,3 @@
+patient_id,n_common_evaluable,common_evaluable_fraction,call_agreement,adjusted_rand_index,cohen_kappa,malignant_jaccard,parity_gate_pass
+patient5,2179,1.0,1.0,1.0,1.0,1.0,True
+patient12,3281,1.0,1.0,1.0,1.0,1.0,True

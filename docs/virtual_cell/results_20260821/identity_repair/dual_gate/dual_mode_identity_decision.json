@@ -1,0 +1,24 @@
+{
+  "all_patient_gate_decisions_agree": false,
+  "blockers": [
+    "released-code effective identity mode did not pass",
+    "patient-level gate decisions differ between modes: patient5, patient6"
+  ],
+  "boundary": "This is a sensitivity gate over two identity semantics. Even a pass does not establish orthogonal or same-cell genomic identity.",
+  "disagreeing_patients": [
+    "patient5",
+    "patient6"
+  ],
+  "dual_mode_retrospective_drug_validation_unlocked": false,
+  "input_sha256": {
+    "corrected_patient_gate": "957caca652d4a3d4954be68a691fd302169cf03955c08874377421c5fc03cbc0",
+    "corrected_summary": "52550987038ba2f28466d8b4af4b9824746df55df4262798f628a6071219fa65",
+    "released_patient_gate": "3e115cdd9a00be8e556a9b141e75591a3dbfc563184632accd161fd289613d3d",
+    "released_summary": "0b65d2f45633aceda6a0dad7975962258dcc84e739515173a1aa12880c66639b"
+  },
+  "permitted_identity_mode_for_monotherapy": null,
+  "released_code_mode_unlocked": false,
+  "research_use_only": true,
+  "stage": "dual_semantics_identity_sensitivity_gate",
+  "true_scevan_corrected_mode_unlocked": true
+}

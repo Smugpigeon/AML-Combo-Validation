@@ -1,0 +1,4 @@
+patient_id,n_cells,rna_ensemble_call_coverage,rna_ensemble_malignant_fraction,known_normal_reference_cells,major_state_count,major_states_passing,reported_scrna_blast_pct,ensemble_vs_scrna_blast_gap_pct,retrospective_identity_gate_pass,blockers,identity_run_status,identity_run_error
+patient12,3610,0.9897506925207756,0.7388748950461796,916,1,1,65.3,8.587489504617963,True,,complete,
+patient5,2365,0.8503171247357294,0.8030830432620587,370,2,2,54.4,25.908304326205872,False,RNA ensemble malignant fraction disagrees with reported scRNA blast fraction,complete,
+patient6,5677,0.861018143385591,0.8457446808510638,223,3,2,40.0,44.574468085106375,False,one or more major virtual states lack a stable identity call | RNA ensemble malignant fraction disagrees with reported scRNA blast fraction,complete,

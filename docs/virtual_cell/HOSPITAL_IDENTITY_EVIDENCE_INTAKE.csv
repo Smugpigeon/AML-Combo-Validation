@@ -1,0 +1,2 @@
+patient_id,sample_id,collection_timepoint,specimen_source,cell_barcode,virtual_state_id,scdna_cnv_call,single_cell_genotype_call,flow_malignant_call,cite_malignant_call,aml_reference_malignant_call,clinical_blast_pct,scrna_blast_pct,batch_id,assay_qc_pass,reviewer,notes
+PATIENT_PLACEHOLDER,SAMPLE_PLACEHOLDER,baseline,bone_marrow,CELL_BARCODE_PLACEHOLDER,VS_PLACEHOLDER,,,,,,,BATCH_PLACEHOLDER,false,,Do not enter direct identifiers; use study-coded IDs only

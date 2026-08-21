@@ -1,0 +1,67 @@
+{
+  "algorithm_unresolved_cells": 1180,
+  "all_patients_pass_retrospective_identity_gate": false,
+  "barcode_unmatched_cells": 0,
+  "boundary": "ScType, CopyKAT, and SCEVAN share the same scRNA input. Agreement supports method reproduction but is not independent genomic proof.",
+  "clinical_identity_stage_unlocked": false,
+  "evidence_level": "rna_derived_cna_ensemble_reproduction_not_scdna",
+  "input_sha256": {
+    "cell_annotations": "37faf53209d70a161593e4543b9b5b577b1335600f72835a3a056169598dbbdc",
+    "official_identity_calls": {
+      "patient12_identity_calls.csv": "6d6e1c6d14d451188bbfc7bd2417d4181e9feafc0ef0ac87459b4f54aadf51a3",
+      "patient5_identity_calls.csv": "ff02ab2b98ef82ce742efe523e505ec1cc8b73d64a74c8832c16b0d46a338750",
+      "patient6_identity_calls.csv": "ce7b0aeb7900e9a8a63312db65d21d40d800980f11cc12db5101f4d1407fa60a"
+    },
+    "patient_summary": "6c060379ca401bc6f08c80683ea68841d21427ab50ab63c325b8beec59c90710",
+    "run_status": "e4cc23318cbda9d7ce10f03a502dbf308fde44eaa545eb0b92eb41e834ffe5a8"
+  },
+  "missing_identity_call_patients": [],
+  "missing_identity_call_record_cells": 0,
+  "n_cells": 11652,
+  "official_identity_run_status": {
+    "_mode": {
+      "name": "released_code_effective",
+      "warning": "SCEVAN_output reproduces released run_SCEVAN(all_pred=FALSE) writeback semantics and is not a SCEVAN tumour classification."
+    },
+    "patient12": {
+      "copykat_unresolved": 0,
+      "n_cells": 3610,
+      "patient_id": "patient12",
+      "status": "complete",
+      "true_scevan_unresolved": 329
+    },
+    "patient5": {
+      "copykat_unresolved": 0,
+      "n_cells": 2365,
+      "patient_id": "patient5",
+      "status": "complete",
+      "true_scevan_unresolved": 186
+    },
+    "patient6": {
+      "copykat_unresolved": 0,
+      "n_cells": 5677,
+      "patient_id": "patient6",
+      "status": "complete",
+      "true_scevan_unresolved": 372
+    }
+  },
+  "patients": [
+    "patient12",
+    "patient5",
+    "patient6"
+  ],
+  "policy": {
+    "major_state_fraction": 0.05,
+    "maximum_scrna_blast_disagreement_pct": 20.0,
+    "minimum_algorithm_agreement": 0.6666666666666666,
+    "minimum_algorithms_per_cell": 2,
+    "minimum_known_normal_reference_cells": 20,
+    "minimum_major_state_call_coverage": 0.7,
+    "minimum_major_state_identity_purity": 0.6,
+    "minimum_patient_call_coverage": 0.8
+  },
+  "research_use_only": true,
+  "retrospective_drug_validation_stage_unlocked": false,
+  "stage": "published_rna_identity_ensemble_reproduction",
+  "strict_orthogonal_identity_gate_pass": false
+}

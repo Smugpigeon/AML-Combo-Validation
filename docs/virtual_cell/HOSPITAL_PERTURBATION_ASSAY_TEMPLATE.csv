@@ -1,0 +1,2 @@
+patient_id,sample_id,cell_population,baseline_state_id,drug_a,drug_b,drug_c,dose_a,dose_b,dose_c,dose_unit,exposure_hours,batch_id,replicate_id,vehicle_control,positive_control,viability_fraction,malignant_fraction,normal_fraction,normal_cell_toxicity,post_state_id,post_expression_available,assay_qc_pass,notes
+PATIENT_PLACEHOLDER,SAMPLE_PLACEHOLDER,barcode_validated_malignant,VS_PLACEHOLDER,DRUG_PLACEHOLDER,,,0,,,nM,24,BATCH_PLACEHOLDER,R1,true,false,,,,,,false,false,Template row only; not a treatment recommendation

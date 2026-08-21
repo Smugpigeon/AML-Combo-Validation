@@ -1,0 +1,4 @@
+patient_id,n_cells,rna_ensemble_call_coverage,rna_ensemble_malignant_fraction,known_normal_reference_cells,major_state_count,major_states_passing,reported_scrna_blast_pct,ensemble_vs_scrna_blast_gap_pct,retrospective_identity_gate_pass,blockers,identity_run_status,identity_run_error
+patient12,3610,0.8988919667590027,0.7195685670261941,916,1,1,65.3,6.656856702619407,True,,complete,
+patient5,2365,0.8376321353065539,0.6915699141847552,370,2,2,54.4,14.756991418475529,True,,complete,
+patient6,5677,0.9034701426809935,0.5073113667381556,223,3,3,40.0,10.731136673815556,True,,complete,
