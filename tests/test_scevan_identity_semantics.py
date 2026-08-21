@@ -1,11 +1,21 @@
 from __future__ import annotations
 
+import importlib.util
 import json
 import subprocess
 import sys
 from pathlib import Path
 
 import pandas as pd
+
+
+def _load_statuses(path: Path) -> dict[str, dict[str, object]]:
+    script = Path(__file__).resolve().parents[1] / "scripts" / "run_pyscevan_identity.py"
+    spec = importlib.util.spec_from_file_location("run_pyscevan_identity", script)
+    assert spec is not None and spec.loader is not None
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.load_statuses(path)
 
 
 def _identity_inputs(patient: str) -> pd.DataFrame:
@@ -155,3 +165,17 @@ def test_identity_modes_remain_explicitly_separate(tmp_path: Path) -> None:
     assert released.loc[0, "scevan_call_source"] != corrected.loc[
         0, "scevan_call_source"
     ]
+
+
+def test_pyscevan_status_file_is_incremental(tmp_path: Path) -> None:
+    out_dir = tmp_path / "out"
+    out_dir.mkdir()
+    status_path = out_dir / "run_status.json"
+    status_path.write_text(
+        json.dumps({"p1": {"patient_id": "p1", "status": "complete"}}),
+        encoding="utf-8",
+    )
+    statuses = _load_statuses(status_path)
+    statuses["p2"] = {"patient_id": "p2", "status": "complete"}
+    status_path.write_text(json.dumps(statuses), encoding="utf-8")
+    assert set(_load_statuses(status_path)) == {"p1", "p2"}

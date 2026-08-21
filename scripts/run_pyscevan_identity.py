@@ -44,6 +44,12 @@ def git_revision(path: Path) -> str:
     return result.stdout.strip()
 
 
+def load_statuses(path: Path) -> dict[str, dict[str, object]]:
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def main() -> int:
     args = parse_args()
     patients = [item.strip() for item in args.patients.split(",") if item.strip()]
@@ -54,7 +60,8 @@ def main() -> int:
 
     source_revision = git_revision(args.pyscevan_source)
     full = ad.read_h5ad(args.h5ad, backed="r")
-    statuses: dict[str, dict[str, object]] = {}
+    status_path = args.out_dir / "run_status.json"
+    statuses = load_statuses(status_path)
     for patient in patients:
         print(f"[pyscevan] {patient}", flush=True)
         normal_path = args.identity_input_dir / f"{patient}_normal_cells.txt"
@@ -126,7 +133,7 @@ def main() -> int:
                 "error": f"{type(error).__name__}: {error}",
                 "pyscevan_revision": source_revision,
             }
-        (args.out_dir / "run_status.json").write_text(
+        status_path.write_text(
             json.dumps(statuses, indent=2, sort_keys=True) + "\n",
             encoding="utf-8",
         )
