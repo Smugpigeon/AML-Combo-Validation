@@ -179,3 +179,88 @@ def test_pyscevan_status_file_is_incremental(tmp_path: Path) -> None:
     statuses["p2"] = {"patient_id": "p2", "status": "complete"}
     status_path.write_text(json.dumps(statuses), encoding="utf-8")
     assert set(_load_statuses(status_path)) == {"p1", "p2"}
+
+
+def _write_gate_mode(
+    directory: Path,
+    patient_passes: dict[str, bool],
+    *,
+    unlocked: bool,
+) -> None:
+    directory.mkdir()
+    pd.DataFrame(
+        {
+            "patient_id": list(patient_passes),
+            "retrospective_identity_gate_pass": list(patient_passes.values()),
+            "blockers": ["" if passed else "failed" for passed in patient_passes.values()],
+        }
+    ).to_csv(directory / "retrospective_patient_identity_gate.csv", index=False)
+    (directory / "retrospective_identity_gate_summary.json").write_text(
+        json.dumps({"retrospective_drug_validation_stage_unlocked": unlocked}),
+        encoding="utf-8",
+    )
+
+
+def test_dual_mode_gate_blocks_semantic_disagreement(tmp_path: Path) -> None:
+    released = tmp_path / "released"
+    corrected = tmp_path / "corrected"
+    output = tmp_path / "output"
+    _write_gate_mode(released, {"p1": False, "p2": True}, unlocked=False)
+    _write_gate_mode(corrected, {"p1": True, "p2": True}, unlocked=True)
+    script = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "compare_sctherapy_identity_mode_gates.py"
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--released-gate-dir",
+            str(released),
+            "--corrected-gate-dir",
+            str(corrected),
+            "--out-dir",
+            str(output),
+        ],
+        check=True,
+    )
+    decision = json.loads(
+        (output / "dual_mode_identity_decision.json").read_text(encoding="utf-8")
+    )
+    assert not decision["dual_mode_retrospective_drug_validation_unlocked"]
+    assert decision["disagreeing_patients"] == ["p1"]
+
+
+def test_dual_mode_gate_unlocks_only_when_both_modes_pass(tmp_path: Path) -> None:
+    released = tmp_path / "released"
+    corrected = tmp_path / "corrected"
+    output = tmp_path / "output"
+    patient_passes = {"p1": True, "p2": True}
+    _write_gate_mode(released, patient_passes, unlocked=True)
+    _write_gate_mode(corrected, patient_passes, unlocked=True)
+    script = (
+        Path(__file__).resolve().parents[1]
+        / "scripts"
+        / "compare_sctherapy_identity_mode_gates.py"
+    )
+    subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--released-gate-dir",
+            str(released),
+            "--corrected-gate-dir",
+            str(corrected),
+            "--out-dir",
+            str(output),
+        ],
+        check=True,
+    )
+    decision = json.loads(
+        (output / "dual_mode_identity_decision.json").read_text(encoding="utf-8")
+    )
+    assert decision["dual_mode_retrospective_drug_validation_unlocked"]
+    assert decision["permitted_identity_mode_for_monotherapy"] == (
+        "true_scevan_corrected"
+    )
