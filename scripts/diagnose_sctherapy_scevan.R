@@ -142,6 +142,12 @@ write_json(
   "preprocessing_diagnostics.json"
 )
 
+# Keep only the matrices required by classifyTumorCells1. The diagnostic path
+# otherwise retains the full Seurat object and a duplicate preprocessing list,
+# which can exceed the memory footprint of the original upstream call.
+rm(object, count_mtx, res_proc, general_labels, t_cell)
+invisible(gc(verbose = FALSE))
+
 original_get_breaks <- SCEVAN:::getBreaksVegaMC
 getBreaksVegaMC <- function(mtx, chr_vect, sample = "", beta_vega = 0.5) {
   write_json(
